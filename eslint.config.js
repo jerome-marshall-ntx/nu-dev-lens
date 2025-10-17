@@ -1,7 +1,7 @@
-import tseslint from "typescript-eslint";
 import { FlatCompat } from "@eslint/eslintrc";
-import { fileURLToPath } from "url";
 import { dirname } from "path";
+import tseslint from "typescript-eslint";
+import { fileURLToPath } from "url";
 // @ts-expect-error -- no types for this plugin
 import drizzle from "eslint-plugin-drizzle";
 

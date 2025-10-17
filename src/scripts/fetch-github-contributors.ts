@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 
+import { env } from "@/env";
 import axios, { type AxiosResponse } from "axios";
+import { config } from "dotenv";
 import { promises as fs } from "fs";
 import { fileURLToPath } from "url";
-import { config } from "dotenv";
-import { env } from "@/env";
 
 config();
 
@@ -932,13 +932,13 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 }
 
 export {
-  parseGithubUrl,
-  makeGithubRequest,
-  fetchPaginatedData,
-  fetchContributorsFromRepo,
-  fetchRepositoryIssuesList,
-  fetchIssueDetails,
-  fetchRepositoryCommits,
   fetchCommitDetails,
+  fetchContributorsFromRepo,
+  fetchIssueDetails,
+  fetchPaginatedData,
+  fetchRepositoryCommits,
+  fetchRepositoryIssuesList,
+  makeGithubRequest,
+  parseGithubUrl,
   processRepositories,
 };

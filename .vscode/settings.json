@@ -4,7 +4,11 @@
 
   // Auto-fix on save
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "always",
+    "source.sortImports": "always",
+    "source.removeUnusedImports": "always",
+    "source.fixAll.ts": "always"
   },
 
   // Optional: Format with Prettier first, then fix with ESLint
