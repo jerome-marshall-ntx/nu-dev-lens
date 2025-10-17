@@ -660,7 +660,7 @@ async function processRepositories(
           // Use git commit author name as username (not linked to GitHub)
           // Create a synthetic username from the name
           const gitAuthorName = commitSummaryData.commit.author.name;
-          const gitAuthorEmail = commitSummaryData.commit.author.email;
+          // const gitAuthorEmail = commitSummaryData.commit.author.email;
           // Use name as identifier, sanitize it for use as username
           authorUsername = gitAuthorName.replace(/\s+/g, "-").toLowerCase();
           authorId = null; // No GitHub ID available
