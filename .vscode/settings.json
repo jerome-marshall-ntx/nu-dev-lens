@@ -1,0 +1,24 @@
+{
+  // Enable ESLint
+  "eslint.enable": true,
+
+  // Auto-fix on save
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // Optional: Format with Prettier first, then fix with ESLint
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Validate these file types with ESLint
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+
+  // Use the flat config format (ESLint 9+)
+  "eslint.useFlatConfig": true
+}
