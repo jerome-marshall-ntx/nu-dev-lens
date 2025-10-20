@@ -1,27 +1,224 @@
-// Example model schema from the Drizzle docs
-// https://orm.drizzle.team/docs/sql-schema-declaration
+// Database schema for nu-dev-lens
+// Based on the three-phase system: Data Ingestion → AI Summarization → API Serving
 
-import { sql } from "drizzle-orm";
-import { index, pgTableCreator } from "drizzle-orm/pg-core";
+import type {
+  StoredCommitData,
+  StoredIssueData,
+  StoredRepositoryData,
+} from "@/types/github";
+import { relations, sql } from "drizzle-orm";
+import { index, jsonb, pgTableCreator } from "drizzle-orm/pg-core";
 
 /**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
- * database instance for multiple projects.
- *
+ * Multi-project schema feature of Drizzle ORM
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `nu-dev-lens_${name}`);
+export const createTable = pgTableCreator((name) => `${name}`);
 
-export const posts = createTable(
-  "post",
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
+/**
+ * Repository - A GitHub repository
+ * Summary: "What is this repo about?" (Level 3)
+ */
+export const repositories = createTable(
+  "repository",
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    name: d.varchar({ length: 256 }),
+    name: d.varchar({ length: 255 }).notNull(),
+    avatarUrl: d.varchar({ length: 500 }).notNull(),
+    url: d.varchar({ length: 500 }).notNull(),
+    summary: d.text(), // Initially empty, populated by AI processing
+    rawData: jsonb().$type<StoredRepositoryData>(), // Structured GitHub API response
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
   }),
-  (t) => [index("name_idx").on(t.name)],
+  (t) => [
+    index("repository_name_idx").on(t.name),
+    index("repository_url_idx").on(t.url),
+  ],
 );
+
+/**
+ * Contributor - A GitHub user
+ * Summary: "Who is this person as an engineer?" (Level 3)
+ */
+export const contributors = createTable(
+  "contributor",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    username: d.varchar({ length: 255 }).notNull().unique(),
+    url: d.varchar({ length: 500 }).notNull(), // URLField
+    avatarUrl: d.varchar({ length: 500 }).notNull(), // URLField
+    summary: d.text(), // Initially empty, populated by AI processing
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    index("contributor_username_idx").on(t.username),
+    index("contributor_url_idx").on(t.url),
+  ],
+);
+
+/**
+ * RepositoryWork - The join table with business logic
+ * Summary: "What did this person do in THIS repo?" (Level 2)
+ * This is the critical relationship that allows the same contributor
+ * to have different summaries in different repos
+ */
+export const repositoryWorks = createTable(
+  "repository_work",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    repositoryId: d
+      .integer()
+      .notNull()
+      .references(() => repositories.id, {
+        onDelete: "cascade",
+      }),
+    contributorId: d
+      .integer()
+      .notNull()
+      .references(() => contributors.id, {
+        onDelete: "cascade",
+      }),
+    summary: d.text(), // Initially empty, populated by AI processing
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    index("repository_work_repo_idx").on(t.repositoryId),
+    index("repository_work_contributor_idx").on(t.contributorId),
+    index("repository_work_composite_idx").on(t.repositoryId, t.contributorId),
+  ],
+);
+
+/**
+ * Issue - A GitHub issue the contributor worked on
+ * Summary: "What was this issue about technically?" (Level 1)
+ */
+export const issues = createTable(
+  "issue",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    repositoryWorkId: d
+      .integer()
+      .notNull()
+      .references(() => repositoryWorks.id, {
+        onDelete: "cascade",
+      }),
+    url: d.varchar({ length: 500 }).notNull(),
+    rawData: jsonb().$type<StoredIssueData>().notNull(), // Typed GitHub issue data
+    summary: d.text(), // Initially empty, populated by AI processing
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    index("issue_repository_work_idx").on(t.repositoryWorkId),
+    index("issue_url_idx").on(t.url),
+  ],
+);
+
+/**
+ * Commit - A code commit by the contributor
+ * Summary: "What technical change did this commit make?" (Level 1)
+ */
+export const commits = createTable(
+  "commit",
+  (d) => ({
+    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+    repositoryWorkId: d
+      .integer()
+      .notNull()
+      .references(() => repositoryWorks.id, {
+        onDelete: "cascade",
+      }),
+    url: d.varchar({ length: 500 }).notNull(),
+    rawData: jsonb().$type<StoredCommitData>().notNull(), // Typed commit data with diffs
+    summary: d.text(), // Initially empty, populated by AI processing
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
+  }),
+  (t) => [
+    index("commit_repository_work_idx").on(t.repositoryWorkId),
+    index("commit_url_idx").on(t.url),
+  ],
+);
+
+// ============================================================================
+// RELATIONS - For type-safe queries and joins
+// ============================================================================
+
+export const repositoriesRelations = relations(repositories, ({ many }) => ({
+  repositoryWorks: many(repositoryWorks),
+}));
+
+export const contributorsRelations = relations(contributors, ({ many }) => ({
+  repositoryWorks: many(repositoryWorks),
+}));
+
+export const repositoryWorksRelations = relations(
+  repositoryWorks,
+  ({ one, many }) => ({
+    repository: one(repositories, {
+      fields: [repositoryWorks.repositoryId],
+      references: [repositories.id],
+    }),
+    contributor: one(contributors, {
+      fields: [repositoryWorks.contributorId],
+      references: [contributors.id],
+    }),
+    issues: many(issues),
+    commits: many(commits),
+  }),
+);
+
+export const issuesRelations = relations(issues, ({ one }) => ({
+  repositoryWork: one(repositoryWorks, {
+    fields: [issues.repositoryWorkId],
+    references: [repositoryWorks.id],
+  }),
+}));
+
+export const commitsRelations = relations(commits, ({ one }) => ({
+  repositoryWork: one(repositoryWorks, {
+    fields: [commits.repositoryWorkId],
+    references: [repositoryWorks.id],
+  }),
+}));
+
+// ============================================================================
+// TYPESCRIPT TYPES - Inferred from schema for type safety
+// ============================================================================
+
+export type InsertRepository = typeof repositories.$inferInsert;
+export type SelectRepository = typeof repositories.$inferSelect;
+
+export type InsertContributor = typeof contributors.$inferInsert;
+export type SelectContributor = typeof contributors.$inferSelect;
+
+export type InsertRepositoryWork = typeof repositoryWorks.$inferInsert;
+export type SelectRepositoryWork = typeof repositoryWorks.$inferSelect;
+
+export type InsertIssue = typeof issues.$inferInsert;
+export type SelectIssue = typeof issues.$inferSelect;
+
+export type InsertCommit = typeof commits.$inferInsert;
+export type SelectCommit = typeof commits.$inferSelect;
