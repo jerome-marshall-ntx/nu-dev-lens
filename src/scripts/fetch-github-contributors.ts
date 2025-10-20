@@ -2,6 +2,15 @@
 // -*- coding: utf-8 -*-
 
 import { env } from "@/env";
+import type {
+  ContributorIngestionData,
+  GithubCommitDetails,
+  GithubIssue,
+  GithubUser,
+  IngestionOutputData,
+  StoredCommitData,
+  StoredIssueData,
+} from "@/types/github";
 import axios, { type AxiosResponse } from "axios";
 import { config } from "dotenv";
 import { promises as fs } from "fs";
@@ -9,69 +18,11 @@ import { fileURLToPath } from "url";
 
 config();
 
-// --- Type Definitions ---
+// --- Script-Specific Type Definitions ---
 
 interface GithubRepoInfo {
   owner: string;
   repo: string;
-}
-
-interface GithubUser {
-  id: number;
-  login: string;
-  html_url: string;
-  avatar_url: string;
-  type: string;
-}
-
-interface GithubLabel {
-  id: number;
-  name: string;
-  color: string;
-}
-
-interface GithubIssue {
-  id: number;
-  number: number;
-  title: string;
-  body: string | null;
-  html_url: string;
-  state: string;
-  state_reason: string | null;
-  labels: GithubLabel[];
-  comments: number;
-  assignees: GithubUser[];
-  assignee: GithubUser | null;
-  user: GithubUser;
-  created_at: string;
-  updated_at: string;
-  closed_at: string | null;
-}
-
-interface GithubCommitAuthor {
-  name: string;
-  email: string;
-  date: string;
-}
-
-interface GithubCommit {
-  message: string;
-  author: GithubCommitAuthor;
-  comment_count: number;
-}
-
-interface GithubFile {
-  filename: string;
-  status: string;
-  patch?: string;
-}
-
-interface GithubCommitDetails {
-  sha: string;
-  html_url: string;
-  commit: GithubCommit;
-  author: GithubUser | null;
-  files: GithubFile[];
 }
 
 interface GithubCommitSummary {
@@ -96,49 +47,6 @@ interface AxiosError {
 interface ApiErrorResponse {
   message?: string;
   errors?: unknown[];
-}
-
-interface SimplifiedIssue {
-  html_url: string;
-  number: number;
-  title: string;
-  body: string | null;
-  labels: GithubLabel[];
-  comments: number;
-  state_reason: string | null;
-}
-
-interface SimplifiedCommit {
-  sha: string;
-  url: string;
-  message: string;
-  files_changed: Array<{ filename: string; status: string }> | null;
-  comment_count: number | null;
-  diff_patch: string | null;
-}
-
-interface RepositoryWork {
-  repository_url: string;
-  issues: SimplifiedIssue[];
-  commits: SimplifiedCommit[];
-}
-
-interface Contributor {
-  id: number | null;
-  username: string;
-  url: string;
-  avatar_url: string;
-  works: RepositoryWork[];
-}
-
-interface OutputData {
-  contributors: Contributor[];
-  metadata: {
-    processed_repos: string[];
-    processing_time_seconds: string;
-    commit_detail_limit_per_repo: number | null;
-    issue_detail_limit_per_repo: number | null;
-  };
 }
 
 // --- Configuration ---
@@ -455,8 +363,8 @@ async function fetchCommitDetails(
 async function processRepositories(
   repoUrls: string[],
   token: string | null = null,
-): Promise<Record<string, Contributor>> {
-  const allContributorsMap: Record<string, Contributor> = {};
+): Promise<Record<string, ContributorIngestionData>> {
+  const allContributorsMap: Record<string, ContributorIngestionData> = {};
 
   for (const repoUrl of repoUrls) {
     console.log(`\n🔍 Processing: ${repoUrl}`);
@@ -499,7 +407,7 @@ async function processRepositories(
       token,
       "closed",
     );
-    const issuesAssignedToUserInRepo: Record<string, SimplifiedIssue[]> = {};
+    const issuesAssignedToUserInRepo: Record<string, StoredIssueData[]> = {};
     const assigneeDetailsCache: Record<
       string,
       { id: number | null; url: string; avatar_url: string }
@@ -553,7 +461,7 @@ async function processRepositories(
           issuesDetailedCount++;
 
           // Create simplified issue object
-          const simplifiedIssueData: SimplifiedIssue = {
+          const simplifiedIssueData: StoredIssueData = {
             html_url: detailedIssueData.html_url,
             number: detailedIssueData.number,
             title: detailedIssueData.title,
@@ -611,7 +519,7 @@ async function processRepositories(
 
     // Step 3: Fetch and Process Commits (IMPROVED VERSION)
     const repoCommitsList = await fetchRepositoryCommits(owner, repo, token);
-    const commitsAuthoredByUserInRepo: Record<string, SimplifiedCommit[]> = {};
+    const commitsAuthoredByUserInRepo: Record<string, StoredCommitData[]> = {};
     const authorDetailsCache: Record<
       string,
       {
@@ -686,7 +594,7 @@ async function processRepositories(
             commitMessageSummary.slice(0, COMMIT_MESSAGE_MAX_LEN - 3) + "...";
         }
 
-        const simplifiedCommit: SimplifiedCommit = {
+        const simplifiedCommit: StoredCommitData = {
           sha: commitSha,
           url: commitSummaryData.html_url,
           message: commitMessageSummary,
@@ -885,7 +793,7 @@ async function main(): Promise<void> {
       .localeCompare((b.username || "").toLowerCase()),
   );
 
-  const outputData: OutputData = {
+  const outputData: IngestionOutputData = {
     contributors: finalContributorList,
     metadata: {
       processed_repos: repositoryUrls,
