@@ -57,7 +57,36 @@ const COMMIT_MESSAGE_MAX_LEN = 200;
 const MAX_COMMITS_TO_DETAIL_PER_REPO: number | null = 500;
 const MAX_ISSUES_TO_DETAIL_PER_REPO: number | null = 500;
 
+// Files to ignore when collecting commit diffs (package locks, generated files, etc.)
+const IGNORED_FILE_PATTERNS = [
+  /package-lock\.json$/i,
+  /yarn\.lock$/i,
+  /pnpm-lock\.yaml$/i,
+  /bun\.lockb?$/i,
+  /Gemfile\.lock$/i,
+  /Cargo\.lock$/i,
+  /composer\.lock$/i,
+  /Pipfile\.lock$/i,
+  /poetry\.lock$/i,
+  /go\.sum$/i,
+  /shrinkwrap\.yaml$/i,
+  /\.min\.js$/i,
+  /\.min\.css$/i,
+  /\.bundle\.js$/i,
+  /dist\//i,
+  /build\//i,
+  /node_modules\//i,
+  /vendor\//i,
+];
+
 // --- Helper Functions ---
+
+/**
+ * Checks if a file should be ignored based on patterns (lock files, minified files, etc.)
+ */
+function shouldIgnoreFile(filename: string): boolean {
+  return IGNORED_FILE_PATTERNS.some((pattern) => pattern.test(filename));
+}
 
 /**
  * Parses a GitHub repository URL to extract owner and repo name.
@@ -632,7 +661,13 @@ async function processRepositories(
           const commentCount = detailedCommitData.commit?.comment_count ?? 0;
 
           simplifiedCommit.comment_count = commentCount;
-          simplifiedCommit.files_changed = files
+
+          // Filter out ignored files (lock files, minified files, etc.)
+          const relevantFiles = files.filter(
+            (f) => f.filename && !shouldIgnoreFile(f.filename),
+          );
+
+          simplifiedCommit.files_changed = relevantFiles
             .map((f) => ({
               filename: f.filename,
               status: f.status,
@@ -640,7 +675,7 @@ async function processRepositories(
             .filter((f) => f.filename);
 
           let combinedPatch = "";
-          for (const f of files) {
+          for (const f of relevantFiles) {
             if (f?.patch && typeof f.patch === "string" && f.patch) {
               combinedPatch += `--- File: ${f.filename ?? "Unknown"} ---\n`;
               combinedPatch += f.patch;
@@ -648,6 +683,14 @@ async function processRepositories(
             }
           }
           simplifiedCommit.diff_patch = combinedPatch.trim() || null;
+
+          // Log if we filtered out any files
+          const ignoredCount = files.length - relevantFiles.length;
+          if (ignoredCount > 0) {
+            console.log(
+              `   🚫 Filtered ${ignoredCount} ignored file(s) (lock files, minified, etc.)`,
+            );
+          }
         }
 
         commitsAuthoredByUserInRepo[authorUsername] ??= [];
@@ -746,10 +789,8 @@ function sleep(ms: number): Promise<void> {
 
 async function main(): Promise<void> {
   const repositoryUrls: string[] = [
-    // "https://github.com/meta-llama/llama-models",
-    // "https://github.com/meta-llama/codellama"
     // "https://github.com/shashi-ntx/demo-repository-1",
-    "https://github.com/jerome-marshall/jerome-marshall.github.io",
+    "https://github.com/remeda/remeda",
   ];
 
   if (!GITHUB_TOKEN) {
