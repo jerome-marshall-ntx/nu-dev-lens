@@ -27,12 +27,14 @@ import {
   type InsertContributor,
   type InsertIssue,
   type InsertRepository,
-  type InsertRepositoryWork,
 } from "@/server/db/schema";
 import type { IngestionOutputData } from "@/types/github";
-import { and, eq } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { promises as fs } from "fs";
 import { fileURLToPath } from "url";
+
+// Batch size for inserts
+const BATCH_SIZE = 500;
 
 // --- Helper Functions ---
 
@@ -90,7 +92,19 @@ async function clearDatabase(): Promise<void> {
 }
 
 /**
+ * Helper function to batch process arrays in chunks
+ */
+function chunk<T>(array: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunks.push(array.slice(i, i + size));
+  }
+  return chunks;
+}
+
+/**
  * Populates the database with contributor data from the JSON file.
+ * Optimized with batch inserts and upserts.
  */
 async function populateDatabase(
   data: IngestionOutputData,
@@ -103,10 +117,6 @@ async function populateDatabase(
     `📊 Starting population with ${totalContributors} contributors\n`,
   );
 
-  // Caches to avoid duplicate queries
-  const repoCache = new Map<string, number>(); // URL -> repo ID
-  const contributorCache = new Map<string, number>(); // username -> contributor ID
-
   // Statistics
   const stats = {
     contributorsProcessed: 0,
@@ -117,281 +127,309 @@ async function populateDatabase(
     commitsCreated: 0,
   };
 
+  // Step 1: Collect all unique contributors and repositories
+  console.log("📦 Step 1: Collecting unique contributors and repositories...");
+  const uniqueContributors = new Map<
+    string,
+    { username: string; url: string; avatar_url: string }
+  >();
+  const uniqueRepositories = new Map<string, { url: string; name: string }>();
+
   for (const contributorData of contributorsData) {
     const username = contributorData.username;
-    if (!username) {
+    if (!username) continue;
+
+    uniqueContributors.set(username, {
+      username,
+      url: contributorData.url || "",
+      avatar_url: contributorData.avatar_url || "",
+    });
+
+    const worksData = contributorData.works || [];
+    for (const workData of worksData) {
+      const repoUrl = workData.repository_url;
+      if (!repoUrl) continue;
+
+      const parsed = parseGithubUrl(repoUrl);
+      if (!parsed) continue;
+
+      const fullName = `${parsed.owner}/${parsed.repo}`;
+      uniqueRepositories.set(repoUrl, { url: repoUrl, name: fullName });
+    }
+  }
+
+  console.log(
+    `  Found ${uniqueContributors.size} unique contributors and ${uniqueRepositories.size} unique repositories`,
+  );
+
+  // Step 2: Batch upsert all contributors
+  console.log("👥 Step 2: Upserting contributors...");
+  const contributorCache = new Map<string, number>(); // username -> contributor ID
+  const contributorsToInsert: InsertContributor[] = Array.from(
+    uniqueContributors.values(),
+  ).map((c) => ({
+    username: c.username,
+    url: c.url,
+    avatarUrl: c.avatar_url,
+    summary: null,
+  }));
+
+  // Process in batches
+  for (const batch of chunk(contributorsToInsert, BATCH_SIZE)) {
+    const result = await db
+      .insert(contributors)
+      .values(batch)
+      .onConflictDoUpdate({
+        target: contributors.username,
+        set: {
+          url: sql`EXCLUDED.url`,
+          avatarUrl: sql`EXCLUDED."avatarUrl"`,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
+        },
+      })
+      .returning({ id: contributors.id, username: contributors.username });
+
+    for (const row of result) {
+      contributorCache.set(row.username, row.id);
+    }
+    stats.contributorsCreated += batch.length;
+  }
+
+  // Fetch existing contributors that weren't inserted
+  const contributorUsernames = Array.from(uniqueContributors.keys());
+  if (contributorUsernames.length > 0) {
+    const existingContributors = await db
+      .select()
+      .from(contributors)
+      .where(inArray(contributors.username, contributorUsernames));
+
+    for (const existing of existingContributors) {
+      contributorCache.set(existing.username, existing.id);
+    }
+  }
+
+  console.log(`  ✓ Processed ${contributorCache.size} contributors`);
+
+  // Step 3: Batch upsert all repositories
+  // Note: repositories.url doesn't have a unique constraint, so we need to check first
+  console.log("📚 Step 3: Upserting repositories...");
+  const repoCache = new Map<string, number>(); // URL -> repo ID
+  const repositoryUrls = Array.from(uniqueRepositories.keys());
+
+  // First, fetch all existing repositories
+  if (repositoryUrls.length > 0) {
+    const existingRepos = await db
+      .select()
+      .from(repositories)
+      .where(inArray(repositories.url, repositoryUrls));
+
+    for (const existing of existingRepos) {
+      repoCache.set(existing.url, existing.id);
+    }
+  }
+
+  // Separate into existing (to update) and new (to insert)
+  const repositoriesToUpdate: Array<{ id: number; name: string }> = [];
+  const repositoriesToInsert: InsertRepository[] = [];
+
+  for (const repoData of uniqueRepositories.values()) {
+    const existingId = repoCache.get(repoData.url);
+    if (existingId) {
+      repositoriesToUpdate.push({ id: existingId, name: repoData.name });
+    } else {
+      repositoriesToInsert.push({
+        name: repoData.name,
+        url: repoData.url,
+        avatarUrl: "",
+        summary: null,
+        rawData: null,
+      });
+    }
+  }
+
+  // Update existing repositories (batch by ID for efficiency)
+  if (repositoriesToUpdate.length > 0) {
+    // Group updates by ID and process
+    for (const repo of repositoriesToUpdate) {
+      await db
+        .update(repositories)
+        .set({
+          name: repo.name,
+          updatedAt: new Date(),
+        })
+        .where(eq(repositories.id, repo.id));
+    }
+  }
+
+  // Insert new repositories in batches
+  if (repositoriesToInsert.length > 0) {
+    for (const batch of chunk(repositoriesToInsert, BATCH_SIZE)) {
+      const result = await db
+        .insert(repositories)
+        .values(batch)
+        .returning({ id: repositories.id, url: repositories.url });
+
+      for (const row of result) {
+        repoCache.set(row.url, row.id);
+      }
+      stats.repositoriesCreated += batch.length;
+    }
+  }
+
+  console.log(`  ✓ Processed ${repoCache.size} repositories`);
+
+  // Step 4: Process repository works, issues, and commits
+  console.log("🔗 Step 4: Processing repository works, issues, and commits...");
+  const repositoryWorkCache = new Map<string, number>(); // "repoId-contributorId" -> work ID
+  const issuesToInsert: InsertIssue[] = [];
+  const commitsToInsert: InsertCommit[] = [];
+
+  for (const contributorData of contributorsData) {
+    const username = contributorData.username;
+    if (!username) continue;
+
+    const contributorId = contributorCache.get(username);
+    if (!contributorId) {
       if (verbose) {
-        console.log("⚠️  Skipping contributor with missing username");
+        console.log(`⚠️  Contributor ${username} not found in cache`);
       }
       continue;
     }
 
-    // --- 1. Create or Update Contributor ---
-    let contributorId = contributorCache.get(username);
-
-    if (!contributorId) {
-      // Check if contributor exists
-      const existingContributor = await db
-        .select()
-        .from(contributors)
-        .where(eq(contributors.username, username))
-        .limit(1);
-
-      if (existingContributor.length > 0) {
-        contributorId = existingContributor[0]!.id;
-
-        // Update existing contributor
-        await db
-          .update(contributors)
-          .set({
-            url: contributorData.url || "",
-            avatarUrl: contributorData.avatar_url || "",
-            updatedAt: new Date(),
-          })
-          .where(eq(contributors.id, contributorId));
-      } else {
-        // Create new contributor
-        const newContributor: InsertContributor = {
-          username: username,
-          url: contributorData.url || "",
-          avatarUrl: contributorData.avatar_url || "",
-          summary: null, // Initially empty, to be populated by AI
-        };
-
-        const [inserted] = await db
-          .insert(contributors)
-          .values(newContributor)
-          .returning({ id: contributors.id });
-
-        contributorId = inserted!.id;
-        stats.contributorsCreated++;
-      }
-
-      contributorCache.set(username, contributorId);
-    }
-
     stats.contributorsProcessed++;
 
-    if (stats.contributorsProcessed % 10 === 0) {
+    if (stats.contributorsProcessed % 50 === 0) {
       console.log(
-        `📝 Processed ${stats.contributorsProcessed}/${totalContributors} contributors...`,
+        `  📝 Processed ${stats.contributorsProcessed}/${totalContributors} contributors...`,
       );
     }
 
-    // --- 2. Process Works (Repositories) for this Contributor ---
     const worksData = contributorData.works || [];
 
     for (const workData of worksData) {
       const repoUrl = workData.repository_url;
-      if (!repoUrl) {
+      if (!repoUrl) continue;
+
+      const repositoryId = repoCache.get(repoUrl);
+      if (!repositoryId) {
         if (verbose) {
-          console.log(
-            `⚠️  Skipping work for ${username} - missing repository_url`,
-          );
+          console.log(`⚠️  Repository ${repoUrl} not found in cache`);
         }
         continue;
       }
 
-      // --- 3. Create or Update Repository ---
-      let repositoryId = repoCache.get(repoUrl);
+      const workKey = `${repositoryId}-${contributorId}`;
+      let repositoryWorkId = repositoryWorkCache.get(workKey);
 
-      if (!repositoryId) {
-        const parsed = parseGithubUrl(repoUrl);
-        if (!parsed) {
-          if (verbose) {
-            console.log(`⚠️  Invalid repository URL: ${repoUrl}`);
-          }
-          continue;
-        }
-
-        const fullName = `${parsed.owner}/${parsed.repo}`;
-
-        // Check if repository exists
-        const existingRepo = await db
+      if (!repositoryWorkId) {
+        // Try to find existing repository work
+        const existing = await db
           .select()
-          .from(repositories)
-          .where(eq(repositories.url, repoUrl))
+          .from(repositoryWorks)
+          .where(
+            sql`${repositoryWorks.repositoryId} = ${repositoryId} AND ${repositoryWorks.contributorId} = ${contributorId}`,
+          )
           .limit(1);
 
-        if (existingRepo.length > 0) {
-          repositoryId = existingRepo[0]!.id;
-
-          // Update existing repository
-          await db
-            .update(repositories)
-            .set({
-              name: fullName,
-              updatedAt: new Date(),
-            })
-            .where(eq(repositories.id, repositoryId));
+        if (existing.length > 0) {
+          repositoryWorkId = existing[0]!.id;
         } else {
-          // Create new repository
-          const newRepository: InsertRepository = {
-            name: fullName,
-            url: repoUrl,
-            avatarUrl: "", // Not available in input JSON
-            summary: null, // Initially empty, to be populated by AI
-            rawData: null, // Could store full repo details if needed
-          };
-
+          // Insert new repository work
           const [inserted] = await db
-            .insert(repositories)
-            .values(newRepository)
-            .returning({ id: repositories.id });
+            .insert(repositoryWorks)
+            .values({
+              repositoryId: repositoryId,
+              contributorId: contributorId,
+              summary: null,
+            })
+            .returning({ id: repositoryWorks.id });
 
-          repositoryId = inserted!.id;
-          stats.repositoriesCreated++;
+          repositoryWorkId = inserted!.id;
+          stats.repositoryWorksCreated++;
         }
 
-        repoCache.set(repoUrl, repositoryId);
+        repositoryWorkCache.set(workKey, repositoryWorkId);
       }
 
-      // --- 4. Create or Update RepositoryWork ---
-      const existingWork = await db
-        .select()
-        .from(repositoryWorks)
-        .where(
-          and(
-            eq(repositoryWorks.repositoryId, repositoryId),
-            eq(repositoryWorks.contributorId, contributorId),
-          ),
-        )
-        .limit(1);
-
-      let repositoryWorkId: number;
-
-      if (existingWork.length > 0) {
-        repositoryWorkId = existingWork[0]!.id;
-
-        // Update existing work
-        await db
-          .update(repositoryWorks)
-          .set({
-            updatedAt: new Date(),
-          })
-          .where(eq(repositoryWorks.id, repositoryWorkId));
-      } else {
-        // Create new repository work
-        const newWork: InsertRepositoryWork = {
-          repositoryId: repositoryId,
-          contributorId: contributorId,
-          summary: null, // Initially empty, to be populated by AI
-        };
-
-        const [inserted] = await db
-          .insert(repositoryWorks)
-          .values(newWork)
-          .returning({ id: repositoryWorks.id });
-
-        repositoryWorkId = inserted!.id;
-        stats.repositoryWorksCreated++;
-      }
-
-      // --- 5. Create or Update Issues for this RepositoryWork ---
+      // Collect issues for batch insert
       const issuesData = workData.issues || [];
-
       for (const issueData of issuesData) {
         const issueUrl = issueData.html_url;
-        if (!issueUrl) {
-          if (verbose) {
-            console.log(`⚠️  Skipping issue - missing html_url`);
-          }
-          continue;
-        }
+        if (!issueUrl) continue;
 
-        // Check if issue exists
-        const existingIssue = await db
-          .select()
-          .from(issues)
-          .where(
-            and(
-              eq(issues.repositoryWorkId, repositoryWorkId),
-              eq(issues.url, issueUrl),
-            ),
-          )
-          .limit(1);
-
-        if (existingIssue.length === 0) {
-          // Create new issue
-          const newIssue: InsertIssue = {
-            repositoryWorkId: repositoryWorkId,
-            url: issueUrl,
-            rawData: issueData, // Store the complete issue data
-            summary: null, // Initially empty, to be populated by AI
-          };
-
-          await db.insert(issues).values(newIssue);
-          stats.issuesCreated++;
-        } else {
-          // Update existing issue
-          await db
-            .update(issues)
-            .set({
-              rawData: issueData,
-              updatedAt: new Date(),
-            })
-            .where(eq(issues.id, existingIssue[0]!.id));
-        }
+        issuesToInsert.push({
+          repositoryWorkId: repositoryWorkId,
+          url: issueUrl,
+          rawData: issueData,
+          summary: null,
+        });
       }
 
-      // --- 6. Create or Update Commits for this RepositoryWork ---
+      // Collect commits for batch insert
       const commitsData = workData.commits || [];
-
       for (const commitData of commitsData) {
         const commitUrl = commitData.url;
-        if (!commitUrl) {
-          if (verbose) {
-            console.log(`⚠️  Skipping commit - missing url`);
-          }
-          continue;
-        }
+        if (!commitUrl) continue;
 
-        // Check if commit exists
-        const existingCommit = await db
-          .select()
-          .from(commits)
-          .where(
-            and(
-              eq(commits.repositoryWorkId, repositoryWorkId),
-              eq(commits.url, commitUrl),
-            ),
-          )
-          .limit(1);
-
-        if (existingCommit.length === 0) {
-          // Create new commit
-          const newCommit: InsertCommit = {
-            repositoryWorkId: repositoryWorkId,
-            url: commitUrl,
-            rawData: commitData, // Store the complete commit data
-            summary: null, // Initially empty, to be populated by AI
-          };
-
-          await db.insert(commits).values(newCommit);
-          stats.commitsCreated++;
-        } else {
-          // Update existing commit
-          await db
-            .update(commits)
-            .set({
-              rawData: commitData,
-              updatedAt: new Date(),
-            })
-            .where(eq(commits.id, existingCommit[0]!.id));
-        }
+        commitsToInsert.push({
+          repositoryWorkId: repositoryWorkId,
+          url: commitUrl,
+          rawData: commitData,
+          summary: null,
+        });
       }
     }
   }
+
+  // Step 5: Batch insert issues
+  // Deduplicate by (repositoryWorkId, url) before inserting to avoid duplicates
+  console.log(`📋 Step 5: Batch inserting ${issuesToInsert.length} issues...`);
+  const issuesMap = new Map<string, InsertIssue>();
+  for (const issue of issuesToInsert) {
+    const key = `${issue.repositoryWorkId}-${issue.url}`;
+    if (!issuesMap.has(key)) {
+      issuesMap.set(key, issue);
+    }
+  }
+
+  const uniqueIssues = Array.from(issuesMap.values());
+  for (const batch of chunk(uniqueIssues, BATCH_SIZE)) {
+    await db.insert(issues).values(batch);
+    stats.issuesCreated += batch.length;
+  }
+
+  console.log(`  ✓ Inserted ${stats.issuesCreated} issues`);
+
+  // Step 6: Batch insert commits
+  // Deduplicate by (repositoryWorkId, url) before inserting to avoid duplicates
+  console.log(
+    `💾 Step 6: Batch inserting ${commitsToInsert.length} commits...`,
+  );
+  const commitsMap = new Map<string, InsertCommit>();
+  for (const commit of commitsToInsert) {
+    const key = `${commit.repositoryWorkId}-${commit.url}`;
+    if (!commitsMap.has(key)) {
+      commitsMap.set(key, commit);
+    }
+  }
+
+  const uniqueCommits = Array.from(commitsMap.values());
+  for (const batch of chunk(uniqueCommits, BATCH_SIZE)) {
+    await db.insert(commits).values(batch);
+    stats.commitsCreated += batch.length;
+  }
+
+  console.log(`  ✓ Inserted ${stats.commitsCreated} commits`);
 
   // Print statistics
   console.log("\n✅ Database population completed successfully!\n");
   console.log("📊 Statistics:");
   console.log(`  • Contributors processed: ${stats.contributorsProcessed}`);
-  console.log(`  • Contributors created: ${stats.contributorsCreated}`);
-  console.log(`  • Repositories created: ${stats.repositoriesCreated}`);
+  console.log(`  • Contributors upserted: ${stats.contributorsCreated}`);
+  console.log(`  • Repositories upserted: ${stats.repositoriesCreated}`);
   console.log(`  • Repository works created: ${stats.repositoryWorksCreated}`);
-  console.log(`  • Issues created: ${stats.issuesCreated}`);
-  console.log(`  • Commits created: ${stats.commitsCreated}`);
+  console.log(`  • Issues upserted: ${stats.issuesCreated}`);
+  console.log(`  • Commits upserted: ${stats.commitsCreated}`);
   console.log();
 }
 

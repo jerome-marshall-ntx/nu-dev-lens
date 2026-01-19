@@ -50,6 +50,7 @@ Examples of proper inference:
 - Output the formatted text directly without any wrapper blocks
 - Make the summary self-contained (include context within the summary)
 - Front-load key technical terms for better semantic matching
+- Only output the summary, no prefix or suffix or title
 </format>
 
 <failure_condition>
@@ -120,6 +121,7 @@ Extract relevant information from:
 - Make the summary self-contained (don't assume prior context)
 - Front-load key technical terms for better semantic matching
 - Use natural sentence format without type prefixes (e.g., "Feature request to add pagination...")
+- Only output the summary, no prefix or suffix or title
 </format>
 
 <failure_condition>

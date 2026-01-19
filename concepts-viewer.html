@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nu Dev Lens - Conceptual Knowledge Map</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-light: #60a5fa;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --orange: #f97316;
+      --purple: #a855f7;
+      --pink: #ec4899;
+      --cyan: #06b6d4;
+      --border: #334155;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+      border-radius: 1rem;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
+    nav {
+      background: var(--bg-card);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      margin-bottom: 2rem;
+      position: sticky;
+      top: 1rem;
+      z-index: 100;
+      border: 1px solid var(--border);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    nav a:hover {
+      background: var(--bg-card-hover);
+      color: var(--text);
+    }
+
+    section {
+      margin-bottom: 3rem;
+      scroll-margin-top: 5rem;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--accent-light);
+    }
+
+    .section-title .icon {
+      font-size: 1.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .card p {
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Phase Cards */
+    .phases-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .phase-card {
+      background: var(--bg-card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phase-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .phase-card.phase-1::before { background: var(--green); }
+    .phase-card.phase-2::before { background: var(--yellow); }
+    .phase-card.phase-3::before { background: var(--purple); }
+
+    .phase-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+
+    .phase-1 .phase-number { background: var(--green); }
+    .phase-2 .phase-number { background: var(--yellow); color: #000; }
+    .phase-3 .phase-number { background: var(--purple); }
+
+    .phase-card h3 {
+      margin-bottom: 1rem;
+    }
+
+    .phase-detail {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .phase-detail .label {
+      color: var(--text-muted);
+      min-width: 60px;
+    }
+
+    .phase-detail .value {
+      color: var(--text);
+    }
+
+    .key-concept {
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid var(--accent);
+      padding: 0.75rem 1rem;
+      margin-top: 1rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    /* Entity Diagram */
+    .entity-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: var(--bg-card);
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .entity-row {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .entity-box {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1rem 1.5rem;
+      min-width: 180px;
+      text-align: center;
+      position: relative;
+    }
+
+    .entity-box.primary { border-color: var(--accent); }
+    .entity-box.secondary { border-color: var(--purple); }
+    .entity-box.join { border-color: var(--orange); }
+    .entity-box.detail { border-color: var(--cyan); }
+
+    .entity-box h4 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .entity-box p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .connector {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+    }
+
+    /* AI Pipeline */
+    .pipeline {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+
+    .level-card {
+      flex: 1;
+      min-width: 280px;
+      background: var(--bg-card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+
+    .level-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .level-1 .level-badge { background: var(--green); }
+    .level-2 .level-badge { background: var(--yellow); color: #000; }
+    .level-3 .level-badge { background: var(--purple); }
+
+    .level-card h4 {
+      margin-bottom: 1rem;
+    }
+
+    .pipeline-detail {
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      padding-left: 1rem;
+      border-left: 2px solid var(--border);
+    }
+
+    .pipeline-detail strong {
+      color: var(--accent-light);
+    }
+
+    .arrow-right {
+      display: flex;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 2rem;
+    }
+
+    /* Flow Diagram */
+    .flow-diagram {
+      background: var(--bg-card);
+      border-radius: 1rem;
+      padding: 2rem;
+      border: 1px solid var(--border);
+    }
+
+    .flow-step {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.875rem;
+    }
+
+    .step-content h4 {
+      margin-bottom: 0.25rem;
+    }
+
+    .step-content p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* API Cards */
+    .api-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .api-card {
+      background: var(--bg-card);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+    }
+
+    .api-method {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    .api-method.get { background: var(--green); }
+    .api-method.post { background: var(--yellow); color: #000; }
+
+    .api-path {
+      font-family: monospace;
+      color: var(--accent-light);
+    }
+
+    .api-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Checklist */
+    .checklist {
+      background: var(--bg-card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .checklist-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .checklist-item:last-child {
+      border-bottom: none;
+    }
+
+    .check {
+      color: var(--green);
+      font-size: 1.25rem;
+    }
+
+    .checklist-text {
+      color: var(--text);
+    }
+
+    .checklist-text strong {
+      color: var(--accent-light);
+    }
+
+    /* MVP Scope */
+    .scope-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .scope-card {
+      background: var(--bg-card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .scope-card.in-scope { border-top: 4px solid var(--green); }
+    .scope-card.out-scope { border-top: 4px solid var(--orange); }
+
+    .scope-card h4 {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .scope-list {
+      list-style: none;
+    }
+
+    .scope-list li {
+      padding: 0.5rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .scope-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .in-scope .scope-list li::before { background: var(--green); }
+    .out-scope .scope-list li::before { background: var(--orange); }
+
+    /* Cost Section */
+    .cost-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .cost-card {
+      background: var(--bg-card);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .cost-card h4 {
+      margin-bottom: 1rem;
+      color: var(--accent-light);
+    }
+
+    .cost-stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    .cost-stat:last-child {
+      border-bottom: none;
+    }
+
+    .cost-stat .label {
+      color: var(--text-muted);
+    }
+
+    .cost-stat .value {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      header h1 {
+        font-size: 1.75rem;
+      }
+
+      nav ul {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.5rem;
+      }
+
+      .pipeline {
+        flex-direction: column;
+      }
+
+      .arrow-right {
+        transform: rotate(90deg);
+        justify-content: center;
+      }
+
+      .entity-row {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔍 Nu Dev Lens</h1>
+      <p>Complete Conceptual Knowledge Map</p>
+    </header>
+
+    <nav>
+      <ul>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#data-model">Data Model</a></li>
+        <li><a href="#ai-pipeline">AI Pipeline</a></li>
+        <li><a href="#cli-tool">CLI Tool</a></li>
+        <li><a href="#query-system">Query System</a></li>
+        <li><a href="#database">Database</a></li>
+        <li><a href="#api">API Design</a></li>
+        <li><a href="#frontend">Frontend</a></li>
+        <li><a href="#costs">Costs</a></li>
+        <li><a href="#mvp">MVP Scope</a></li>
+        <li><a href="#checklist">Checklist</a></li>
+      </ul>
+    </nav>
+
+    <!-- Architecture Section -->
+    <section id="architecture">
+      <h2 class="section-title"><span class="icon">🏗️</span> Architecture: The Three-Phase System</h2>
+      
+      <div class="phases-grid">
+        <div class="phase-card phase-1">
+          <div class="phase-number">1</div>
+          <h3>Data Ingestion</h3>
+          <div class="phase-detail">
+            <span class="label">Input:</span>
+            <span class="value">JSON file from GitHub</span>
+          </div>
+          <div class="phase-detail">
+            <span class="label">Process:</span>
+            <span class="value">Parse JSON → Insert into PostgreSQL</span>
+          </div>
+          <div class="phase-detail">
+            <span class="label">Output:</span>
+            <span class="value">Database with raw data</span>
+          </div>
+          <div class="key-concept">
+            <strong>💡 Key:</strong> One-time bulk load. Design for idempotency (can run multiple times safely).
+          </div>
+        </div>
+
+        <div class="phase-card phase-2">
+          <div class="phase-number">2</div>
+          <h3>AI Summarization (CLI)</h3>
+          <div class="phase-detail">
+            <span class="label">Input:</span>
+            <span class="value">Records with empty summaries</span>
+          </div>
+          <div class="phase-detail">
+            <span class="label">Process:</span>
+            <span class="value">Level 1 → Level 2 → Level 3</span>
+          </div>
+          <div class="phase-detail">
+            <span class="label">Output:</span>
+            <span class="value">All summaries populated</span>
+          </div>
+          <div class="key-concept">
+            <strong>💡 Key:</strong> Expensive and slow. Design for resumability (can continue after crash).
+          </div>
+        </div>
+
+        <div class="phase-card phase-3">
+          <div class="phase-number">3</div>
+          <h3>API Serving + Frontend</h3>
+          <div class="phase-detail">
+            <span class="label">Input:</span>
+            <span class="value">User requests</span>
+          </div>
+          <div class="phase-detail">
+            <span class="label">Process:</span>
+            <span class="value">Fast DB reads, stream LLM for chat</span>
+          </div>
+          <div class="phase-detail">
+            <span class="label">Output:</span>
+            <span class="value">Rendered UI with summaries</span>
+          </div>
+          <div class="key-concept">
+            <strong>💡 Key:</strong> Fast and cheap. No AI except chat queries.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Model Section -->
+    <section id="data-model">
+      <h2 class="section-title"><span class="icon">📊</span> Data Model: Entity Relationships</h2>
+      
+      <div class="entity-diagram">
+        <div class="entity-row">
+          <div class="entity-box primary">
+            <h4>📦 Repository</h4>
+            <p>A GitHub repo</p>
+            <p><em>"What is this repo about?"</em></p>
+          </div>
+          <div class="entity-box secondary">
+            <h4>👤 Contributor</h4>
+            <p>A GitHub user</p>
+            <p><em>"Who is this person?" (L3)</em></p>
+          </div>
+        </div>
+        
+        <div class="connector">↓ connected through ↓</div>
+        
+        <div class="entity-row">
+          <div class="entity-box join">
+            <h4>🔗 RepositoryWork</h4>
+            <p>Join table with business logic</p>
+            <p><em>"What did they do in THIS repo?" (L2)</em></p>
+          </div>
+        </div>
+        
+        <div class="connector">↓ contains ↓</div>
+        
+        <div class="entity-row">
+          <div class="entity-box detail">
+            <h4>🎫 Issue</h4>
+            <p>GitHub issue worked on</p>
+            <p><em>"What was this issue about?" (L1)</em></p>
+          </div>
+          <div class="entity-box detail">
+            <h4>💾 Commit</h4>
+            <p>Code commit made</p>
+            <p><em>"What change did this make?" (L1)</em></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3>🔑 Critical Relationship Understanding</h3>
+        <p>Issues and Commits don't directly belong to Contributors.</p>
+        <p>They belong to the <strong>RepositoryWork</strong> (the specific relationship).</p>
+        <p>This allows the same contributor to have <strong>different summaries in different repos</strong>.</p>
+      </div>
+    </section>
+
+    <!-- AI Pipeline Section -->
+    <section id="ai-pipeline">
+      <h2 class="section-title"><span class="icon">🤖</span> AI Processing Pipeline: Dependency Chain</h2>
+      
+      <div class="pipeline">
+        <div class="level-card level-1">
+          <span class="level-badge">Level 1</span>
+          <h4>Atomic Summaries</h4>
+          <div class="pipeline-detail">
+            <strong>Issues:</strong> Extract technical facts from raw data → 2-3 sentence summary
+          </div>
+          <div class="pipeline-detail">
+            <strong>Commits:</strong> Describe technical change, mention files/functions → 1-2 sentences
+          </div>
+          <div class="pipeline-detail">
+            <strong>Temperature:</strong> 0.3 (factual)
+          </div>
+          <div class="pipeline-detail">
+            <strong>Max Tokens:</strong> ~100
+          </div>
+          <div class="pipeline-detail">
+            <strong>Parallel?</strong> ✅ 8 concurrent workers
+          </div>
+        </div>
+        
+        <div class="arrow-right">→</div>
+        
+        <div class="level-card level-2">
+          <span class="level-badge">Level 2</span>
+          <h4>Repository Work Synthesis</h4>
+          <div class="pipeline-detail">
+            <strong>Input:</strong> All L1 summaries for this RepositoryWork
+          </div>
+          <div class="pipeline-detail">
+            <strong>Task:</strong> Identify patterns, group work types, describe focus areas
+          </div>
+          <div class="pipeline-detail">
+            <strong>Temperature:</strong> 0.4 (pattern recognition)
+          </div>
+          <div class="pipeline-detail">
+            <strong>Max Tokens:</strong> 250
+          </div>
+          <div class="pipeline-detail">
+            <strong>Parallel?</strong> ✅ 8 concurrent workers
+          </div>
+        </div>
+        
+        <div class="arrow-right">→</div>
+        
+        <div class="level-card level-3">
+          <span class="level-badge">Level 3</span>
+          <h4>Contributor Profile</h4>
+          <div class="pipeline-detail">
+            <strong>Input:</strong> All L2 summaries across ALL repos
+          </div>
+          <div class="pipeline-detail">
+            <strong>Task:</strong> Infer expertise, identify specializations, assess breadth vs depth
+          </div>
+          <div class="pipeline-detail">
+            <strong>Temperature:</strong> 0.5 (inferential)
+          </div>
+          <div class="pipeline-detail">
+            <strong>Max Tokens:</strong> 350
+          </div>
+          <div class="pipeline-detail">
+            <strong>Parallel?</strong> ✅ 8 concurrent workers
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>⚠️ The Dependency Rule</h3>
+        <p style="font-family: monospace; background: var(--bg); padding: 1rem; border-radius: 0.5rem; text-align: center;">
+          Level 1 (all done) → Level 2 (all done) → Level 3 (all done)
+        </p>
+        <p style="margin-top: 1rem;">You cannot start Level 2 until ALL Level 1 is complete. You cannot start Level 3 until ALL Level 2 is complete.</p>
+      </div>
+
+      <!-- Level Details with System Prompts -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3>📋 Level 1: Issue & Commit Summaries (Detail)</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+          <div>
+            <h4 style="color: var(--green); margin-bottom: 0.75rem;">🎫 Issues System Prompt</h4>
+            <div style="background: var(--bg); padding: 1rem; border-radius: 0.5rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+              "Generate detailed technical summaries of GitHub issues based on raw JSON data. Focus on the <strong style="color: var(--text);">specific technical problem</strong>, the <strong style="color: var(--text);">proposed solution</strong>, and any key <strong style="color: var(--text);">technical components, features, or modules</strong> mentioned. If the issue mentions specific functions, classes, or files, ensure these details are included. Avoid generalizations; stick to technical facts."
+            </div>
+            <div style="margin-top: 0.75rem; font-size: 0.85rem;">
+              <strong>Example output:</strong>
+              <p style="color: var(--text-muted); margin-top: 0.25rem;">"Bug fix for null reference in UserAuth module during login"</p>
+            </div>
+          </div>
+          <div>
+            <h4 style="color: var(--cyan); margin-bottom: 0.75rem;">💾 Commits System Prompt</h4>
+            <div style="background: var(--bg); padding: 1rem; border-radius: 0.5rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+              "Generate detailed technical summaries of GitHub commits based on raw JSON data. Focus on the <strong style="color: var(--text);">technical change implemented</strong>, primarily using the 'message' field. Describe <strong style="color: var(--text);">what code was added, removed, or modified</strong> and its specific technical purpose. <strong style="color: var(--text);">Explicitly mention names of key functions, classes, methods, or files</strong> that were changed."
+            </div>
+            <div style="margin-top: 0.75rem; font-size: 0.85rem;">
+              <strong>Example output:</strong>
+              <p style="color: var(--text-muted); margin-top: 0.25rem;">"Fixed null pointer exception in UserAuth by adding validation check"</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1rem;">
+        <h3>📋 Level 2: Repository Work Summary (Detail)</h3>
+        <h4 style="color: var(--yellow); margin-bottom: 0.75rem;">🔗 System Prompt</h4>
+        <div style="background: var(--bg); padding: 1rem; border-radius: 0.5rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+          "Summarize a contributor's <strong style="color: var(--text);">specific contributions within one particular repository</strong>. You will receive Markdown summaries of individual issues and commits. <strong style="color: var(--text);">Synthesize</strong> these into a coherent paragraph (2-4 sentences). Describe the contributor's <strong style="color: var(--text);">primary activities and areas of focus</strong> within this specific repository. <strong style="color: var(--text);">Identify and group the types of tasks</strong> performed. Mention key technical areas or components they worked on."
+        </div>
+        <div style="margin-top: 0.75rem; font-size: 0.85rem;">
+          <strong>Example output:</strong>
+          <p style="color: var(--text-muted); margin-top: 0.25rem;">"Focused on backend API bug fixes, particularly in authentication and authorization modules. Contributed to database query optimization and added comprehensive test coverage for user management endpoints."</p>
+        </div>
+        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(234, 179, 8, 0.1); border-left: 3px solid var(--yellow); border-radius: 0 0.5rem 0.5rem 0;">
+          <strong>Business Logic:</strong> Groups all atomic summaries by RepositoryWork. Asks LLM to identify patterns and focus areas. Creates a coherent narrative of the contributor's role in that specific repository.
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1rem;">
+        <h3>📋 Level 3: Contributor Profile (Detail)</h3>
+        <h4 style="color: var(--purple); margin-bottom: 0.75rem;">👤 System Prompt</h4>
+        <div style="background: var(--bg); padding: 1rem; border-radius: 0.5rem; font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+          "Create a <strong style="color: var(--text);">high-level profile summary</strong> for a contributor based on summaries of their work across different repositories. Synthesize these into a coherent paragraph (3-5 sentences) describing the contributor's <strong style="color: var(--text);">overall technical profile</strong>, <strong style="color: var(--text);">recurring themes</strong>, and <strong style="color: var(--text);">inferred technical skills</strong>. Focus on identifying consistent patterns: Does the contributor specialize? What is their apparent primary role? What specific technologies do they engage with? Are their contributions broad or focused? <strong style="color: var(--text);">Generalize and infer skills</strong> to paint a picture of the contributor as a whole."
+        </div>
+        <div style="margin-top: 0.75rem; font-size: 0.85rem;">
+          <strong>Example output:</strong>
+          <p style="color: var(--text-muted); margin-top: 0.25rem;">"This contributor consistently focuses on backend development across multiple projects, demonstrating expertise in Python and Django. They frequently tackle complex bug fixes in API layers and contribute significantly to database schema design and optimization. Their work suggests strong analytical skills and deep understanding of server-side application architecture."</p>
+        </div>
+        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(168, 85, 247, 0.1); border-left: 3px solid var(--purple); border-radius: 0 0.5rem 0.5rem 0;">
+          <strong>Business Logic:</strong> Identifies consistent patterns across ALL repositories. Infers technical skills and specializations. Assesses breadth vs depth of contributions. Creates a holistic professional profile.
+        </div>
+      </div>
+
+      <!-- Technical Implementation -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3>⚙️ Technical Implementation Details</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem; text-align: center;">
+            <div style="font-size: 1.5rem; color: var(--accent-light);">🔄</div>
+            <strong>ThreadPoolExecutor</strong>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">8 concurrent workers</p>
+          </div>
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem; text-align: center;">
+            <div style="font-size: 1.5rem; color: var(--accent-light);">🔌</div>
+            <strong>Connection Per Thread</strong>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Each worker has own client</p>
+          </div>
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem; text-align: center;">
+            <div style="font-size: 1.5rem; color: var(--accent-light);">⏱️</div>
+            <strong>API Timeout</strong>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">120 seconds</p>
+          </div>
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem; text-align: center;">
+            <div style="font-size: 1.5rem; color: var(--accent-light);">🛡️</div>
+            <strong>Graceful Errors</strong>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Rate limits → continue</p>
+          </div>
+        </div>
+        <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+          <strong>Model:</strong> <code style="background: var(--bg-card); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">Llama-4-Maverick-17B-128E-Instruct-FP8</code>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">17B parameters • Instruction-tuned • FP8 quantization for faster inference • 128E enhanced context window</p>
+        </div>
+      </div>
+
+      <!-- Summary Generation Results -->
+      <div class="card" style="margin-top: 1rem;">
+        <h3>📊 Summary Generation Results</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <div style="padding: 1rem; background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.05)); border-radius: 0.5rem;">
+            <div style="font-size: 1.25rem; margin-bottom: 0.5rem;">🧠</div>
+            <strong>Knowledge Graph</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Creates a structured graph of technical expertise</p>
+          </div>
+          <div style="padding: 1rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05)); border-radius: 0.5rem;">
+            <div style="font-size: 1.25rem; margin-bottom: 0.5rem;">📈</div>
+            <strong>Hierarchical Build</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Each level builds on the previous level</p>
+          </div>
+          <div style="padding: 1rem; background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.05)); border-radius: 0.5rem;">
+            <div style="font-size: 1.25rem; margin-bottom: 0.5rem;">🔍</div>
+            <strong>Expert Discovery</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Enables intelligent expert finding</p>
+          </div>
+          <div style="padding: 1rem; background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(236, 72, 153, 0.05)); border-radius: 0.5rem;">
+            <div style="font-size: 1.25rem; margin-bottom: 0.5rem;">💬</div>
+            <strong>Powers AI Chat</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Enables the AI query system</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLI Tool Section -->
+    <section id="cli-tool">
+      <h2 class="section-title"><span class="icon">⚙️</span> CLI Tool Architecture</h2>
+      
+      <div class="card">
+        <h3>The Tool's Responsibilities</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <h4 style="color: var(--accent-light); margin-bottom: 0.5rem;">🔌 Connection</h4>
+            <p style="font-size: 0.875rem; color: var(--text-muted);">Open connection, process items, close cleanly. Handle connection pooling.</p>
+          </div>
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <h4 style="color: var(--accent-light); margin-bottom: 0.5rem;">📤 Distribution</h4>
+            <p style="font-size: 0.875rem; color: var(--text-muted);">Find empty summaries, divide among workers (e.g., 8 workers).</p>
+          </div>
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <h4 style="color: var(--accent-light); margin-bottom: 0.5rem;">📊 Progress</h4>
+            <p style="font-size: 0.875rem; color: var(--text-muted);">Report every 10% or 100 items. Show elapsed/remaining time.</p>
+          </div>
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <h4 style="color: var(--accent-light); margin-bottom: 0.5rem;">🛡️ Errors</h4>
+            <p style="font-size: 0.875rem; color: var(--text-muted);">Rate limits → continue. Timeouts → continue. DB errors → fail fast.</p>
+          </div>
+          <div style="padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <h4 style="color: var(--accent-light); margin-bottom: 0.5rem;">🔄 Resumability</h4>
+            <p style="font-size: 0.875rem; color: var(--text-muted);">Only process empty summaries. Safe to run multiple times.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Query System Section -->
+    <section id="query-system">
+      <h2 class="section-title"><span class="icon">💬</span> Natural Language Query System</h2>
+      
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>User Input</h4>
+            <p>"Who's the expert on React components?"</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Context Assembly</h4>
+            <p>Query database for ALL data. Format into structured prompt with repositories, contributors, work summaries, issues, and commits.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>LLM Reasoning</h4>
+            <p>The LLM reads the entire knowledge graph, identifies matching contributors, explains reasoning, uses special markup: <code>&lt;contributor id="X"&gt;Name&lt;/contributor&gt;</code></p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Streaming Response</h4>
+            <p>Backend streams tokens as they arrive. Frontend renders incrementally. User sees "thinking" in real-time.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h4>Frontend Parsing</h4>
+            <p>Detect contributor tags in markdown. Convert to clickable links. Navigate to detail pages.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="key-concept" style="margin-top: 1rem;">
+        <strong>💡 Key Insight:</strong> You're not searching text. You're giving the LLM a structured knowledge base and asking it to reason about it. The summaries make this feasible within token limits.
+      </div>
+    </section>
+
+    <!-- Database Section -->
+    <section id="database">
+      <h2 class="section-title"><span class="icon">🗄️</span> Database Design</h2>
+      
+      <div class="card">
+        <h3>Schema Fields Every Entity Needs</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <div style="text-align: center; padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔑</div>
+            <strong>id</strong>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">Primary key</p>
+          </div>
+          <div style="text-align: center; padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📅</div>
+            <strong>created_at</strong>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">When created</p>
+          </div>
+          <div style="text-align: center; padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔄</div>
+            <strong>updated_at</strong>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">Last modified</p>
+          </div>
+          <div style="text-align: center; padding: 1rem; background: var(--bg); border-radius: 0.5rem;">
+            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📝</div>
+            <strong>summary</strong>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">Initially empty</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div class="card">
+          <h3>Why Timestamps?</h3>
+          <ul style="list-style: none; color: var(--text-muted);">
+            <li>• Track data freshness</li>
+            <li>• Show "last updated" in UI</li>
+            <li>• Enable incremental updates</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Why Empty Summaries?</h3>
+          <ul style="list-style: none; color: var(--text-muted);">
+            <li>• CLI can query WHERE summary IS NULL</li>
+            <li>• Makes resumability trivial</li>
+            <li>• Clear processing state indicator</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Why JSON Fields?</h3>
+          <ul style="list-style: none; color: var(--text-muted);">
+            <li>• Preserve original GitHub data</li>
+            <li>• Allow re-processing</li>
+            <li>• Future enhancements without re-fetch</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- API Section -->
+    <section id="api">
+      <h2 class="section-title"><span class="icon">🔌</span> API Design</h2>
+      
+      <div class="api-grid">
+        <div class="api-card">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/data</span>
+          <p class="api-desc">Returns entire knowledge graph (repositories + contributors with nested data). Frontend loads once on mount, caches in memory. Good for &lt;1000 contributors.</p>
+        </div>
+        <div class="api-card">
+          <span class="api-method post">POST</span>
+          <span class="api-path">/api/chat</span>
+          <p class="api-desc">Streaming endpoint. Input: user's question. Assembles context + calls LLM + streams response via Server-Sent Events.</p>
+        </div>
+        <div class="api-card">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/contributors/:id</span>
+          <p class="api-desc">Single contributor with all details. Optional if frontend already has cached data from /api/data.</p>
+        </div>
+      </div>
+
+      <div class="key-concept" style="margin-top: 1rem;">
+        <strong>💡 Design Philosophy:</strong> Start simple (one big query), optimize later (pagination, filtering) if needed.
+      </div>
+    </section>
+
+    <!-- Frontend Section -->
+    <section id="frontend">
+      <h2 class="section-title"><span class="icon">🖥️</span> Frontend State Management</h2>
+      
+      <div class="flow-diagram">
+        <div class="flow-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>On App Mount</h4>
+            <p>Fetch from /api/data → Store in memory (React state/context) → Set loading to false</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Throughout App</h4>
+            <p>All pages read from in-memory data. No additional API calls. Fast, offline-capable browsing.</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>For Chat</h4>
+            <p>Separate API call to /api/chat with streaming. Independent from cached data.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: 1rem;">
+        <h3>Why This Works</h3>
+        <p>• Data changes infrequently (only when summaries regenerated)</p>
+        <p>• Single load + client-side filtering is faster than multiple API calls</p>
+        <p>• Simplifies code (no loading states on every page)</p>
+      </div>
+    </section>
+
+    <!-- Costs Section -->
+    <section id="costs">
+      <h2 class="section-title"><span class="icon">💰</span> Cost & Performance</h2>
+      
+      <div class="cost-grid">
+        <div class="cost-card">
+          <h4>One-Time Costs (Phase 2 - CLI)</h4>
+          <div class="cost-stat">
+            <span class="label">Example data:</span>
+            <span class="value">1000 commits, 500 issues</span>
+          </div>
+          <div class="cost-stat">
+            <span class="label">Total LLM calls:</span>
+            <span class="value">~1,650 calls</span>
+          </div>
+          <div class="cost-stat">
+            <span class="label">Total tokens:</span>
+            <span class="value">~1 million</span>
+          </div>
+          <div class="cost-stat">
+            <span class="label">Estimated cost:</span>
+            <span class="value">$0.50-$5</span>
+          </div>
+          <div class="cost-stat">
+            <span class="label">Time:</span>
+            <span class="value">1-4 hours</span>
+          </div>
+        </div>
+        
+        <div class="cost-card">
+          <h4>Ongoing Costs (Phase 3 - Runtime)</h4>
+          <div class="cost-stat">
+            <span class="label">Per chat query:</span>
+            <span class="value">~10-50k tokens</span>
+          </div>
+          <div class="cost-stat">
+            <span class="label">Cost per query:</span>
+            <span class="value">$0.01-$0.10</span>
+          </div>
+          <div class="cost-stat">
+            <span class="label">Database reads:</span>
+            <span class="value">Negligible</span>
+          </div>
+          <div class="cost-stat">
+            <span class="label">Hosting:</span>
+            <span class="value">Normal web app</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="key-concept" style="margin-top: 1rem;">
+        <strong>💡 Optimization Strategy:</strong> Pre-compute everything possible (Phase 2). Serve cached data at runtime (Phase 3). Only use LLM for chat queries.
+      </div>
+    </section>
+
+    <!-- MVP Scope Section -->
+    <section id="mvp">
+      <h2 class="section-title"><span class="icon">🎯</span> MVP Scope</h2>
+      
+      <div class="scope-grid">
+        <div class="scope-card in-scope">
+          <h4>✅ In Scope</h4>
+          <ul class="scope-list">
+            <li>Database schema (5 tables)</li>
+            <li>CLI tool: JSON → PostgreSQL</li>
+            <li>CLI tool: Generate summaries (3 levels)</li>
+            <li>API: Serve all data</li>
+            <li>API: Chat queries (streaming)</li>
+            <li>Frontend: Dashboard with stats</li>
+            <li>Frontend: Contributor list page</li>
+            <li>Frontend: Contributor detail page</li>
+            <li>Frontend: Repository list page</li>
+            <li>Frontend: Repository detail page</li>
+            <li>Frontend: Chat interface (floating)</li>
+          </ul>
+        </div>
+        
+        <div class="scope-card out-scope">
+          <h4>⏸️ Deferred</h4>
+          <ul class="scope-list">
+            <li>Graph visualization</li>
+            <li>Voice chat integration</li>
+            <li>Admin dashboard for summaries</li>
+            <li>Background job processing</li>
+            <li>Incremental updates</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Checklist Section -->
+    <section id="checklist">
+      <h2 class="section-title"><span class="icon">✅</span> Final Conceptual Checklist</h2>
+      
+      <div class="checklist">
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>The three phases</strong> are separate systems (ingestion → processing → serving)</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>Hierarchical summarization</strong> builds knowledge bottom-up (atomic → synthesis → profile)</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>The join table has business logic</strong> (RepositoryWork.summary is critical)</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>Level dependencies</strong> prevent parallel processing across levels</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>CLI tools are separate</strong> from the web application</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>Summaries are pre-computed</strong>, not generated on-demand</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>Chat queries use entire knowledge graph</strong> as LLM context</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>Custom markup</strong> creates interactivity in LLM responses</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>Type safety flows</strong> from database schema through the entire stack</span>
+        </div>
+        <div class="checklist-item">
+          <span class="check">✓</span>
+          <span class="checklist-text"><strong>Error handling differs</strong> between phases (fail fast vs. graceful degradation)</span>
+        </div>
+      </div>
+    </section>
+
+    <footer style="text-align: center; padding: 2rem; color: var(--text-muted); border-top: 1px solid var(--border); margin-top: 2rem;">
+      <p>Nu Dev Lens - Conceptual Knowledge Map</p>
+    </footer>
+  </div>
+
+  <script>
+    // Smooth scrolling for navigation
+    document.querySelectorAll('nav a').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        target.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // Highlight current section in nav
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('nav a');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (scrollY >= sectionTop - 200) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      navLinks.forEach(link => {
+        link.style.background = '';
+        link.style.color = '';
+        if (link.getAttribute('href') === '#' + current) {
+          link.style.background = 'var(--accent)';
+          link.style.color = 'white';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -56,6 +56,11 @@ const API_BASE_URL = "https://api.github.com";
 const COMMIT_MESSAGE_MAX_LEN = 200;
 const MAX_COMMITS_TO_DETAIL_PER_REPO: number | null = 500;
 const MAX_ISSUES_TO_DETAIL_PER_REPO: number | null = 500;
+// Concurrency limits for parallel processing
+// Rate limiter handles throttling, so we can use higher concurrency
+const CONCURRENT_ISSUE_DETAILS = 20; // Fetch 20 issue details in parallel
+const CONCURRENT_COMMIT_DETAILS = 20; // Fetch 20 commit details in parallel
+const CONCURRENT_REPOS = 3; // Process 3 repositories in parallel
 
 // Files to ignore when collecting commit diffs (package locks, generated files, etc.)
 const IGNORED_FILE_PATTERNS = [
@@ -77,6 +82,12 @@ const IGNORED_FILE_PATTERNS = [
   /build\//i,
   /node_modules\//i,
   /vendor\//i,
+  /mock[s]?[\./\\]/i, // Matches 'mock/', 'mocks/', 'mock\', 'mocks\' (folder) or 'mock.' in files
+  /\.mock\.(js|ts|json|cjs|mjs|jsx|tsx)$/i, // Matches files like '.mock.js' or '.mock.ts' etc
+  /__mocks__\//i, // Jest-like convention for mock folders
+  /\.snapshots?\//i, // Matches 'snapshot/' or 'snapshots/' directory
+  /\.snap(\.js|\.ts|\.json|\.cjs|\.mjs|\.jsx|\.tsx)?$/i, // snapshot files (Jest, etc)
+  /__snapshots__\//i, // Jest-like convention for snapshot folders
 ];
 
 // --- Helper Functions ---
@@ -276,7 +287,7 @@ async function fetchPaginatedData<T = unknown>(
         if (nextMatch?.[1]) {
           currentUrl = nextMatch[1];
           page++;
-          await sleep(300);
+          await sleep(100);
         } else {
           currentUrl = null;
         }
@@ -341,7 +352,8 @@ async function fetchIssueDetails(
   const response = await makeGithubRequest(issueUrl, token, {}, acceptHeader);
 
   if (response?.status === 200) {
-    await sleep(500);
+    // Small delay to avoid overwhelming the API with parallel requests
+    await sleep(100);
     return response.data as GithubIssue;
   }
   return null;
@@ -378,7 +390,8 @@ async function fetchCommitDetails(
   const response = await makeGithubRequest(commitUrl, token);
 
   if (response?.status === 200) {
-    await sleep(500);
+    // Small delay to avoid overwhelming the API with parallel requests
+    await sleep(100);
     return response.data as GithubCommitDetails;
   }
   return null;
@@ -387,391 +400,498 @@ async function fetchCommitDetails(
 // --- Main Processing Function ---
 
 /**
- * Processes multiple repositories and fetches contributor data.
+ * Processes a single repository and fetches contributor data.
+ */
+async function processSingleRepository(
+  repoUrl: string,
+  token: string | null = null,
+): Promise<Record<string, ContributorIngestionData>> {
+  const allContributorsMap: Record<string, ContributorIngestionData> = {};
+
+  console.log(`\n🔍 Processing: ${repoUrl}`);
+  const parsedInfo = parseGithubUrl(repoUrl);
+  if (!parsedInfo) return allContributorsMap;
+
+  const { owner, repo } = parsedInfo;
+  const canonicalRepoUrl = `https://github.com/${owner}/${repo}`;
+
+  // Step 1: Fetch Contributors
+  const repoContributors =
+    (await fetchContributorsFromRepo(owner, repo, token)) ?? [];
+
+  for (const contributorData of repoContributors) {
+    const requiredKeys = ["login", "id", "html_url", "avatar_url"];
+    if (
+      !requiredKeys.every((k) => k in contributorData) ||
+      contributorData.type !== "User"
+    ) {
+      continue;
+    }
+
+    const username = contributorData.login;
+    if (!username) continue;
+
+    allContributorsMap[username] ??= {
+      id: contributorData.id,
+      username: username,
+      url: contributorData.html_url,
+      avatar_url: contributorData.avatar_url,
+      works: [],
+    };
+    allContributorsMap[username].works ??= [];
+  }
+
+  // Step 2: Fetch and Process Closed Issues (PARALLELIZED)
+  const repoClosedIssuesList = await fetchRepositoryIssuesList(
+    owner,
+    repo,
+    token,
+    "closed",
+  );
+  const issuesAssignedToUserInRepo: Record<string, StoredIssueData[]> = {};
+  const assigneeDetailsCache: Record<
+    string,
+    { id: number | null; url: string; avatar_url: string }
+  > = {};
+
+  if (repoClosedIssuesList) {
+    const limitStr =
+      MAX_ISSUES_TO_DETAIL_PER_REPO !== null
+        ? `${MAX_ISSUES_TO_DETAIL_PER_REPO}`
+        : "all";
+    console.log(
+      `📋 Processing ${repoClosedIssuesList.length} issues (limit: ${limitStr})`,
+    );
+
+    // Filter and prepare issues for parallel fetching
+    const issuesToFetch: Array<{
+      issueNumber: number;
+      index: number;
+    }> = [];
+    let issuesDetailedCount = 0;
+
+    for (const issueSummaryData of repoClosedIssuesList) {
+      if ("pull_request" in issueSummaryData) continue;
+      if (issueSummaryData.state !== "closed") continue;
+
+      const issueNumber = issueSummaryData.number;
+      if (!issueNumber) continue;
+
+      const shouldFetchDetails =
+        MAX_ISSUES_TO_DETAIL_PER_REPO === null ||
+        issuesDetailedCount < MAX_ISSUES_TO_DETAIL_PER_REPO;
+
+      if (!shouldFetchDetails) {
+        if (issuesDetailedCount === MAX_ISSUES_TO_DETAIL_PER_REPO) {
+          console.log(
+            `⏹️  Reached limit (${MAX_ISSUES_TO_DETAIL_PER_REPO}), skipping remaining issues`,
+          );
+          issuesDetailedCount++;
+        }
+        continue;
+      }
+
+      issuesToFetch.push({ issueNumber, index: issuesDetailedCount });
+      issuesDetailedCount++;
+    }
+
+    console.log(
+      `📋 Fetching ${issuesToFetch.length} issue details in parallel (concurrency: ${CONCURRENT_ISSUE_DETAILS})...`,
+    );
+
+    // Fetch issue details in parallel
+    const issueDetailsResults = await processInParallel(
+      issuesToFetch,
+      async ({ issueNumber }, index) => {
+        const limitStr =
+          MAX_ISSUES_TO_DETAIL_PER_REPO !== null
+            ? `${MAX_ISSUES_TO_DETAIL_PER_REPO}`
+            : "all";
+        console.log(`📋 [${index + 1}/${limitStr}] Issue #${issueNumber}`);
+        return await fetchIssueDetails(owner, repo, issueNumber, token);
+      },
+      CONCURRENT_ISSUE_DETAILS,
+    );
+
+    // Process fetched issue details
+    for (const detailedIssueData of issueDetailsResults) {
+      if (!detailedIssueData) continue;
+
+      // Create simplified issue object
+      const simplifiedIssueData: StoredIssueData = {
+        html_url: detailedIssueData.html_url,
+        number: detailedIssueData.number,
+        title: detailedIssueData.title,
+        body: detailedIssueData.body,
+        labels: detailedIssueData.labels ?? [],
+        comments: detailedIssueData.comments ?? 0,
+        state_reason: detailedIssueData.state_reason,
+      };
+
+      const issueDataToStore = simplifiedIssueData;
+
+      let assigneesList = detailedIssueData.assignees ?? [];
+      if (assigneesList.length === 0 && detailedIssueData.assignee) {
+        assigneesList = [detailedIssueData.assignee];
+      }
+
+      if (assigneesList.length === 0) continue;
+
+      for (const assignee of assigneesList) {
+        if (
+          assignee &&
+          typeof assignee === "object" &&
+          assignee.login &&
+          assignee.type === "User"
+        ) {
+          const assigneeUsername = assignee.login;
+          if (!assigneeUsername) continue;
+
+          issuesAssignedToUserInRepo[assigneeUsername] ??= [];
+
+          // Avoid adding duplicate issues
+          const isDuplicate = issuesAssignedToUserInRepo[assigneeUsername].some(
+            (i) => i.number === issueDataToStore.number,
+          );
+          if (!isDuplicate) {
+            issuesAssignedToUserInRepo[assigneeUsername].push(issueDataToStore);
+          }
+
+          assigneeDetailsCache[assigneeUsername] ??= {
+            id: assignee.id,
+            url: assignee.html_url,
+            avatar_url: assignee.avatar_url,
+          };
+        }
+      }
+    }
+
+    const failedCount =
+      issueDetailsResults.length -
+      issueDetailsResults.filter((r) => r !== null).length;
+    if (failedCount > 0) {
+      console.log(`⚠️  Failed to fetch ${failedCount} issue(s)`);
+    }
+  } else {
+    console.log(`📭 No closed issues found`);
+  }
+
+  // Step 3: Fetch and Process Commits (PARALLELIZED VERSION)
+  const repoCommitsList = await fetchRepositoryCommits(owner, repo, token);
+  const commitsAuthoredByUserInRepo: Record<string, StoredCommitData[]> = {};
+  const authorDetailsCache: Record<
+    string,
+    {
+      id: number | null;
+      url: string;
+      avatar_url: string;
+      is_github_user: boolean;
+    }
+  > = {};
+
+  if (repoCommitsList) {
+    const limitStrCommits =
+      MAX_COMMITS_TO_DETAIL_PER_REPO !== null
+        ? `${MAX_COMMITS_TO_DETAIL_PER_REPO}`
+        : "all";
+    console.log(
+      `💾 Processing ${repoCommitsList.length} commits (limit: ${limitStrCommits})`,
+    );
+
+    // First pass: Extract author info and prepare commits for parallel fetching
+    interface CommitToProcess {
+      commitSha: string;
+      commitSummary: GithubCommitSummary;
+      authorUsername: string;
+      authorId: number | null;
+      authorUrl: string | null;
+      authorAvatarUrl: string | null;
+      isGitHubUser: boolean;
+      commitMessageSummary: string;
+      index: number;
+    }
+
+    const commitsToProcess: CommitToProcess[] = [];
+    let commitsDetailedCount = 0;
+
+    for (const commitSummaryData of repoCommitsList) {
+      const commitSha = commitSummaryData.sha;
+      if (!commitSha) continue;
+
+      // Extract author information
+      const commitAuthorInfo = commitSummaryData.author;
+      let authorUsername: string | null = null;
+      let authorId: number | null = null;
+      let authorUrl: string | null = null;
+      let authorAvatarUrl: string | null = null;
+      let isGitHubUser = false;
+
+      if (
+        commitAuthorInfo &&
+        typeof commitAuthorInfo === "object" &&
+        commitAuthorInfo.login &&
+        commitAuthorInfo.type === "User"
+      ) {
+        authorUsername = commitAuthorInfo.login;
+        authorId = commitAuthorInfo.id;
+        authorUrl = commitAuthorInfo.html_url;
+        authorAvatarUrl = commitAuthorInfo.avatar_url;
+        isGitHubUser = true;
+      } else if (commitSummaryData.commit?.author?.name) {
+        const gitAuthorName = commitSummaryData.commit.author.name;
+        authorUsername = gitAuthorName.replace(/\s+/g, "-").toLowerCase();
+        authorId = null;
+        authorUrl = null;
+        authorAvatarUrl = null;
+        isGitHubUser = false;
+      } else {
+        continue;
+      }
+
+      if (!authorUsername || !commitSummaryData.html_url) continue;
+
+      const commitMessage =
+        commitSummaryData.commit?.message ?? "No commit message";
+      let commitMessageSummary = commitMessage.split("\n")[0] ?? "";
+      if (commitMessageSummary.length > COMMIT_MESSAGE_MAX_LEN) {
+        commitMessageSummary =
+          commitMessageSummary.slice(0, COMMIT_MESSAGE_MAX_LEN - 3) + "...";
+      }
+
+      const shouldFetchDetails =
+        MAX_COMMITS_TO_DETAIL_PER_REPO === null ||
+        commitsDetailedCount < MAX_COMMITS_TO_DETAIL_PER_REPO;
+
+      if (shouldFetchDetails) {
+        commitsToProcess.push({
+          commitSha,
+          commitSummary: commitSummaryData,
+          authorUsername,
+          authorId,
+          authorUrl,
+          authorAvatarUrl,
+          isGitHubUser,
+          commitMessageSummary,
+          index: commitsDetailedCount,
+        });
+        commitsDetailedCount++;
+      }
+    }
+
+    console.log(
+      `💾 Fetching ${commitsToProcess.length} commit details in parallel (concurrency: ${CONCURRENT_COMMIT_DETAILS})...`,
+    );
+
+    // Fetch commit details in parallel
+    const commitDetailsResults = await processInParallel(
+      commitsToProcess,
+      async ({ commitSha, authorUsername }, index) => {
+        const limitStrCommits =
+          MAX_COMMITS_TO_DETAIL_PER_REPO !== null
+            ? `${MAX_COMMITS_TO_DETAIL_PER_REPO}`
+            : "all";
+        console.log(
+          `💾 [${index + 1}/${limitStrCommits}] Commit ${commitSha.slice(0, 7)} by ${authorUsername}`,
+        );
+        return await fetchCommitDetails(owner, repo, commitSha, token);
+      },
+      CONCURRENT_COMMIT_DETAILS,
+    );
+
+    // Process fetched commit details
+    for (let i = 0; i < commitsToProcess.length; i++) {
+      const commitInfo = commitsToProcess[i];
+      if (!commitInfo) continue;
+      const detailedCommitData = commitDetailsResults[i];
+
+      const simplifiedCommit: StoredCommitData = {
+        sha: commitInfo.commitSha,
+        url: commitInfo.commitSummary.html_url,
+        message: commitInfo.commitMessageSummary,
+        files_changed: null,
+        comment_count: null,
+        diff_patch: null,
+      };
+
+      if (detailedCommitData) {
+        const files = detailedCommitData.files ?? [];
+        const commentCount = detailedCommitData.commit?.comment_count ?? 0;
+
+        simplifiedCommit.comment_count = commentCount;
+
+        // Filter out ignored files
+        const relevantFiles = files.filter(
+          (f) => f.filename && !shouldIgnoreFile(f.filename),
+        );
+
+        simplifiedCommit.files_changed = relevantFiles
+          .map((f) => ({
+            filename: f.filename,
+            status: f.status,
+          }))
+          .filter((f) => f.filename);
+
+        let combinedPatch = "";
+        for (const f of relevantFiles) {
+          if (f?.patch && typeof f.patch === "string" && f.patch) {
+            combinedPatch += `--- File: ${f.filename ?? "Unknown"} ---\n`;
+            combinedPatch += f.patch;
+            combinedPatch += "\n\n";
+          }
+        }
+        simplifiedCommit.diff_patch = combinedPatch.trim() || null;
+
+        const ignoredCount = files.length - relevantFiles.length;
+        if (ignoredCount > 0) {
+          console.log(
+            `   🚫 Commit ${commitInfo.commitSha.slice(0, 7)}: Filtered ${ignoredCount} ignored file(s)`,
+          );
+        }
+      }
+
+      commitsAuthoredByUserInRepo[commitInfo.authorUsername] ??= [];
+
+      const isDuplicate = commitsAuthoredByUserInRepo[
+        commitInfo.authorUsername
+      ]!.some((c) => c.sha === simplifiedCommit.sha);
+      if (!isDuplicate) {
+        commitsAuthoredByUserInRepo[commitInfo.authorUsername]!.push(
+          simplifiedCommit,
+        );
+      }
+
+      // Store author details
+      authorDetailsCache[commitInfo.authorUsername] ??= {
+        id: commitInfo.authorId,
+        url: commitInfo.authorUrl ?? "",
+        avatar_url: commitInfo.authorAvatarUrl ?? "",
+        is_github_user: commitInfo.isGitHubUser,
+      };
+    }
+
+    const failedCount =
+      commitDetailsResults.length -
+      commitDetailsResults.filter((r) => r !== null).length;
+    if (failedCount > 0) {
+      console.log(`⚠️  Failed to fetch ${failedCount} commit(s)`);
+    }
+  } else {
+    console.log(`📭 No commits found`);
+  }
+
+  // Step 4: Integrate Issues and Commits into Contributor Works
+  const involvedUsersInRepo = new Set<string>();
+  if (repoContributors) {
+    repoContributors.forEach((c) => {
+      if (c.login) involvedUsersInRepo.add(c.login);
+    });
+  }
+  Object.keys(issuesAssignedToUserInRepo).forEach((u) =>
+    involvedUsersInRepo.add(u),
+  );
+  Object.keys(commitsAuthoredByUserInRepo).forEach((u) =>
+    involvedUsersInRepo.add(u),
+  );
+
+  console.log(`🔗 Integrating ${involvedUsersInRepo.size} users`);
+
+  for (const username of involvedUsersInRepo) {
+    if (!allContributorsMap[username]) {
+      const details =
+        assigneeDetailsCache[username] ?? authorDetailsCache[username];
+      // *** IMPROVED: Accept details even without GitHub ID/URL ***
+      if (details) {
+        console.log(`➕ Adding contributor: ${username}`);
+        allContributorsMap[username] = {
+          id: details.id ?? null,
+          username: username,
+          url: details.url ?? "",
+          avatar_url: details.avatar_url ?? "",
+          works: [],
+        };
+      } else {
+        console.log(`⚠️  Skipping user: ${username} (no details)`);
+        continue;
+      }
+    }
+
+    allContributorsMap[username].works ??= [];
+    const contributorWorks = allContributorsMap[username].works;
+
+    const userIssuesInRepo = issuesAssignedToUserInRepo[username] ?? [];
+    const userCommitsInRepo = commitsAuthoredByUserInRepo[username] ?? [];
+
+    if (userIssuesInRepo.length > 0 || userCommitsInRepo.length > 0) {
+      let repoWorkEntry = contributorWorks.find(
+        (work) => work.repository_url === canonicalRepoUrl,
+      );
+
+      if (!repoWorkEntry) {
+        repoWorkEntry = {
+          repository_url: canonicalRepoUrl,
+          issues: userIssuesInRepo,
+          commits: userCommitsInRepo,
+        };
+        contributorWorks.push(repoWorkEntry);
+      } else {
+        repoWorkEntry.issues = userIssuesInRepo;
+        repoWorkEntry.commits = userCommitsInRepo;
+      }
+    }
+  }
+
+  return allContributorsMap;
+}
+
+/**
+ * Processes multiple repositories and fetches contributor data in parallel.
  */
 async function processRepositories(
   repoUrls: string[],
   token: string | null = null,
 ): Promise<Record<string, ContributorIngestionData>> {
+  console.log(
+    `🚀 Processing ${repoUrls.length} repositories in parallel (concurrency: ${CONCURRENT_REPOS})...`,
+  );
+
+  const repoResults = await processInParallel(
+    repoUrls,
+    async (repoUrl) => await processSingleRepository(repoUrl, token),
+    CONCURRENT_REPOS,
+  );
+
+  // Merge all contributor maps
   const allContributorsMap: Record<string, ContributorIngestionData> = {};
 
-  for (const repoUrl of repoUrls) {
-    console.log(`\n🔍 Processing: ${repoUrl}`);
-    const parsedInfo = parseGithubUrl(repoUrl);
-    if (!parsedInfo) continue;
-
-    const { owner, repo } = parsedInfo;
-    const canonicalRepoUrl = `https://github.com/${owner}/${repo}`;
-
-    // Step 1: Fetch Contributors
-    const repoContributors =
-      (await fetchContributorsFromRepo(owner, repo, token)) ?? [];
-
-    for (const contributorData of repoContributors) {
-      const requiredKeys = ["login", "id", "html_url", "avatar_url"];
-      if (
-        !requiredKeys.every((k) => k in contributorData) ||
-        contributorData.type !== "User"
-      ) {
-        continue;
-      }
-
-      const username = contributorData.login;
-      if (!username) continue;
-
-      allContributorsMap[username] ??= {
-        id: contributorData.id,
-        username: username,
-        url: contributorData.html_url,
-        avatar_url: contributorData.avatar_url,
-        works: [],
-      };
-      allContributorsMap[username].works ??= [];
-    }
-
-    // Step 2: Fetch and Process Closed Issues
-    const repoClosedIssuesList = await fetchRepositoryIssuesList(
-      owner,
-      repo,
-      token,
-      "closed",
-    );
-    const issuesAssignedToUserInRepo: Record<string, StoredIssueData[]> = {};
-    const assigneeDetailsCache: Record<
-      string,
-      { id: number | null; url: string; avatar_url: string }
-    > = {};
-    let issuesDetailedCount = 0;
-
-    if (repoClosedIssuesList) {
-      const limitStr =
-        MAX_ISSUES_TO_DETAIL_PER_REPO !== null
-          ? `${MAX_ISSUES_TO_DETAIL_PER_REPO}`
-          : "all";
-      console.log(
-        `📋 Processing ${repoClosedIssuesList.length} issues (limit: ${limitStr})`,
-      );
-
-      for (const issueSummaryData of repoClosedIssuesList) {
-        if ("pull_request" in issueSummaryData) continue;
-        if (issueSummaryData.state !== "closed") continue;
-
-        const issueNumber = issueSummaryData.number;
-        if (!issueNumber) {
-          console.log(`⚠️  Skipping issue without number`);
-          continue;
-        }
-
-        const shouldFetchDetails =
-          MAX_ISSUES_TO_DETAIL_PER_REPO === null ||
-          issuesDetailedCount < MAX_ISSUES_TO_DETAIL_PER_REPO;
-
-        if (!shouldFetchDetails) {
-          if (issuesDetailedCount === MAX_ISSUES_TO_DETAIL_PER_REPO) {
-            console.log(
-              `⏹️  Reached limit (${MAX_ISSUES_TO_DETAIL_PER_REPO}), skipping remaining issues`,
-            );
-            issuesDetailedCount++;
-          }
-          continue;
-        }
-
-        console.log(
-          `📋 [${issuesDetailedCount + 1}/${limitStr}] Issue #${issueNumber}`,
-        );
-        const detailedIssueData = await fetchIssueDetails(
-          owner,
-          repo,
-          issueNumber,
-          token,
-        );
-
-        if (detailedIssueData) {
-          issuesDetailedCount++;
-
-          // Create simplified issue object
-          const simplifiedIssueData: StoredIssueData = {
-            html_url: detailedIssueData.html_url,
-            number: detailedIssueData.number,
-            title: detailedIssueData.title,
-            body: detailedIssueData.body,
-            labels: detailedIssueData.labels ?? [],
-            comments: detailedIssueData.comments ?? 0,
-            state_reason: detailedIssueData.state_reason,
-          };
-
-          const issueDataToStore = simplifiedIssueData;
-
-          let assigneesList = detailedIssueData.assignees ?? [];
-          if (assigneesList.length === 0 && detailedIssueData.assignee) {
-            assigneesList = [detailedIssueData.assignee];
-          }
-
-          if (assigneesList.length === 0) continue;
-
-          for (const assignee of assigneesList) {
-            if (
-              assignee &&
-              typeof assignee === "object" &&
-              assignee.login &&
-              assignee.type === "User"
-            ) {
-              const assigneeUsername = assignee.login;
-              if (!assigneeUsername) continue;
-
-              issuesAssignedToUserInRepo[assigneeUsername] ??= [];
-
-              // Avoid adding duplicate issues
-              const isDuplicate = issuesAssignedToUserInRepo[
-                assigneeUsername
-              ].some((i) => i.number === issueDataToStore.number);
-              if (!isDuplicate) {
-                issuesAssignedToUserInRepo[assigneeUsername].push(
-                  issueDataToStore,
-                );
-              }
-
-              assigneeDetailsCache[assigneeUsername] ??= {
-                id: assignee.id,
-                url: assignee.html_url,
-                avatar_url: assignee.avatar_url,
-              };
-            }
-          }
-        } else {
-          console.log(`❌ Failed to fetch issue #${issueNumber}`);
-        }
-      }
-    } else {
-      console.log(`📭 No closed issues found`);
-    }
-
-    // Step 3: Fetch and Process Commits (IMPROVED VERSION)
-    const repoCommitsList = await fetchRepositoryCommits(owner, repo, token);
-    const commitsAuthoredByUserInRepo: Record<string, StoredCommitData[]> = {};
-    const authorDetailsCache: Record<
-      string,
-      {
-        id: number | null;
-        url: string;
-        avatar_url: string;
-        is_github_user: boolean;
-      }
-    > = {};
-    let commitsDetailedCount = 0;
-
-    if (repoCommitsList) {
-      const limitStrCommits =
-        MAX_COMMITS_TO_DETAIL_PER_REPO !== null
-          ? `${MAX_COMMITS_TO_DETAIL_PER_REPO}`
-          : "all";
-      console.log(
-        `💾 Processing ${repoCommitsList.length} commits (limit: ${limitStrCommits})`,
-      );
-
-      for (const commitSummaryData of repoCommitsList) {
-        const commitSha = commitSummaryData.sha;
-        if (!commitSha) continue;
-
-        // *** IMPROVED: Try to get GitHub user first, fallback to git commit author ***
-        const commitAuthorInfo = commitSummaryData.author;
-        let authorUsername: string | null = null;
-        let authorId: number | null = null;
-        let authorUrl: string | null = null;
-        let authorAvatarUrl: string | null = null;
-        let isGitHubUser = false;
-
-        if (
-          commitAuthorInfo &&
-          typeof commitAuthorInfo === "object" &&
-          commitAuthorInfo.login &&
-          commitAuthorInfo.type === "User"
-        ) {
-          // This is a linked GitHub user
-          authorUsername = commitAuthorInfo.login;
-          authorId = commitAuthorInfo.id;
-          authorUrl = commitAuthorInfo.html_url;
-          authorAvatarUrl = commitAuthorInfo.avatar_url;
-          isGitHubUser = true;
-        } else if (commitSummaryData.commit?.author?.name) {
-          // Use git commit author name as username (not linked to GitHub)
-          // Create a synthetic username from the name
-          const gitAuthorName = commitSummaryData.commit.author.name;
-          // const gitAuthorEmail = commitSummaryData.commit.author.email;
-          // Use name as identifier, sanitize it for use as username
-          authorUsername = gitAuthorName.replace(/\s+/g, "-").toLowerCase();
-          authorId = null; // No GitHub ID available
-          authorUrl = null; // No profile URL
-          authorAvatarUrl = null; // No avatar
-          isGitHubUser = false;
-
-          console.log(
-            `👤 Commit ${commitSha.slice(0, 7)} by ${gitAuthorName} (not linked to GitHub)`,
-          );
-        } else {
-          // No author information at all, skip
-          continue;
-        }
-
-        if (!authorUsername) continue;
-
-        const commitMessage =
-          commitSummaryData.commit?.message ?? "No commit message";
-        let commitMessageSummary = commitMessage.split("\n")[0] ?? "";
-        if (commitMessageSummary.length > COMMIT_MESSAGE_MAX_LEN) {
-          commitMessageSummary =
-            commitMessageSummary.slice(0, COMMIT_MESSAGE_MAX_LEN - 3) + "...";
-        }
-
-        const simplifiedCommit: StoredCommitData = {
-          sha: commitSha,
-          url: commitSummaryData.html_url,
-          message: commitMessageSummary,
-          files_changed: null,
-          comment_count: null,
-          diff_patch: null,
-        };
-
-        if (!simplifiedCommit.url) continue;
-
-        const shouldFetchDetails =
-          MAX_COMMITS_TO_DETAIL_PER_REPO === null ||
-          commitsDetailedCount < MAX_COMMITS_TO_DETAIL_PER_REPO;
-        let detailedCommitData: GithubCommitDetails | null = null;
-
-        if (shouldFetchDetails) {
-          console.log(
-            `💾 [${commitsDetailedCount + 1}/${limitStrCommits}] Commit ${commitSha.slice(0, 7)} by ${authorUsername}`,
-          );
-          detailedCommitData = await fetchCommitDetails(
-            owner,
-            repo,
-            commitSha,
-            token,
-          );
-          if (detailedCommitData) {
-            commitsDetailedCount++;
-          } else {
-            console.log(`❌ Failed to fetch commit ${commitSha.slice(0, 7)}`);
-          }
-        }
-
-        if (detailedCommitData) {
-          const files = detailedCommitData.files ?? [];
-          const commentCount = detailedCommitData.commit?.comment_count ?? 0;
-
-          simplifiedCommit.comment_count = commentCount;
-
-          // Filter out ignored files (lock files, minified files, etc.)
-          const relevantFiles = files.filter(
-            (f) => f.filename && !shouldIgnoreFile(f.filename),
-          );
-
-          simplifiedCommit.files_changed = relevantFiles
-            .map((f) => ({
-              filename: f.filename,
-              status: f.status,
-            }))
-            .filter((f) => f.filename);
-
-          let combinedPatch = "";
-          for (const f of relevantFiles) {
-            if (f?.patch && typeof f.patch === "string" && f.patch) {
-              combinedPatch += `--- File: ${f.filename ?? "Unknown"} ---\n`;
-              combinedPatch += f.patch;
-              combinedPatch += "\n\n";
-            }
-          }
-          simplifiedCommit.diff_patch = combinedPatch.trim() || null;
-
-          // Log if we filtered out any files
-          const ignoredCount = files.length - relevantFiles.length;
-          if (ignoredCount > 0) {
-            console.log(
-              `   🚫 Filtered ${ignoredCount} ignored file(s) (lock files, minified, etc.)`,
-            );
-          }
-        }
-
-        commitsAuthoredByUserInRepo[authorUsername] ??= [];
-
-        const isDuplicate = commitsAuthoredByUserInRepo[authorUsername]!.some(
-          (c) => c.sha === simplifiedCommit.sha,
-        );
-        if (!isDuplicate) {
-          commitsAuthoredByUserInRepo[authorUsername]!.push(simplifiedCommit);
-        }
-
-        // *** IMPROVED: Store author details with all available information ***
-        authorDetailsCache[authorUsername] ??= {
-          id: authorId,
-          url: authorUrl ?? "",
-          avatar_url: authorAvatarUrl ?? "",
-          is_github_user: isGitHubUser,
-        };
-      }
-    } else {
-      console.log(`📭 No commits found`);
-    }
-
-    // Step 4: Integrate Issues and Commits into Contributor Works
-    const involvedUsersInRepo = new Set<string>();
-    if (repoContributors) {
-      repoContributors.forEach((c) => {
-        if (c.login) involvedUsersInRepo.add(c.login);
-      });
-    }
-    Object.keys(issuesAssignedToUserInRepo).forEach((u) =>
-      involvedUsersInRepo.add(u),
-    );
-    Object.keys(commitsAuthoredByUserInRepo).forEach((u) =>
-      involvedUsersInRepo.add(u),
-    );
-
-    console.log(`🔗 Integrating ${involvedUsersInRepo.size} users`);
-
-    for (const username of involvedUsersInRepo) {
+  for (const repoContributorsMap of repoResults) {
+    for (const [username, contributorData] of Object.entries(
+      repoContributorsMap,
+    )) {
       if (!allContributorsMap[username]) {
-        const details =
-          assigneeDetailsCache[username] ?? authorDetailsCache[username];
-        // *** IMPROVED: Accept details even without GitHub ID/URL ***
-        if (details) {
-          console.log(`➕ Adding contributor: ${username}`);
-          allContributorsMap[username] = {
-            id: details.id ?? null,
-            username: username,
-            url: details.url ?? "",
-            avatar_url: details.avatar_url ?? "",
-            works: [],
-          };
-        } else {
-          console.log(`⚠️  Skipping user: ${username} (no details)`);
-          continue;
+        allContributorsMap[username] = contributorData;
+      } else {
+        // Merge works from different repositories
+        const existingWorks = allContributorsMap[username].works ?? [];
+        const newWorks = contributorData.works ?? [];
+        const mergedWorks = [...existingWorks];
+
+        for (const newWork of newWorks) {
+          const existingWorkIndex = mergedWorks.findIndex(
+            (w) => w.repository_url === newWork.repository_url,
+          );
+          if (existingWorkIndex >= 0) {
+            // Merge issues and commits for the same repo
+            mergedWorks[existingWorkIndex] = {
+              repository_url: newWork.repository_url,
+              issues: newWork.issues,
+              commits: newWork.commits,
+            };
+          } else {
+            mergedWorks.push(newWork);
+          }
         }
-      }
 
-      allContributorsMap[username].works ??= [];
-      const contributorWorks = allContributorsMap[username].works;
-
-      const userIssuesInRepo = issuesAssignedToUserInRepo[username] ?? [];
-      const userCommitsInRepo = commitsAuthoredByUserInRepo[username] ?? [];
-
-      if (userIssuesInRepo.length > 0 || userCommitsInRepo.length > 0) {
-        let repoWorkEntry = contributorWorks.find(
-          (work) => work.repository_url === canonicalRepoUrl,
-        );
-
-        if (!repoWorkEntry) {
-          repoWorkEntry = {
-            repository_url: canonicalRepoUrl,
-            issues: userIssuesInRepo,
-            commits: userCommitsInRepo,
-          };
-          contributorWorks.push(repoWorkEntry);
-        } else {
-          repoWorkEntry.issues = userIssuesInRepo;
-          repoWorkEntry.commits = userCommitsInRepo;
-        }
+        allContributorsMap[username].works = mergedWorks;
       }
     }
   }
@@ -783,6 +903,51 @@ async function processRepositories(
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Processes items in parallel with a concurrency limit.
+ * @param items Array of items to process
+ * @param processor Function that processes each item
+ * @param concurrency Maximum number of concurrent operations
+ * @returns Array of results in the same order as input
+ */
+async function processInParallel<T, R>(
+  items: T[],
+  processor: (item: T, index: number) => Promise<R>,
+  concurrency: number,
+): Promise<R[]> {
+  const results: (R | undefined)[] = new Array<R | undefined>(items.length);
+  const executing: Promise<void>[] = [];
+  let index = 0;
+
+  const executeNext = async (): Promise<void> => {
+    if (index >= items.length) return;
+
+    const currentIndex = index++;
+    const item = items[currentIndex];
+    if (item === undefined) return;
+
+    const promise = processor(item, currentIndex)
+      .then((result) => {
+        results[currentIndex] = result;
+      })
+      .then(() => executeNext());
+
+    executing.push(promise);
+
+    await promise;
+  };
+
+  // Start initial batch
+  const initialBatch = Math.min(concurrency, items.length);
+  for (let i = 0; i < initialBatch; i++) {
+    executing.push(executeNext());
+  }
+
+  await Promise.all(executing);
+  // All positions are filled by the processor, so we can safely assert the type
+  return results as R[];
 }
 
 // --- Main Execution ---
