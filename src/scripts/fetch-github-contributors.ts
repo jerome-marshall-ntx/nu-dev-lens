@@ -55,9 +55,23 @@ const MAX_COMMITS_TO_DETAIL_PER_REPO: number | null = 1000;
 // Batch size for processing commits (to avoid memory issues)
 const COMMIT_BATCH_SIZE = 200;
 // Concurrency limits for parallel processing
-// Rate limiter handles throttling, so we can use higher concurrency
-const CONCURRENT_COMMIT_DETAILS = 20; // Fetch 20 commit details in parallel
+// Lower concurrency to avoid overwhelming GitHub API and causing timeouts
+const CONCURRENT_COMMIT_DETAILS = 5; // Fetch 5 commit details in parallel (reduced from 20)
 const CONCURRENT_REPOS = 3; // Process 3 repositories in parallel
+
+// Repository configuration
+interface RepoConfig {
+  url: string;
+  branch?: string;
+}
+
+const REPOSITORIES: RepoConfig[] = [
+  { url: "https://github.com/shashi-ntx/test-clone-prism-reactjs", branch: "master" },
+  { url: "https://github.com/jerome-marshall-ntx/prism-ui-draas", branch: "master" },
+  { url: "https://github.com/jerome-marshall-ntx/prism-ui-security-dashboard", branch: "main" },
+  { url: "https://github.com/jerome-marshall-ntx/flow-ui-main", branch: "flow-ui-ng-master" },
+  { url: "https://github.com/jerome-marshall-ntx/iam-ui", branch: "master" },
+];
 
 // Files to ignore when collecting commit diffs (package locks, generated files, etc.)
 const IGNORED_FILE_PATTERNS = [
@@ -336,10 +350,11 @@ async function fetchRepositoryCommits(
   owner: string,
   repo: string,
   token: string | null = null,
+  branch = "master",
 ): Promise<GithubCommitSummary[] | null> {
   const commitsUrl = `${API_BASE_URL}/repos/${owner}/${repo}/commits`;
-  const params = { per_page: 100 };
-  console.log(`💾 Fetching commits for ${owner}/${repo}`);
+  const params = { per_page: 100, sha: branch };
+  console.log(`💾 Fetching commits for ${owner}/${repo} (branch: ${branch})`);
   return await fetchPaginatedData<GithubCommitSummary>(
     commitsUrl,
     token,
@@ -348,7 +363,7 @@ async function fetchRepositoryCommits(
 }
 
 /**
- * Fetches detailed information for a single commit.
+ * Fetches detailed information for a single commit with timeout.
  */
 async function fetchCommitDetails(
   owner: string,
@@ -357,14 +372,29 @@ async function fetchCommitDetails(
   token: string | null = null,
 ): Promise<GithubCommitDetails | null> {
   const commitUrl = `${API_BASE_URL}/repos/${owner}/${repo}/commits/${commitSha}`;
-  const response = await makeGithubRequest(commitUrl, token);
 
-  if (response?.status === 200) {
-    // Small delay to avoid overwhelming the API with parallel requests
-    await sleep(100);
-    return response.data as GithubCommitDetails;
+  // Add timeout to prevent hanging
+  const timeoutMs = 60000; // 60 second timeout (some large commits take longer)
+  const timeoutPromise = new Promise<null>((_, reject) => {
+    setTimeout(() => reject(new Error(`Timeout fetching commit ${commitSha}`)), timeoutMs);
+  });
+
+  try {
+    const response = await Promise.race([
+      makeGithubRequest(commitUrl, token),
+      timeoutPromise,
+    ]);
+
+    if (response?.status === 200) {
+      // Small delay to avoid overwhelming the API with parallel requests
+      await sleep(100);
+      return response.data as GithubCommitDetails;
+    }
+    return null;
+  } catch (error) {
+    console.error(`   ⚠️ Failed to fetch commit ${commitSha.slice(0, 7)}: ${(error as Error).message}`);
+    return null;
   }
-  return null;
 }
 
 // --- Main Processing Function ---
@@ -373,12 +403,13 @@ async function fetchCommitDetails(
  * Processes a single repository and fetches contributor data.
  */
 async function processSingleRepository(
-  repoUrl: string,
+  repoConfig: RepoConfig,
   token: string | null = null,
 ): Promise<Record<string, ContributorIngestionData>> {
   const allContributorsMap: Record<string, ContributorIngestionData> = {};
+  const { url: repoUrl, branch = "master" } = repoConfig;
 
-  console.log(`\n🔍 Processing: ${repoUrl}`);
+  console.log(`\n🔍 Processing: ${repoUrl} (branch: ${branch})`);
   const parsedInfo = parseGithubUrl(repoUrl);
   if (!parsedInfo) return allContributorsMap;
 
@@ -412,7 +443,7 @@ async function processSingleRepository(
   }
 
   // Step 2: Fetch and Process Commits (PARALLELIZED VERSION)
-  const repoCommitsList = await fetchRepositoryCommits(owner, repo, token);
+  const repoCommitsList = await fetchRepositoryCommits(owner, repo, token, branch);
   const commitsAuthoredByUserInRepo: Record<string, StoredCommitData[]> = {};
   const authorDetailsCache: Record<
     string,
@@ -537,7 +568,7 @@ async function processSingleRepository(
         async ({ commitSha, authorUsername }, index) => {
           const globalIndex = batchStart + index + 1;
           console.log(
-            `💾 [${globalIndex}/${totalCommits}] Commit ${commitSha.slice(0, 7)} by ${authorUsername}`,
+            `💾 [${repo}] [${globalIndex}/${totalCommits}] Commit ${commitSha.slice(0, 7)} by ${authorUsername}`,
           );
           return await fetchCommitDetails(owner, repo, commitSha, token);
         },
@@ -692,16 +723,16 @@ async function processSingleRepository(
  * Processes multiple repositories and fetches contributor data in parallel.
  */
 async function processRepositories(
-  repoUrls: string[],
+  repoConfigs: RepoConfig[],
   token: string | null = null,
 ): Promise<Record<string, ContributorIngestionData>> {
   console.log(
-    `🚀 Processing ${repoUrls.length} repositories in parallel (concurrency: ${CONCURRENT_REPOS})...`,
+    `🚀 Processing ${repoConfigs.length} repositories in parallel (concurrency: ${CONCURRENT_REPOS})...`,
   );
 
   const repoResults = await processInParallel(
-    repoUrls,
-    async (repoUrl) => await processSingleRepository(repoUrl, token),
+    repoConfigs,
+    async (repoConfig) => await processSingleRepository(repoConfig, token),
     CONCURRENT_REPOS,
   );
 
@@ -709,6 +740,7 @@ async function processRepositories(
   const allContributorsMap: Record<string, ContributorIngestionData> = {};
 
   for (const repoContributorsMap of repoResults) {
+    if (!repoContributorsMap) continue; // Skip null results from failed repos
     for (const [username, contributorData] of Object.entries(
       repoContributorsMap,
     )) {
@@ -760,49 +792,39 @@ async function processInParallel<T, R>(
   items: T[],
   processor: (item: T, index: number) => Promise<R>,
   concurrency: number,
-): Promise<R[]> {
-  const results: (R | undefined)[] = new Array<R | undefined>(items.length);
-  const executing: Promise<void>[] = [];
+): Promise<(R | null)[]> {
+  const results: (R | null)[] = new Array<R | null>(items.length).fill(null);
   let index = 0;
 
   const executeNext = async (): Promise<void> => {
-    if (index >= items.length) return;
+    while (index < items.length) {
+      const currentIndex = index++;
+      const item = items[currentIndex];
+      if (item === undefined) continue;
 
-    const currentIndex = index++;
-    const item = items[currentIndex];
-    if (item === undefined) return;
-
-    const promise = processor(item, currentIndex)
-      .then((result) => {
+      try {
+        const result = await processor(item, currentIndex);
         results[currentIndex] = result;
-      })
-      .then(() => executeNext());
-
-    executing.push(promise);
-
-    await promise;
+      } catch (error) {
+        console.error(`   ⚠️ Error processing item ${currentIndex}:`, (error as Error).message);
+        results[currentIndex] = null;
+      }
+    }
   };
 
-  // Start initial batch
-  const initialBatch = Math.min(concurrency, items.length);
-  for (let i = 0; i < initialBatch; i++) {
-    executing.push(executeNext());
+  // Start concurrent workers
+  const workers: Promise<void>[] = [];
+  for (let i = 0; i < Math.min(concurrency, items.length); i++) {
+    workers.push(executeNext());
   }
 
-  await Promise.all(executing);
-  // All positions are filled by the processor, so we can safely assert the type
-  return results as R[];
+  await Promise.all(workers);
+  return results;
 }
 
 // --- Main Execution ---
 
 async function main(): Promise<void> {
-  const repositoryUrls: string[] = [
-    // "https://github.com/shashi-ntx/demo-repository-1",
-    // "https://github.com/remeda/remeda",
-    "https://github.com/shashi-ntx/test-clone-prism-reactjs"
-  ];
-
   if (!GITHUB_TOKEN) {
     console.log("⚠️  No GitHub token found - using unauthenticated requests");
     console.log("📉 Rate limits will be much lower");
@@ -830,7 +852,7 @@ async function main(): Promise<void> {
   let contributorsMap: Record<string, ContributorIngestionData>;
   try {
     contributorsMap = await processRepositories(
-      repositoryUrls,
+      REPOSITORIES,
       GITHUB_TOKEN,
     );
     console.log(`✅ Repository processing complete`);
@@ -893,7 +915,7 @@ async function main(): Promise<void> {
 
     // Write metadata and close
     const metadata = {
-      processed_repos: repositoryUrls,
+      processed_repos: REPOSITORIES,
       processing_time_seconds: ((endTime - startTime) / 1000).toFixed(2),
       commit_detail_limit_per_repo: MAX_COMMITS_TO_DETAIL_PER_REPO,
     };

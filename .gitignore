@@ -13,6 +13,9 @@
 /prisma/db.sqlite-journal
 db.sqlite
 
+# backup data files
+/data/summaries-backup/
+
 # next.js
 /.next/
 /out/

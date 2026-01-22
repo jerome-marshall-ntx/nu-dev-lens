@@ -1,0 +1,155 @@
+import { db } from "@/server/db";
+import { commits } from "@/server/db/schema";
+import type { StoredCommitData } from "@/types/github";
+import { eq } from "drizzle-orm";
+
+/**
+ * Processes items in parallel with a concurrency limit.
+ * This allows you to process many items efficiently without overwhelming the system.
+ */
+export async function processInParallel<T, R>(
+  items: T[],
+  processor: (item: T, index: number) => Promise<R>,
+  concurrency: number,
+): Promise<R[]> {
+  const results: (R | undefined)[] = new Array<R | undefined>(items.length);
+  const executing: Promise<void>[] = [];
+  let index = 0;
+
+  const executeNext = async (): Promise<void> => {
+    if (index >= items.length) return;
+
+    const currentIndex = index++;
+    const item = items[currentIndex];
+    if (item === undefined) return;
+
+    const promise = processor(item, currentIndex)
+      .then((result) => {
+        results[currentIndex] = result;
+      })
+      .catch((error) => {
+        console.error(`Error processing item ${currentIndex}:`, error);
+        results[currentIndex] = undefined;
+      })
+      .then(() => executeNext());
+
+    executing.push(promise);
+    await promise;
+  };
+
+  // Start initial batch
+  const initialBatch = Math.min(concurrency, items.length);
+  for (let i = 0; i < initialBatch; i++) {
+    executing.push(executeNext());
+  }
+
+  await Promise.all(executing);
+  return results.filter((r): r is R => r !== undefined);
+}
+
+/**
+ * Retries a function with exponential backoff.
+ * If a function fails, it waits a bit longer each time before trying again.
+ * This helps handle temporary network issues or rate limits gracefully.
+ */
+export async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  delayMs = 1000,
+): Promise<T> {
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries - 1) {
+        const waitTime = delayMs * Math.pow(2, attempt);
+        console.log(
+          `⚠️  Retry attempt ${attempt + 1}/${maxRetries} after ${waitTime}ms...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    }
+  }
+  throw lastError!;
+}
+
+/**
+ * Removes null bytes and other problematic characters from text.
+ * PostgreSQL doesn't allow null bytes (0x00) in text fields, and other
+ * control characters can cause issues with display or processing.
+ */
+function sanitizeForPostgres(text: string): string {
+  return (
+    text
+      // Remove null bytes (0x00) - PostgreSQL doesn't allow these in text
+      .replace(/\x00/g, "")
+      // Remove other problematic control characters (0x01-0x08, 0x0B, 0x0C, 0x0E-0x1F)
+      // We keep: tab (0x09), newline (0x0A), carriage return (0x0D)
+      .replace(/[\x01-\x08\x0B\x0C\x0E-\x1F]/g, "")
+      // Remove Unicode replacement character (often indicates encoding issues)
+      .replace(/\uFFFD/g, "")
+      // Remove zero-width characters that can cause invisible issues
+      .replace(/[\u200B-\u200D\uFEFF]/g, "")
+      // Normalize multiple spaces/newlines to single ones (cleanup)
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/ {2,}/g, " ")
+      // Trim whitespace from start and end
+      .trim()
+  );
+}
+
+/**
+ * Batch updates database records efficiently.
+ * Instead of updating one record at a time, this groups updates together
+ * to reduce database load and improve performance.
+ */
+export async function batchUpdateCommits(
+  updates: Array<{ id: number; summary: string }>,
+  batchSize = 50,
+): Promise<void> {
+  for (let i = 0; i < updates.length; i += batchSize) {
+    const batch = updates.slice(i, i + batchSize);
+    await Promise.all(
+      batch.map((update) =>
+        db
+          .update(commits)
+          .set({ summary: sanitizeForPostgres(update.summary) })
+          .where(eq(commits.id, update.id)),
+      ),
+    );
+  }
+}
+
+/**
+ * Builds repository context info for the AI prompt.
+ * Formats repository information in a structured way that helps the AI
+ * understand what repository the commit belongs to.
+ */
+export function buildRepositoryInfo(repo: {
+  name: string;
+  description: string | null;
+}): string {
+  const repoDescription = repo.description ?? "No description available.";
+
+  return `
+<repository_info>
+Repository: ${repo.name}
+
+${repoDescription}
+</repository_info>`;
+}
+
+/**
+ * Builds commit context info for the AI prompt.
+ * Formats commit data (message, files changed, diff) in a structured way
+ * that helps the AI understand what changes were made.
+ */
+export function buildCommitInfo(commit: StoredCommitData): string {
+  return `<commit_data>
+  <message>${commit.message}</message>
+  <files_changed>${commit.files_changed?.map((file) => `- ${file.filename} (${file.status})`).join("\n")}</files_changed>
+  <diff_patch>${JSON.stringify(commit.diff_patch ?? "")}</diff_patch>
+  </commit_data>`;
+}

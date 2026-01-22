@@ -27,6 +27,7 @@ export const repositories = createTable(
   (d) => ({
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     name: d.varchar({ length: 255 }).notNull(),
+    description: d.text(),
     avatarUrl: d.varchar({ length: 500 }).notNull(),
     url: d.varchar({ length: 500 }).notNull(),
     summary: d.text(), // Initially empty, populated by AI processing
