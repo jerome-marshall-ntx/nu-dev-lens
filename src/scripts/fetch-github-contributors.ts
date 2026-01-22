@@ -7,9 +7,8 @@ import type {
   GithubCommitDetails,
   GithubIssue,
   GithubUser,
-  IngestionOutputData,
   StoredCommitData,
-  StoredIssueData,
+  StoredIssueData
 } from "@/types/github";
 import axios, { type AxiosResponse } from "axios";
 import { config } from "dotenv";
@@ -54,8 +53,10 @@ const GITHUB_TOKEN = env.GITHUB_TOKEN;
 const GITHUB_API_VERSION = "2022-11-28";
 const API_BASE_URL = "https://api.github.com";
 const COMMIT_MESSAGE_MAX_LEN = 200;
-const MAX_COMMITS_TO_DETAIL_PER_REPO: number | null = 500;
+const MAX_COMMITS_TO_DETAIL_PER_REPO: number | null = 1000;
 const MAX_ISSUES_TO_DETAIL_PER_REPO: number | null = 500;
+// Batch size for processing commits (to avoid memory issues)
+const COMMIT_BATCH_SIZE = 200;
 // Concurrency limits for parallel processing
 // Rate limiter handles throttling, so we can use higher concurrency
 const CONCURRENT_ISSUE_DETAILS = 20; // Fetch 20 issue details in parallel
@@ -88,6 +89,15 @@ const IGNORED_FILE_PATTERNS = [
   /\.snapshots?\//i, // Matches 'snapshot/' or 'snapshots/' directory
   /\.snap(\.js|\.ts|\.json|\.cjs|\.mjs|\.jsx|\.tsx)?$/i, // snapshot files (Jest, etc)
   /__snapshots__\//i, // Jest-like convention for snapshot folders
+  // Image files
+  /\.png$/i,
+  /\.jpe?g$/i,
+  /\.gif$/i,
+  /\.svg$/i,
+  /\.ico$/i,
+  /\.webp$/i,
+  /\.bmp$/i,
+  /\.tiff?$/i,
 ];
 
 // --- Helper Functions ---
@@ -168,7 +178,7 @@ async function makeGithubRequest(
         if (retries > 0) {
           const resetTime = parseInt(
             (response.headers["x-ratelimit-reset"] as string) ??
-              (Date.now() / 1000 + 60).toString(),
+            (Date.now() / 1000 + 60).toString(),
           );
           const waitTime = Math.max(0, resetTime - Date.now() / 1000) + 5;
           console.log(`⏳ Rate limit hit, waiting ${waitTime.toFixed(0)}s...`);
@@ -678,102 +688,119 @@ async function processSingleRepository(
       }
     }
 
+    // Process commits in batches to avoid memory issues
+    const totalCommits = commitsToProcess.length;
+    const totalBatches = Math.ceil(totalCommits / COMMIT_BATCH_SIZE);
     console.log(
-      `💾 Fetching ${commitsToProcess.length} commit details in parallel (concurrency: ${CONCURRENT_COMMIT_DETAILS})...`,
+      `💾 Processing ${totalCommits} commits in ${totalBatches} batches of ${COMMIT_BATCH_SIZE}...`,
     );
 
-    // Fetch commit details in parallel
-    const commitDetailsResults = await processInParallel(
-      commitsToProcess,
-      async ({ commitSha, authorUsername }, index) => {
-        const limitStrCommits =
-          MAX_COMMITS_TO_DETAIL_PER_REPO !== null
-            ? `${MAX_COMMITS_TO_DETAIL_PER_REPO}`
-            : "all";
-        console.log(
-          `💾 [${index + 1}/${limitStrCommits}] Commit ${commitSha.slice(0, 7)} by ${authorUsername}`,
-        );
-        return await fetchCommitDetails(owner, repo, commitSha, token);
-      },
-      CONCURRENT_COMMIT_DETAILS,
-    );
+    let totalFailedCount = 0;
 
-    // Process fetched commit details
-    for (let i = 0; i < commitsToProcess.length; i++) {
-      const commitInfo = commitsToProcess[i];
-      if (!commitInfo) continue;
-      const detailedCommitData = commitDetailsResults[i];
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      const batchStart = batchIndex * COMMIT_BATCH_SIZE;
+      const batchEnd = Math.min(batchStart + COMMIT_BATCH_SIZE, totalCommits);
+      const batchCommits = commitsToProcess.slice(batchStart, batchEnd);
 
-      const simplifiedCommit: StoredCommitData = {
-        sha: commitInfo.commitSha,
-        url: commitInfo.commitSummary.html_url,
-        message: commitInfo.commitMessageSummary,
-        files_changed: null,
-        comment_count: null,
-        diff_patch: null,
-      };
+      console.log(
+        `\n📦 Batch ${batchIndex + 1}/${totalBatches}: Processing commits ${batchStart + 1}-${batchEnd}...`,
+      );
 
-      if (detailedCommitData) {
-        const files = detailedCommitData.files ?? [];
-        const commentCount = detailedCommitData.commit?.comment_count ?? 0;
+      // Fetch commit details for this batch in parallel
+      const batchResults = await processInParallel(
+        batchCommits,
+        async ({ commitSha, authorUsername }, index) => {
+          const globalIndex = batchStart + index + 1;
+          console.log(
+            `💾 [${globalIndex}/${totalCommits}] Commit ${commitSha.slice(0, 7)} by ${authorUsername}`,
+          );
+          return await fetchCommitDetails(owner, repo, commitSha, token);
+        },
+        CONCURRENT_COMMIT_DETAILS,
+      );
 
-        simplifiedCommit.comment_count = commentCount;
+      // Process this batch's results immediately
+      for (let i = 0; i < batchCommits.length; i++) {
+        const commitInfo = batchCommits[i];
+        if (!commitInfo) continue;
+        const detailedCommitData = batchResults[i];
 
-        // Filter out ignored files
-        const relevantFiles = files.filter(
-          (f) => f.filename && !shouldIgnoreFile(f.filename),
-        );
+        const simplifiedCommit: StoredCommitData = {
+          sha: commitInfo.commitSha,
+          url: commitInfo.commitSummary.html_url,
+          message: commitInfo.commitMessageSummary,
+          files_changed: null,
+          comment_count: null,
+          diff_patch: null,
+        };
 
-        simplifiedCommit.files_changed = relevantFiles
-          .map((f) => ({
-            filename: f.filename,
-            status: f.status,
-          }))
-          .filter((f) => f.filename);
+        if (detailedCommitData) {
+          const files = detailedCommitData.files ?? [];
+          const commentCount = detailedCommitData.commit?.comment_count ?? 0;
 
-        let combinedPatch = "";
-        for (const f of relevantFiles) {
-          if (f?.patch && typeof f.patch === "string" && f.patch) {
-            combinedPatch += `--- File: ${f.filename ?? "Unknown"} ---\n`;
-            combinedPatch += f.patch;
-            combinedPatch += "\n\n";
+          simplifiedCommit.comment_count = commentCount;
+
+          // Filter out ignored files
+          const relevantFiles = files.filter(
+            (f) => f.filename && !shouldIgnoreFile(f.filename),
+          );
+
+          simplifiedCommit.files_changed = relevantFiles
+            .map((f) => ({
+              filename: f.filename,
+              status: f.status,
+            }))
+            .filter((f) => f.filename);
+
+          let combinedPatch = "";
+          for (const f of relevantFiles) {
+            if (f?.patch && typeof f.patch === "string" && f.patch) {
+              combinedPatch += `--- File: ${f.filename ?? "Unknown"} ---\n`;
+              combinedPatch += f.patch;
+              combinedPatch += "\n\n";
+            }
+          }
+          simplifiedCommit.diff_patch = combinedPatch.trim() || null;
+
+          const ignoredCount = files.length - relevantFiles.length;
+          if (ignoredCount > 0) {
+            console.log(
+              `   🚫 Commit ${commitInfo.commitSha.slice(0, 7)}: Filtered ${ignoredCount} ignored file(s)`,
+            );
           }
         }
-        simplifiedCommit.diff_patch = combinedPatch.trim() || null;
 
-        const ignoredCount = files.length - relevantFiles.length;
-        if (ignoredCount > 0) {
-          console.log(
-            `   🚫 Commit ${commitInfo.commitSha.slice(0, 7)}: Filtered ${ignoredCount} ignored file(s)`,
+        commitsAuthoredByUserInRepo[commitInfo.authorUsername] ??= [];
+
+        const isDuplicate = commitsAuthoredByUserInRepo[
+          commitInfo.authorUsername
+        ]!.some((c) => c.sha === simplifiedCommit.sha);
+        if (!isDuplicate) {
+          commitsAuthoredByUserInRepo[commitInfo.authorUsername]!.push(
+            simplifiedCommit,
           );
         }
+
+        // Store author details
+        authorDetailsCache[commitInfo.authorUsername] ??= {
+          id: commitInfo.authorId,
+          url: commitInfo.authorUrl ?? "",
+          avatar_url: commitInfo.authorAvatarUrl ?? "",
+          is_github_user: commitInfo.isGitHubUser,
+        };
       }
 
-      commitsAuthoredByUserInRepo[commitInfo.authorUsername] ??= [];
+      const batchFailedCount = batchResults.filter((r) => r === null).length;
+      totalFailedCount += batchFailedCount;
 
-      const isDuplicate = commitsAuthoredByUserInRepo[
-        commitInfo.authorUsername
-      ]!.some((c) => c.sha === simplifiedCommit.sha);
-      if (!isDuplicate) {
-        commitsAuthoredByUserInRepo[commitInfo.authorUsername]!.push(
-          simplifiedCommit,
-        );
-      }
+      console.log(`✅ Batch ${batchIndex + 1}/${totalBatches} complete`);
 
-      // Store author details
-      authorDetailsCache[commitInfo.authorUsername] ??= {
-        id: commitInfo.authorId,
-        url: commitInfo.authorUrl ?? "",
-        avatar_url: commitInfo.authorAvatarUrl ?? "",
-        is_github_user: commitInfo.isGitHubUser,
-      };
+      // Clear batch data from memory
+      batchResults.length = 0;
     }
 
-    const failedCount =
-      commitDetailsResults.length -
-      commitDetailsResults.filter((r) => r !== null).length;
-    if (failedCount > 0) {
-      console.log(`⚠️  Failed to fetch ${failedCount} commit(s)`);
+    if (totalFailedCount > 0) {
+      console.log(`⚠️  Failed to fetch ${totalFailedCount} commit(s) total`);
     }
   } else {
     console.log(`📭 No commits found`);
@@ -955,7 +982,8 @@ async function processInParallel<T, R>(
 async function main(): Promise<void> {
   const repositoryUrls: string[] = [
     // "https://github.com/shashi-ntx/demo-repository-1",
-    "https://github.com/remeda/remeda",
+    // "https://github.com/remeda/remeda",
+    "https://github.com/shashi-ntx/test-clone-prism-reactjs"
   ];
 
   if (!GITHUB_TOKEN) {
@@ -986,28 +1014,31 @@ async function main(): Promise<void> {
   }
 
   const startTime = Date.now();
-  const contributorsMap = await processRepositories(
-    repositoryUrls,
-    GITHUB_TOKEN,
-  );
+  console.log(`🔄 Starting repository processing...`);
+
+  let contributorsMap: Record<string, ContributorIngestionData>;
+  try {
+    contributorsMap = await processRepositories(
+      repositoryUrls,
+      GITHUB_TOKEN,
+    );
+    console.log(`✅ Repository processing complete`);
+  } catch (error) {
+    const err = error as Error;
+    console.error(`❌ Processing failed: ${err.message}`);
+    console.error(err.stack);
+    return;
+  }
+
   const endTime = Date.now();
 
+  console.log(`🔄 Sorting contributors...`);
   const finalContributorList = Object.values(contributorsMap);
   finalContributorList.sort((a, b) =>
     (a.username || "")
       .toLowerCase()
       .localeCompare((b.username || "").toLowerCase()),
   );
-
-  const outputData: IngestionOutputData = {
-    contributors: finalContributorList,
-    metadata: {
-      processed_repos: repositoryUrls,
-      processing_time_seconds: ((endTime - startTime) / 1000).toFixed(2),
-      commit_detail_limit_per_repo: MAX_COMMITS_TO_DETAIL_PER_REPO,
-      issue_detail_limit_per_repo: MAX_ISSUES_TO_DETAIL_PER_REPO,
-    },
-  };
 
   console.log(
     `\n✅ Processing completed in ${((endTime - startTime) / 1000).toFixed(1)}s`,
@@ -1016,17 +1047,57 @@ async function main(): Promise<void> {
 
   const outputFilename =
     "github_contributors_simplified_issues_commits_v4.json";
+  const outputPath = `./data/${outputFilename}`;
+
   try {
-    console.log(`💾 Saving data to ${outputFilename}...`);
-    await fs.writeFile(
-      `./data/${outputFilename}`,
-      JSON.stringify(outputData, null, 2),
-      "utf-8",
-    );
+    console.log(`💾 Saving data to ${outputFilename} (streaming)...`);
+
+    // Stream write to avoid memory issues with large JSON
+    const writeStream = await fs.open(outputPath, "w");
+
+    // Write opening
+    await writeStream.write('{\n  "contributors": [\n');
+
+    // Write each contributor individually
+    for (let i = 0; i < finalContributorList.length; i++) {
+      const contributor = finalContributorList[i];
+      const contributorJson = JSON.stringify(contributor, null, 4)
+        .split('\n')
+        .map(line => '    ' + line)
+        .join('\n');
+
+      await writeStream.write(contributorJson);
+
+      if (i < finalContributorList.length - 1) {
+        await writeStream.write(',\n');
+      } else {
+        await writeStream.write('\n');
+      }
+
+      // Log progress every 10 contributors
+      if ((i + 1) % 10 === 0) {
+        console.log(`   📝 Written ${i + 1}/${finalContributorList.length} contributors`);
+      }
+    }
+
+    // Write metadata and close
+    const metadata = {
+      processed_repos: repositoryUrls,
+      processing_time_seconds: ((endTime - startTime) / 1000).toFixed(2),
+      commit_detail_limit_per_repo: MAX_COMMITS_TO_DETAIL_PER_REPO,
+      issue_detail_limit_per_repo: MAX_ISSUES_TO_DETAIL_PER_REPO,
+    };
+
+    await writeStream.write('  ],\n');
+    await writeStream.write(`  "metadata": ${JSON.stringify(metadata, null, 4).split('\n').map((l, i) => i === 0 ? l : '  ' + l).join('\n')}\n`);
+    await writeStream.write('}\n');
+
+    await writeStream.close();
     console.log(`✅ Data saved successfully`);
   } catch (error) {
     const err = error as Error;
     console.log(`❌ Save error: ${err.message}`);
+    console.error(err.stack);
   }
 
   const usersWithNoWorks = finalContributorList.filter((c) => !c.works?.length);
@@ -1054,5 +1125,6 @@ export {
   fetchRepositoryIssuesList,
   makeGithubRequest,
   parseGithubUrl,
-  processRepositories,
+  processRepositories
 };
+
