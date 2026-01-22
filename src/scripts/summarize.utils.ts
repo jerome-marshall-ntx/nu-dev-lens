@@ -201,7 +201,7 @@ export async function batchUpdateContributors(
  * Formats commit summaries in a structured way for the AI to synthesize.
  */
 export function buildRepositoryWorkInput(
-  repoName: string,
+  repositoryInfo: string,
   commitSummaries: string[],
 ): string {
   const validSummaries = commitSummaries.filter(
@@ -213,7 +213,7 @@ export function buildRepositoryWorkInput(
   }
 
   return `<repository_work_input>
-Repository: ${repoName}
+${repositoryInfo}
 
 Commit summaries:
 ${validSummaries.map((summary, idx) => `${idx + 1}. ${summary}`).join("\n\n")}

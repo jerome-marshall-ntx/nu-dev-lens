@@ -94,7 +94,7 @@ Create a coherent synthesis of what the contributor focused on in this repositor
 
 <input_format>
 You will receive:
-- Repository name (for context)
+- Repository Info (for context)
 - A list of commit summaries, each containing:
   - Description of the change
   - "Expertise:" tags from that commit
