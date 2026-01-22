@@ -1,5 +1,5 @@
 import { db } from "@/server/db";
-import { commits } from "@/server/db/schema";
+import { commits, contributors, repositoryWorks } from "@/server/db/schema";
 import type { StoredCommitData } from "@/types/github";
 import { eq } from "drizzle-orm";
 
@@ -152,4 +152,97 @@ export function buildCommitInfo(commit: StoredCommitData): string {
   <files_changed>${commit.files_changed?.map((file) => `- ${file.filename} (${file.status})`).join("\n")}</files_changed>
   <diff_patch>${JSON.stringify(commit.diff_patch ?? "")}</diff_patch>
   </commit_data>`;
+}
+
+/**
+ * Batch updates repository work summaries efficiently.
+ * Groups updates together to reduce database load and improve performance.
+ */
+export async function batchUpdateRepositoryWorks(
+  updates: Array<{ id: number; summary: string }>,
+  batchSize = 50,
+): Promise<void> {
+  for (let i = 0; i < updates.length; i += batchSize) {
+    const batch = updates.slice(i, i + batchSize);
+    await Promise.all(
+      batch.map((update) =>
+        db
+          .update(repositoryWorks)
+          .set({ summary: sanitizeForPostgres(update.summary) })
+          .where(eq(repositoryWorks.id, update.id)),
+      ),
+    );
+  }
+}
+
+/**
+ * Batch updates contributor summaries efficiently.
+ * Groups updates together to reduce database load and improve performance.
+ */
+export async function batchUpdateContributors(
+  updates: Array<{ id: number; summary: string }>,
+  batchSize = 50,
+): Promise<void> {
+  for (let i = 0; i < updates.length; i += batchSize) {
+    const batch = updates.slice(i, i + batchSize);
+    await Promise.all(
+      batch.map((update) =>
+        db
+          .update(contributors)
+          .set({ summary: sanitizeForPostgres(update.summary) })
+          .where(eq(contributors.id, update.id)),
+      ),
+    );
+  }
+}
+
+/**
+ * Builds repository work input for Level 2 summarization.
+ * Formats commit summaries in a structured way for the AI to synthesize.
+ */
+export function buildRepositoryWorkInput(
+  repoName: string,
+  commitSummaries: string[],
+): string {
+  const validSummaries = commitSummaries.filter(
+    (s) => s?.trim() && !s.toLowerCase().includes("cannot summarize"),
+  );
+
+  if (validSummaries.length === 0) {
+    return "";
+  }
+
+  return `<repository_work_input>
+Repository: ${repoName}
+
+Commit summaries:
+${validSummaries.map((summary, idx) => `${idx + 1}. ${summary}`).join("\n\n")}
+</repository_work_input>`;
+}
+
+/**
+ * Builds contributor input for Level 3 summarization.
+ * Formats repository work summaries in a structured way for the AI to synthesize.
+ */
+export function buildContributorInput(
+  workSummaries: Array<{ repoName: string; summary: string }>,
+): string {
+  const validSummaries = workSummaries.filter(
+    (w) => w.summary?.trim() && !w.summary?.toLowerCase().includes("cannot summarize"),
+  );
+
+  if (validSummaries.length === 0) {
+    return "";
+  }
+
+  return `<contributor_input>
+Repository work summaries:
+
+${validSummaries
+      .map(
+        (work, idx) =>
+          `${idx + 1}. Repository: ${work.repoName}\n   ${work.summary}`,
+      )
+      .join("\n\n")}
+</contributor_input>`;
 }

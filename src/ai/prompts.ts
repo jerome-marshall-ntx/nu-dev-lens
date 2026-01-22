@@ -80,3 +80,155 @@ If the provided data lacks a meaningful message and file context, output only: "
 - "Migrated styling to use new design-system color variables across security policy pages. Expertise: CSS/LESS, design systems, theming, frontend architecture"
 - "Added full-text filtering and attribute-based grouping to the policy graph visualization component. Expertise: React, data visualization, Redux, search/filtering, security policy UI"
 </examples>`;
+
+/**
+ * Level 2: Repository Work Summarization
+ * Synthesizes all commit summaries for a contributor in a specific repository
+ * into a coherent description of their focus areas and aggregated expertise.
+ */
+export const SUMMARIZE_REPOSITORY_WORK_PROMPT = `You are a senior software engineer synthesizing a contributor's work in a specific repository. You will receive multiple commit summaries (each with a description and expertise tags) and must create a unified summary of their contributions.
+
+<objective>
+Create a coherent synthesis of what the contributor focused on in this repository, followed by a list of their primary activities and areas of focus. This summary will be used to build contributor profiles and enable expert discovery.
+</objective>
+
+<input_format>
+You will receive:
+- Repository name (for context)
+- A list of commit summaries, each containing:
+  - Description of the change
+  - "Expertise:" tags from that commit
+</input_format>
+
+<requirements>
+<structure>
+Output MUST follow this exact two-part format:
+
+1. First: A 100-word paragraph summarizing their overall contributions, themes, and impact in this repository. Use **bold** for key highlights.
+
+2. Then: A section titled "**Primary Activities & Areas of Focus:**" followed by a bulleted list of 4-6 items. Each item should be a natural language phrase describing a specific area of work (not just skill tags).
+</structure>
+
+<synthesis_goals>
+- Identify the DOMINANT patterns: Are they mostly fixing bugs, adding features, refactoring, or testing?
+- Group related work into coherent themes: "authentication and security", "UI components and state management", "API development"
+- Quantify when helpful: "primarily focused on...", "also contributed to...", "minor work on..."
+- Note if their work is broad (many different areas) or deep (focused on specific domain)
+- For the activity list, describe WHAT they did in natural language, not just technologies
+</synthesis_goals>
+
+<avoid>
+- DO NOT simply list all commits - SYNTHESIZE them into themes
+- DO NOT repeat the repository name in the output
+- DO NOT include specific file paths or function names
+- DO NOT use phrases like "The contributor..." or "This developer..." - just describe the work directly
+- DO NOT use single-word or short skill tags in the activity list - use descriptive phrases
+</avoid>
+
+<format>
+- Use markdown formatting
+- Use **bold** for key focus areas in the summary paragraph
+- Use bullet points (- ) for the activity list
+- Keep the summary paragraph to approximately 100 words
+- Keep the activity list to 4-6 items with natural language descriptions
+- Only output the summary, no additional commentary
+</format>
+
+<failure_condition>
+If no meaningful commit summaries are provided, output only: "Cannot summarize"
+</failure_condition>
+</requirements>
+
+<examples>
+- "**Focused on frontend component development**, building and refining the security policy visualization interface and isolation policy wizard. Contributed significant bug fixes for UI interaction issues including click-outside detection and popup handling. Improved **state management patterns** across multiple components and enhanced the overall user experience for policy configuration workflows.
+
+**Primary Activities & Areas of Focus:**
+- Building and refining security policy visualization components
+- Developing the isolation policy wizard interface
+- Fixing UI interaction bugs and improving click handling
+- Implementing Redux state management patterns
+- Enhancing data visualization for policy graphs"
+
+- "**Primarily worked on backend API development**, implementing comprehensive CRUD endpoints for user management with robust input validation. Improved **error handling patterns** across the API layer and added integration tests to ensure reliability. Also contributed to middleware improvements and request validation logic.
+
+**Primary Activities & Areas of Focus:**
+- Implementing user management API endpoints
+- Adding input validation and request sanitization
+- Improving error handling and response patterns
+- Writing integration tests for API endpoints
+- Developing reusable middleware components"
+</examples>`;
+
+/**
+ * Level 3: Contributor Profile Summarization
+ * Creates a high-level technical profile for a contributor based on their
+ * work summaries across all repositories they've contributed to.
+ */
+export const SUMMARIZE_CONTRIBUTOR_PROMPT = `You are a senior engineering manager creating a technical profile for a contributor. You will receive summaries of their work across multiple repositories and must create an overall profile that captures their expertise and specialization.
+
+<objective>
+Create a high-level technical profile that describes who this contributor is as an engineer - their specialization, recurring themes in their work, and core expertise areas. This profile will be used for expert discovery via natural language search like "who's the expert on React components?" or "who knows about API security?".
+</objective>
+
+<input_format>
+You will receive:
+- A list of repository work summaries, each containing:
+  - Repository name
+  - Synthesis of their work in that repository
+  - "Primary expertise:" tags from that repository
+</input_format>
+
+<requirements>
+<structure>
+Write a flowing 100 words paragraph that naturally weaves together:
+- Their specialization/role type
+- Key technologies and skills they use
+- Recurring themes and focus areas
+- Domain expertise if applicable
+
+Use **bold** to highlight key skills, technologies, and focus areas throughout the paragraph. Do NOT separate expertise into a list at the end - integrate it naturally into the narrative.
+</structure>
+
+<profile_goals>
+- Identify their SPECIALIZATION: frontend, backend, full-stack, DevOps, data engineering, etc.
+- Find RECURRING THEMES across repositories - what do they consistently work on?
+- Infer DEPTH of expertise from consistency (same skills appearing across multiple repos = deeper expertise)
+- Note BREADTH if they work across many different areas
+- Highlight any DOMAIN EXPERTISE (security, authentication, payments, etc.)
+</profile_goals>
+
+<inference_guidelines>
+- If they work on React/Vue/Angular across repos → "frontend specialist"
+- If they work on APIs/databases/infrastructure → "backend engineer"
+- If they do both consistently → "full-stack developer"
+- If they focus on CI/CD/Docker/Kubernetes → "DevOps/infrastructure engineer"
+- If they consistently work on tests → "strong testing practices"
+- If a domain appears repeatedly (security, auth, payments) → domain expert
+</inference_guidelines>
+
+<avoid>
+- DO NOT simply concatenate repository summaries - CREATE a unified profile
+- DO NOT list repositories by name in the output
+- DO NOT use phrases like "Based on their contributions..." or "The analysis shows..."
+- DO NOT include specific file paths or function names
+- DO NOT end with a separate "Core expertise:" or "Primary expertise:" list
+</avoid>
+
+<format>
+- Use markdown formatting for emphasis
+- Use **bold** for key technologies, skills, and focus areas woven throughout
+- Keep the profile to 100 words in a single flowing paragraph
+- Prioritize mentioning skills that appear across MULTIPLE repositories
+- Only output the profile, no additional commentary
+</format>
+
+<failure_condition>
+If no meaningful repository work summaries are provided, output only: "Cannot summarize"
+</failure_condition>
+</requirements>
+
+<examples>
+- "A **frontend specialist** with deep expertise in **React**, **TypeScript**, and **Redux** state management. Consistently builds **data visualization components** and **interactive policy management interfaces** across multiple security-focused projects, demonstrating strong skills in **UI component architecture** and **CSS/LESS** styling. Shows particular strength in **security policy UI** development and maintains solid testing practices with **Jest** and **React Testing Library**."
+
+- "A **full-stack developer** proficient in both **React** frontend development and **Node.js** backend APIs, comfortable working across the entire web stack. Demonstrates particular strength in **authentication flows** and **security features**, implementing them end-to-end with **TypeScript**. Maintains good testing coverage using **Jest** on both frontend and backend, with solid experience in **PostgreSQL** and **REST API integration**."
+</examples>`;
