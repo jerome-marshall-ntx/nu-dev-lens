@@ -2,6 +2,8 @@ import { db } from "@/server/db";
 import { commits, contributors, repositoryWorks } from "@/server/db/schema";
 import type { StoredCommitData } from "@/types/github";
 import { eq } from "drizzle-orm";
+import { estimateTokenCount, isWithinTokenLimit } from "tokenx";
+import { MAX_INPUT_TOKENS, TOKEN_BUFFER } from "./summarize.config";
 
 /**
  * Processes items in parallel with a concurrency limit.
@@ -245,4 +247,132 @@ ${validSummaries
       )
       .join("\n\n")}
 </contributor_input>`;
+}
+
+// ============================================================================
+// Token Estimation & Chunking Utilities
+// ============================================================================
+
+/**
+ * Checks if text is within the context window limit.
+ * Uses tokenx library for fast, accurate token estimation.
+ *
+ * @param text - The text to check
+ * @param limit - Token limit (defaults to MAX_INPUT_TOKENS minus buffer)
+ * @returns true if text fits within the limit
+ */
+export function isWithinContextLimit(
+  text: string,
+  limit: number = MAX_INPUT_TOKENS - TOKEN_BUFFER,
+): boolean {
+  return isWithinTokenLimit(text, limit);
+}
+
+/**
+ * Estimates the number of tokens in a text string.
+ * Wrapper around tokenx for convenience.
+ *
+ * @param text - The text to estimate tokens for
+ * @returns Estimated token count
+ */
+export function getTokenCount(text: string): number {
+  return estimateTokenCount(text);
+}
+
+/**
+ * Splits commit summaries into chunks that fit within the token limit.
+ * Uses a greedy algorithm: keeps adding summaries to a chunk until
+ * adding the next one would exceed the limit.
+ *
+ * @param summaries - Array of commit summary strings
+ * @param maxTokens - Maximum tokens per chunk (defaults to MAX_INPUT_TOKENS minus buffer)
+ * @param minSummariesPerChunk - Minimum summaries per chunk to avoid too many chunks
+ * @returns Array of summary arrays, each fitting within the token limit
+ */
+export function splitCommitSummariesByTokens(
+  summaries: string[],
+  maxTokens: number = MAX_INPUT_TOKENS - TOKEN_BUFFER,
+  minSummariesPerChunk = 10,
+): string[][] {
+  if (summaries.length === 0) {
+    return [];
+  }
+
+  // Filter out invalid summaries first
+  const validSummaries = summaries.filter(
+    (s) => s?.trim() && !s.toLowerCase().includes("cannot summarize"),
+  );
+
+  if (validSummaries.length === 0) {
+    return [];
+  }
+
+  // If all summaries fit in one chunk, return as-is
+  const allSummariesText = validSummaries.join("\n\n");
+  if (isWithinTokenLimit(allSummariesText, maxTokens)) {
+    return [validSummaries];
+  }
+
+  const chunks: string[][] = [];
+  let currentChunk: string[] = [];
+  let currentTokens = 0;
+
+  for (const summary of validSummaries) {
+    const summaryTokens = estimateTokenCount(summary);
+    // Add ~10 tokens for formatting (numbering, newlines)
+    const summaryWithOverhead = summaryTokens + 10;
+
+    // Check if adding this summary would exceed the limit
+    // But always add at least minSummariesPerChunk to avoid too many tiny chunks
+    const wouldExceedLimit = currentTokens + summaryWithOverhead > maxTokens;
+    const hasMinimumSummaries = currentChunk.length >= minSummariesPerChunk;
+
+    if (wouldExceedLimit && hasMinimumSummaries) {
+      // Start a new chunk
+      chunks.push(currentChunk);
+      currentChunk = [summary];
+      currentTokens = summaryWithOverhead;
+    } else {
+      // Add to current chunk
+      currentChunk.push(summary);
+      currentTokens += summaryWithOverhead;
+    }
+  }
+
+  // Don't forget the last chunk
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+}
+
+/**
+ * Builds input text for a chunk of commit summaries (for intermediate summarization).
+ * Similar to buildRepositoryWorkInput but used for chunked processing.
+ *
+ * @param repositoryInfo - Repository context info
+ * @param commitSummaries - Array of commit summaries for this chunk
+ * @param chunkIndex - Current chunk number (1-based)
+ * @param totalChunks - Total number of chunks
+ * @returns Formatted input string for the AI
+ */
+export function buildChunkInput(
+  repositoryInfo: string,
+  commitSummaries: string[],
+  chunkIndex: number,
+  totalChunks: number,
+): string {
+  if (commitSummaries.length === 0) {
+    return "";
+  }
+
+  return `<chunk_input>
+${repositoryInfo}
+
+This is chunk ${chunkIndex} of ${totalChunks} containing ${commitSummaries.length} commit summaries.
+
+Commit summaries:
+${commitSummaries.map((summary, idx) => `${idx + 1}. ${summary}`).join("\n\n")}
+</chunk_input>`;
 }

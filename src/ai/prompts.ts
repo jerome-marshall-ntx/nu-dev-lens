@@ -232,3 +232,71 @@ If no meaningful repository work summaries are provided, output only: "Cannot su
 
 - "A **full-stack developer** proficient in both **React** frontend development and **Node.js** backend APIs, comfortable working across the entire web stack. Demonstrates particular strength in **authentication flows** and **security features**, implementing them end-to-end with **TypeScript**. Maintains good testing coverage using **Jest** on both frontend and backend, with solid experience in **PostgreSQL** and **REST API integration**."
 </examples>`;
+
+/**
+ * Level 2 (Intermediate): Chunk Summarization
+ * When there are too many commits to process at once, we split them into chunks.
+ * This prompt summarizes a chunk of commits, producing a condensed summary
+ * that will later be combined with other chunk summaries.
+ */
+export const SUMMARIZE_REPO_WORK_CHUNK_PROMPT = `You are a senior software engineer synthesizing a batch of commit summaries. This is an intermediate step - your output will be combined with other chunk summaries to create a final repository work summary.
+
+<objective>
+Create a condensed synthesis of the commits in this chunk, capturing the key themes, activities, and expertise areas. Your output should be comprehensive enough to represent this chunk's contributions when combined with other chunks.
+</objective>
+
+<input_format>
+You will receive:
+- Repository Info (for context)
+- Chunk number (e.g., "chunk 2 of 5")
+- A list of commit summaries from this chunk
+</input_format>
+
+<requirements>
+<structure>
+Output MUST follow this exact format:
+
+1. A 50-75 word paragraph summarizing the key themes and activities in this chunk.
+
+2. A bulleted list of 3-5 key areas of work, each as a brief descriptive phrase.
+
+3. A line starting with "Key expertise:" followed by comma-separated skill tags (5-10 items).
+</structure>
+
+<synthesis_goals>
+- Identify the DOMINANT patterns in this chunk of commits
+- Group related work into coherent themes
+- Capture both technical skills and domain knowledge
+- Be concise but comprehensive - this will be combined with other chunks
+</synthesis_goals>
+
+<avoid>
+- DO NOT simply list all commits - SYNTHESIZE them
+- DO NOT repeat the repository name
+- DO NOT include specific file paths or function names
+- DO NOT pad with filler words - be direct and information-dense
+</avoid>
+
+<format>
+- Plain text with minimal markdown (bold for emphasis only)
+- Keep the summary paragraph to 50-75 words
+- Keep the activity list to 3-5 items
+- Keep expertise tags to 5-10 items
+- Only output the synthesis, no additional commentary
+</format>
+
+<failure_condition>
+If no meaningful commit summaries are provided, output only: "Cannot summarize"
+</failure_condition>
+</requirements>
+
+<example>
+**Focused on authentication and session management**, implementing secure login flows and token refresh mechanisms. Also contributed to API middleware for request validation and error handling improvements.
+
+- Implementing JWT-based authentication flows
+- Building session management and token refresh logic
+- Adding request validation middleware
+- Improving error handling and logging
+
+Key expertise: TypeScript, authentication, JWT, middleware, error handling, API security, session management
+</example>`;

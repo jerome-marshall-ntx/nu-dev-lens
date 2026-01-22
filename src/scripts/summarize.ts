@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { summarizeRepositoryWorks } from "./summarize.repository-works";
+import { summarizeContributors } from "./summarize.contributors";
 
 config();
 
@@ -16,10 +16,10 @@ const main = async () => {
     // await summarizeCommits();
 
     // Phase 2: Summarize repository works (Level 2) - depends on Level 1
-    await summarizeRepositoryWorks();
+    // await summarizeRepositoryWorks();
 
     // Phase 3: Summarize contributors (Level 3) - depends on Level 2
-    // await summarizeContributors();
+    await summarizeContributors();
 
     console.log("\n🎉 All summarization complete!");
     process.exit(0);

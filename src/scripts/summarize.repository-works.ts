@@ -1,5 +1,8 @@
 import { summarizationModel } from "@/ai/models";
-import { SUMMARIZE_REPOSITORY_WORK_PROMPT } from "@/ai/prompts";
+import {
+  SUMMARIZE_REPO_WORK_CHUNK_PROMPT,
+  SUMMARIZE_REPOSITORY_WORK_PROMPT,
+} from "@/ai/prompts";
 import { db } from "@/server/db";
 import { commits, repositories, repositoryWorks } from "@/server/db/schema";
 import { generateText } from "ai";
@@ -13,10 +16,13 @@ import {
 } from "./summarize.config";
 import {
   batchUpdateRepositoryWorks,
+  buildChunkInput,
   buildRepositoryInfo,
   buildRepositoryWorkInput,
+  isWithinContextLimit,
   processInParallel,
   retryWithBackoff,
+  splitCommitSummariesByTokens,
 } from "./summarize.utils";
 
 /**
@@ -73,7 +79,8 @@ export async function summarizeRepositoryWorks(): Promise<void> {
         return undefined;
       }
 
-      const prompt = buildRepositoryWorkInput(buildRepositoryInfo(repository), commitSummaries);
+      const repositoryInfo = buildRepositoryInfo(repository);
+      const prompt = buildRepositoryWorkInput(repositoryInfo, commitSummaries);
 
       if (!prompt) {
         console.log(
@@ -82,12 +89,75 @@ export async function summarizeRepositoryWorks(): Promise<void> {
         return undefined;
       }
 
+      // Check if the prompt fits within context limit
+      if (isWithinContextLimit(prompt)) {
+        // Standard path: all commits fit in one request
+        const summary = await retryWithBackoff(
+          async () => {
+            const result = await generateText({
+              model: summarizationModel,
+              system: SUMMARIZE_REPOSITORY_WORK_PROMPT,
+              prompt,
+            });
+            return result.text;
+          },
+          MAX_RETRIES,
+          RETRY_DELAY_MS,
+        );
+
+        return { id: repoWork.id, summary };
+      }
+
+      // Chunked path: too many commits, need to split and summarize in stages
+      console.log(
+        `📊 Repository work ${repoWork.id} has ${commitSummaries.length} commits, chunking...`,
+      );
+
+      const chunks = splitCommitSummariesByTokens(commitSummaries);
+      console.log(`   Split into ${chunks.length} chunks`);
+
+      // Stage 1: Summarize each chunk
+      const chunkSummaries: string[] = [];
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        if (!chunk || chunk.length === 0) continue;
+
+        const chunkPrompt = buildChunkInput(
+          repositoryInfo,
+          chunk,
+          i + 1,
+          chunks.length,
+        );
+
+        const chunkSummary = await retryWithBackoff(
+          async () => {
+            const result = await generateText({
+              model: summarizationModel,
+              system: SUMMARIZE_REPO_WORK_CHUNK_PROMPT,
+              prompt: chunkPrompt,
+            });
+            return result.text;
+          },
+          MAX_RETRIES,
+          RETRY_DELAY_MS,
+        );
+
+        chunkSummaries.push(chunkSummary);
+        console.log(`   ✓ Chunk ${i + 1}/${chunks.length} summarized`);
+      }
+
+      // Stage 2: Combine chunk summaries into final summary
+      const combinedPrompt = buildRepositoryWorkInput(
+        repositoryInfo,
+        chunkSummaries,
+      );
+
       const summary = await retryWithBackoff(
         async () => {
           const result = await generateText({
             model: summarizationModel,
             system: SUMMARIZE_REPOSITORY_WORK_PROMPT,
-            prompt,
+            prompt: combinedPrompt,
           });
           return result.text;
         },
@@ -95,6 +165,7 @@ export async function summarizeRepositoryWorks(): Promise<void> {
         RETRY_DELAY_MS,
       );
 
+      console.log(`   ✓ Final summary generated from ${chunks.length} chunks`);
       return { id: repoWork.id, summary };
     },
     CONCURRENT_REQUESTS,
