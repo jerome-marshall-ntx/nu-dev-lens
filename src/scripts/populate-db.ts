@@ -20,12 +20,10 @@ import { db } from "@/server/db";
 import {
   commits,
   contributors,
-  issues,
   repositories,
   repositoryWorks,
   type InsertCommit,
   type InsertContributor,
-  type InsertIssue,
   type InsertRepository,
 } from "@/server/db/schema";
 import type { IngestionOutputData } from "@/types/github";
@@ -76,9 +74,6 @@ async function clearDatabase(): Promise<void> {
   await db.delete(commits);
   console.log("  ✓ Commits cleared");
 
-  await db.delete(issues);
-  console.log("  ✓ Issues cleared");
-
   await db.delete(repositoryWorks);
   console.log("  ✓ Repository works cleared");
 
@@ -123,7 +118,6 @@ async function populateDatabase(
     contributorsCreated: 0,
     repositoriesCreated: 0,
     repositoryWorksCreated: 0,
-    issuesCreated: 0,
     commitsCreated: 0,
   };
 
@@ -278,10 +272,9 @@ async function populateDatabase(
 
   console.log(`  ✓ Processed ${repoCache.size} repositories`);
 
-  // Step 4: Process repository works, issues, and commits
-  console.log("🔗 Step 4: Processing repository works, issues, and commits...");
+  // Step 4: Process repository works and commits
+  console.log("🔗 Step 4: Processing repository works and commits...");
   const repositoryWorkCache = new Map<string, number>(); // "repoId-contributorId" -> work ID
-  const issuesToInsert: InsertIssue[] = [];
   const commitsToInsert: InsertCommit[] = [];
 
   for (const contributorData of contributorsData) {
@@ -351,20 +344,6 @@ async function populateDatabase(
         repositoryWorkCache.set(workKey, repositoryWorkId);
       }
 
-      // Collect issues for batch insert
-      const issuesData = workData.issues || [];
-      for (const issueData of issuesData) {
-        const issueUrl = issueData.html_url;
-        if (!issueUrl) continue;
-
-        issuesToInsert.push({
-          repositoryWorkId: repositoryWorkId,
-          url: issueUrl,
-          rawData: issueData,
-          summary: null,
-        });
-      }
-
       // Collect commits for batch insert
       const commitsData = workData.commits || [];
       for (const commitData of commitsData) {
@@ -381,29 +360,10 @@ async function populateDatabase(
     }
   }
 
-  // Step 5: Batch insert issues
-  // Deduplicate by (repositoryWorkId, url) before inserting to avoid duplicates
-  console.log(`📋 Step 5: Batch inserting ${issuesToInsert.length} issues...`);
-  const issuesMap = new Map<string, InsertIssue>();
-  for (const issue of issuesToInsert) {
-    const key = `${issue.repositoryWorkId}-${issue.url}`;
-    if (!issuesMap.has(key)) {
-      issuesMap.set(key, issue);
-    }
-  }
-
-  const uniqueIssues = Array.from(issuesMap.values());
-  for (const batch of chunk(uniqueIssues, BATCH_SIZE)) {
-    await db.insert(issues).values(batch);
-    stats.issuesCreated += batch.length;
-  }
-
-  console.log(`  ✓ Inserted ${stats.issuesCreated} issues`);
-
-  // Step 6: Batch insert commits
+  // Step 5: Batch insert commits
   // Deduplicate by (repositoryWorkId, url) before inserting to avoid duplicates
   console.log(
-    `💾 Step 6: Batch inserting ${commitsToInsert.length} commits...`,
+    `💾 Step 5: Batch inserting ${commitsToInsert.length} commits...`,
   );
   const commitsMap = new Map<string, InsertCommit>();
   for (const commit of commitsToInsert) {
@@ -428,7 +388,6 @@ async function populateDatabase(
   console.log(`  • Contributors upserted: ${stats.contributorsCreated}`);
   console.log(`  • Repositories upserted: ${stats.repositoriesCreated}`);
   console.log(`  • Repository works created: ${stats.repositoryWorksCreated}`);
-  console.log(`  • Issues upserted: ${stats.issuesCreated}`);
   console.log(`  • Commits upserted: ${stats.commitsCreated}`);
   console.log();
 }
@@ -503,9 +462,6 @@ async function main(): Promise<void> {
     );
     console.log(
       `  • Commit limit per repo: ${data.metadata.commit_detail_limit_per_repo ?? "ALL"}`,
-    );
-    console.log(
-      `  • Issue limit per repo: ${data.metadata.issue_detail_limit_per_repo ?? "ALL"}`,
     );
   }
 

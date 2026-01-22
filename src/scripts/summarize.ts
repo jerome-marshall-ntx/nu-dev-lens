@@ -1,7 +1,7 @@
 import { summarizationModel } from "@/ai/models";
-import { SUMMARIZE_COMMIT_PROMPT, SUMMARIZE_ISSUE_PROMPT } from "@/ai/prompts";
+import { SUMMARIZE_COMMIT_PROMPT } from "@/ai/prompts";
 import { db } from "@/server/db";
-import { commits, issues } from "@/server/db/schema";
+import { commits } from "@/server/db/schema";
 import { generateText } from "ai";
 import { config } from "dotenv";
 import { eq, isNull } from "drizzle-orm";
@@ -102,22 +102,6 @@ async function batchUpdateCommits(
   }
 }
 
-async function batchUpdateIssues(
-  updates: Array<{ id: number; summary: string }>,
-): Promise<void> {
-  for (let i = 0; i < updates.length; i += BATCH_UPDATE_SIZE) {
-    const batch = updates.slice(i, i + BATCH_UPDATE_SIZE);
-    await Promise.all(
-      batch.map((update) =>
-        db
-          .update(issues)
-          .set({ summary: update.summary })
-          .where(eq(issues.id, update.id)),
-      ),
-    );
-  }
-}
-
 const summarizeCommits = async () => {
   const commitsToSummarize = await db
     .select()
@@ -183,73 +167,9 @@ When analyzing commits that reference Remeda functions or patterns, recognize th
   );
 };
 
-const summarizeIssues = async () => {
-  const issuesToSummarize = await db
-    .select()
-    .from(issues)
-    .where(isNull(issues.summary));
-  const total = issuesToSummarize.length;
-  console.log(`Found ${total} issues without summaries.`);
-
-  if (total === 0) {
-    console.log("✅ No issues to summarize.");
-    return;
-  }
-
-  const startTime = Date.now();
-  const repositoryInfo = `
-<repository_info>
-This codebase uses Remeda, a "data-first" and "data-last" utility library designed for TypeScript.
-
-Key features:
-- First-class TypeScript support with specific types
-- Supports both data-first (\`R.filter(array, fn)\`) and data-last (\`R.filter(fn)(array)\`) approaches
-- Lazy evaluation with \`pipe\` and \`piped\`
-- Tree-shakable, supports CJS and ESM
-- Common pattern: \`R.pipe(data, R.operation1(), R.operation2())\`
-
-When analyzing commits that reference Remeda functions or patterns, recognize these as utility operations for data transformation, array manipulation, and functional programming patterns.
-</repository_info>`;
-
-  // Process issues in parallel
-  const summaries = await processInParallel(
-    issuesToSummarize,
-    async (issue, index) => {
-      const progress = ((index + 1) / total) * 100;
-      if ((index + 1) % 10 === 0 || index === 0) {
-        console.log(
-          `📝 [${index + 1}/${total}] (${progress.toFixed(1)}%) Processing issue ID ${issue.id}...`,
-        );
-      }
-
-      const summary = await retryWithBackoff(async () => {
-        const result = await generateText({
-          model: summarizationModel,
-          system: SUMMARIZE_ISSUE_PROMPT,
-          prompt: `${repositoryInfo}<issue_data>${JSON.stringify(issue.rawData)}</issue_data>`,
-        });
-        return result.text;
-      });
-
-      return { id: issue.id, summary };
-    },
-    CONCURRENT_REQUESTS,
-  );
-
-  // Batch update database
-  console.log(`💾 Updating ${summaries.length} issue summaries in database...`);
-  await batchUpdateIssues(summaries);
-
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(
-    `✅ Done summarizing ${summaries.length}/${total} issues in ${elapsed}s.`,
-  );
-};
-
 const main = async () => {
   try {
     await summarizeCommits();
-    // await summarizeIssues();
     console.log("\n🎉 All summarization complete!");
     process.exit(0);
   } catch (error) {

@@ -5,10 +5,8 @@ import { env } from "@/env";
 import type {
   ContributorIngestionData,
   GithubCommitDetails,
-  GithubIssue,
   GithubUser,
   StoredCommitData,
-  StoredIssueData
 } from "@/types/github";
 import axios, { type AxiosResponse } from "axios";
 import { config } from "dotenv";
@@ -54,12 +52,10 @@ const GITHUB_API_VERSION = "2022-11-28";
 const API_BASE_URL = "https://api.github.com";
 const COMMIT_MESSAGE_MAX_LEN = 200;
 const MAX_COMMITS_TO_DETAIL_PER_REPO: number | null = 1000;
-const MAX_ISSUES_TO_DETAIL_PER_REPO: number | null = 500;
 // Batch size for processing commits (to avoid memory issues)
 const COMMIT_BATCH_SIZE = 200;
 // Concurrency limits for parallel processing
 // Rate limiter handles throttling, so we can use higher concurrency
-const CONCURRENT_ISSUE_DETAILS = 20; // Fetch 20 issue details in parallel
 const CONCURRENT_COMMIT_DETAILS = 20; // Fetch 20 commit details in parallel
 const CONCURRENT_REPOS = 3; // Process 3 repositories in parallel
 
@@ -334,42 +330,6 @@ async function fetchContributorsFromRepo(
 }
 
 /**
- * Fetches a list of issue summaries for a specific repository.
- */
-async function fetchRepositoryIssuesList(
-  owner: string,
-  repo: string,
-  token: string | null = null,
-  state = "closed",
-): Promise<GithubIssue[] | null> {
-  const issuesUrl = `${API_BASE_URL}/repos/${owner}/${repo}/issues`;
-  const params = { state, per_page: 100 };
-  console.log(`📋 Fetching ${state} issues for ${owner}/${repo}`);
-  return await fetchPaginatedData<GithubIssue>(issuesUrl, token, params);
-}
-
-/**
- * Fetches detailed information for a single issue.
- */
-async function fetchIssueDetails(
-  owner: string,
-  repo: string,
-  issueNumber: number,
-  token: string | null = null,
-): Promise<GithubIssue | null> {
-  const issueUrl = `${API_BASE_URL}/repos/${owner}/${repo}/issues/${issueNumber}`;
-  const acceptHeader = "application/vnd.github.raw+json";
-  const response = await makeGithubRequest(issueUrl, token, {}, acceptHeader);
-
-  if (response?.status === 200) {
-    // Small delay to avoid overwhelming the API with parallel requests
-    await sleep(100);
-    return response.data as GithubIssue;
-  }
-  return null;
-}
-
-/**
  * Fetches commit summaries for a specific repository.
  */
 async function fetchRepositoryCommits(
@@ -451,142 +411,7 @@ async function processSingleRepository(
     allContributorsMap[username].works ??= [];
   }
 
-  // Step 2: Fetch and Process Closed Issues (PARALLELIZED)
-  const repoClosedIssuesList = await fetchRepositoryIssuesList(
-    owner,
-    repo,
-    token,
-    "closed",
-  );
-  const issuesAssignedToUserInRepo: Record<string, StoredIssueData[]> = {};
-  const assigneeDetailsCache: Record<
-    string,
-    { id: number | null; url: string; avatar_url: string }
-  > = {};
-
-  if (repoClosedIssuesList) {
-    const limitStr =
-      MAX_ISSUES_TO_DETAIL_PER_REPO !== null
-        ? `${MAX_ISSUES_TO_DETAIL_PER_REPO}`
-        : "all";
-    console.log(
-      `📋 Processing ${repoClosedIssuesList.length} issues (limit: ${limitStr})`,
-    );
-
-    // Filter and prepare issues for parallel fetching
-    const issuesToFetch: Array<{
-      issueNumber: number;
-      index: number;
-    }> = [];
-    let issuesDetailedCount = 0;
-
-    for (const issueSummaryData of repoClosedIssuesList) {
-      if ("pull_request" in issueSummaryData) continue;
-      if (issueSummaryData.state !== "closed") continue;
-
-      const issueNumber = issueSummaryData.number;
-      if (!issueNumber) continue;
-
-      const shouldFetchDetails =
-        MAX_ISSUES_TO_DETAIL_PER_REPO === null ||
-        issuesDetailedCount < MAX_ISSUES_TO_DETAIL_PER_REPO;
-
-      if (!shouldFetchDetails) {
-        if (issuesDetailedCount === MAX_ISSUES_TO_DETAIL_PER_REPO) {
-          console.log(
-            `⏹️  Reached limit (${MAX_ISSUES_TO_DETAIL_PER_REPO}), skipping remaining issues`,
-          );
-          issuesDetailedCount++;
-        }
-        continue;
-      }
-
-      issuesToFetch.push({ issueNumber, index: issuesDetailedCount });
-      issuesDetailedCount++;
-    }
-
-    console.log(
-      `📋 Fetching ${issuesToFetch.length} issue details in parallel (concurrency: ${CONCURRENT_ISSUE_DETAILS})...`,
-    );
-
-    // Fetch issue details in parallel
-    const issueDetailsResults = await processInParallel(
-      issuesToFetch,
-      async ({ issueNumber }, index) => {
-        const limitStr =
-          MAX_ISSUES_TO_DETAIL_PER_REPO !== null
-            ? `${MAX_ISSUES_TO_DETAIL_PER_REPO}`
-            : "all";
-        console.log(`📋 [${index + 1}/${limitStr}] Issue #${issueNumber}`);
-        return await fetchIssueDetails(owner, repo, issueNumber, token);
-      },
-      CONCURRENT_ISSUE_DETAILS,
-    );
-
-    // Process fetched issue details
-    for (const detailedIssueData of issueDetailsResults) {
-      if (!detailedIssueData) continue;
-
-      // Create simplified issue object
-      const simplifiedIssueData: StoredIssueData = {
-        html_url: detailedIssueData.html_url,
-        number: detailedIssueData.number,
-        title: detailedIssueData.title,
-        body: detailedIssueData.body,
-        labels: detailedIssueData.labels ?? [],
-        comments: detailedIssueData.comments ?? 0,
-        state_reason: detailedIssueData.state_reason,
-      };
-
-      const issueDataToStore = simplifiedIssueData;
-
-      let assigneesList = detailedIssueData.assignees ?? [];
-      if (assigneesList.length === 0 && detailedIssueData.assignee) {
-        assigneesList = [detailedIssueData.assignee];
-      }
-
-      if (assigneesList.length === 0) continue;
-
-      for (const assignee of assigneesList) {
-        if (
-          assignee &&
-          typeof assignee === "object" &&
-          assignee.login &&
-          assignee.type === "User"
-        ) {
-          const assigneeUsername = assignee.login;
-          if (!assigneeUsername) continue;
-
-          issuesAssignedToUserInRepo[assigneeUsername] ??= [];
-
-          // Avoid adding duplicate issues
-          const isDuplicate = issuesAssignedToUserInRepo[assigneeUsername].some(
-            (i) => i.number === issueDataToStore.number,
-          );
-          if (!isDuplicate) {
-            issuesAssignedToUserInRepo[assigneeUsername].push(issueDataToStore);
-          }
-
-          assigneeDetailsCache[assigneeUsername] ??= {
-            id: assignee.id,
-            url: assignee.html_url,
-            avatar_url: assignee.avatar_url,
-          };
-        }
-      }
-    }
-
-    const failedCount =
-      issueDetailsResults.length -
-      issueDetailsResults.filter((r) => r !== null).length;
-    if (failedCount > 0) {
-      console.log(`⚠️  Failed to fetch ${failedCount} issue(s)`);
-    }
-  } else {
-    console.log(`📭 No closed issues found`);
-  }
-
-  // Step 3: Fetch and Process Commits (PARALLELIZED VERSION)
+  // Step 2: Fetch and Process Commits (PARALLELIZED VERSION)
   const repoCommitsList = await fetchRepositoryCommits(owner, repo, token);
   const commitsAuthoredByUserInRepo: Record<string, StoredCommitData[]> = {};
   const authorDetailsCache: Record<
@@ -806,16 +631,13 @@ async function processSingleRepository(
     console.log(`📭 No commits found`);
   }
 
-  // Step 4: Integrate Issues and Commits into Contributor Works
+  // Step 3: Integrate Commits into Contributor Works
   const involvedUsersInRepo = new Set<string>();
   if (repoContributors) {
     repoContributors.forEach((c) => {
       if (c.login) involvedUsersInRepo.add(c.login);
     });
   }
-  Object.keys(issuesAssignedToUserInRepo).forEach((u) =>
-    involvedUsersInRepo.add(u),
-  );
   Object.keys(commitsAuthoredByUserInRepo).forEach((u) =>
     involvedUsersInRepo.add(u),
   );
@@ -824,8 +646,7 @@ async function processSingleRepository(
 
   for (const username of involvedUsersInRepo) {
     if (!allContributorsMap[username]) {
-      const details =
-        assigneeDetailsCache[username] ?? authorDetailsCache[username];
+      const details = authorDetailsCache[username];
       // *** IMPROVED: Accept details even without GitHub ID/URL ***
       if (details) {
         console.log(`➕ Adding contributor: ${username}`);
@@ -845,10 +666,9 @@ async function processSingleRepository(
     allContributorsMap[username].works ??= [];
     const contributorWorks = allContributorsMap[username].works;
 
-    const userIssuesInRepo = issuesAssignedToUserInRepo[username] ?? [];
     const userCommitsInRepo = commitsAuthoredByUserInRepo[username] ?? [];
 
-    if (userIssuesInRepo.length > 0 || userCommitsInRepo.length > 0) {
+    if (userCommitsInRepo.length > 0) {
       let repoWorkEntry = contributorWorks.find(
         (work) => work.repository_url === canonicalRepoUrl,
       );
@@ -856,12 +676,10 @@ async function processSingleRepository(
       if (!repoWorkEntry) {
         repoWorkEntry = {
           repository_url: canonicalRepoUrl,
-          issues: userIssuesInRepo,
           commits: userCommitsInRepo,
         };
         contributorWorks.push(repoWorkEntry);
       } else {
-        repoWorkEntry.issues = userIssuesInRepo;
         repoWorkEntry.commits = userCommitsInRepo;
       }
     }
@@ -907,10 +725,9 @@ async function processRepositories(
             (w) => w.repository_url === newWork.repository_url,
           );
           if (existingWorkIndex >= 0) {
-            // Merge issues and commits for the same repo
+            // Merge commits for the same repo
             mergedWorks[existingWorkIndex] = {
               repository_url: newWork.repository_url,
-              issues: newWork.issues,
               commits: newWork.commits,
             };
           } else {
@@ -1007,12 +824,6 @@ async function main(): Promise<void> {
     console.log("📊 Commit limit: ALL commits");
   }
 
-  if (MAX_ISSUES_TO_DETAIL_PER_REPO !== null) {
-    console.log(`📊 Issue limit: ${MAX_ISSUES_TO_DETAIL_PER_REPO} per repo`);
-  } else {
-    console.log("📊 Issue limit: ALL issues");
-  }
-
   const startTime = Date.now();
   console.log(`🔄 Starting repository processing...`);
 
@@ -1085,7 +896,6 @@ async function main(): Promise<void> {
       processed_repos: repositoryUrls,
       processing_time_seconds: ((endTime - startTime) / 1000).toFixed(2),
       commit_detail_limit_per_repo: MAX_COMMITS_TO_DETAIL_PER_REPO,
-      issue_detail_limit_per_repo: MAX_ISSUES_TO_DETAIL_PER_REPO,
     };
 
     await writeStream.write('  ],\n');
@@ -1119,10 +929,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 export {
   fetchCommitDetails,
   fetchContributorsFromRepo,
-  fetchIssueDetails,
   fetchPaginatedData,
   fetchRepositoryCommits,
-  fetchRepositoryIssuesList,
   makeGithubRequest,
   parseGithubUrl,
   processRepositories

@@ -9,30 +9,6 @@ export interface GithubUser {
   type: string;
 }
 
-export interface GithubLabel {
-  id: number;
-  name: string;
-  color: string;
-}
-
-export interface GithubIssue {
-  id: number;
-  number: number;
-  title: string;
-  body: string | null;
-  html_url: string;
-  state: string;
-  state_reason: string | null;
-  labels: GithubLabel[];
-  comments: number;
-  assignees: GithubUser[];
-  assignee: GithubUser | null;
-  user: GithubUser;
-  created_at: string;
-  updated_at: string;
-  closed_at: string | null;
-}
-
 export interface GithubCommitAuthor {
   name: string;
   email: string;
@@ -72,20 +48,6 @@ export interface GithubRepository {
 // These are the structures we store in the database
 
 /**
- * Simplified issue data stored in database
- * Contains essential information for AI summarization
- */
-export interface StoredIssueData {
-  html_url: string;
-  number: number;
-  title: string;
-  body: string | null;
-  labels: GithubLabel[];
-  comments: number;
-  state_reason: string | null;
-}
-
-/**
  * Simplified commit data stored in database
  * Contains commit message, file changes, and diff patches for AI summarization
  */
@@ -119,7 +81,6 @@ export interface StoredRepositoryData {
 
 export interface RepositoryWork {
   repository_url: string;
-  issues: StoredIssueData[];
   commits: StoredCommitData[];
 }
 
@@ -137,6 +98,5 @@ export interface IngestionOutputData {
     processed_repos: string[];
     processing_time_seconds: string;
     commit_detail_limit_per_repo: number | null;
-    issue_detail_limit_per_repo: number | null;
   };
 }

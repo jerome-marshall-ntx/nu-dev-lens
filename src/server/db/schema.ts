@@ -3,7 +3,6 @@
 
 import type {
   StoredCommitData,
-  StoredIssueData,
   StoredRepositoryData,
 } from "@/types/github";
 import { relations, sql } from "drizzle-orm";
@@ -105,35 +104,6 @@ export const repositoryWorks = createTable(
 );
 
 /**
- * Issue - A GitHub issue the contributor worked on
- * Summary: "What was this issue about technically?" (Level 1)
- */
-export const issues = createTable(
-  "issue",
-  (d) => ({
-    id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
-    repositoryWorkId: d
-      .integer()
-      .notNull()
-      .references(() => repositoryWorks.id, {
-        onDelete: "cascade",
-      }),
-    url: d.varchar({ length: 500 }).notNull(),
-    rawData: jsonb().$type<StoredIssueData>().notNull(), // Typed GitHub issue data
-    summary: d.text(), // Initially empty, populated by AI processing
-    createdAt: d
-      .timestamp({ withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: d.timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-  }),
-  (t) => [
-    index("issue_repository_work_idx").on(t.repositoryWorkId),
-    index("issue_url_idx").on(t.url),
-  ],
-);
-
-/**
  * Commit - A code commit by the contributor
  * Summary: "What technical change did this commit make?" (Level 1)
  */
@@ -185,17 +155,9 @@ export const repositoryWorksRelations = relations(
       fields: [repositoryWorks.contributorId],
       references: [contributors.id],
     }),
-    issues: many(issues),
     commits: many(commits),
   }),
 );
-
-export const issuesRelations = relations(issues, ({ one }) => ({
-  repositoryWork: one(repositoryWorks, {
-    fields: [issues.repositoryWorkId],
-    references: [repositoryWorks.id],
-  }),
-}));
 
 export const commitsRelations = relations(commits, ({ one }) => ({
   repositoryWork: one(repositoryWorks, {
@@ -216,9 +178,6 @@ export type SelectContributor = typeof contributors.$inferSelect;
 
 export type InsertRepositoryWork = typeof repositoryWorks.$inferInsert;
 export type SelectRepositoryWork = typeof repositoryWorks.$inferSelect;
-
-export type InsertIssue = typeof issues.$inferInsert;
-export type SelectIssue = typeof issues.$inferSelect;
 
 export type InsertCommit = typeof commits.$inferInsert;
 export type SelectCommit = typeof commits.$inferSelect;
