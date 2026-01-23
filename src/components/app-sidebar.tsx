@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import * as React from "react";
+import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -16,26 +17,11 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 import { Separator } from "./ui/separator";
-
-// Sidebar navigation data - can be customized based on project
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/",
-    },
-    {
-      title: "Repository",
-      url: "/",
-    },
-    {
-      title: "Contributors",
-      url: "/",
-    },
-  ],
-};
+import { navigationData } from "@/lib/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+
   return (
     <Sidebar {...props} variant="floating">
       <SidebarHeader className="p-4">
@@ -55,9 +41,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {/* <SidebarGroupLabel>Navigation</SidebarGroupLabel> */}
           <SidebarGroupContent>
             <SidebarMenu>
-              {data.navMain.map((item) => (
+              {navigationData.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
                     <Link href={item.url}>{item.title}</Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
