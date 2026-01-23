@@ -59,13 +59,13 @@ docker compose logs
 
 ### Database connection details
 
-| Setting  | Value         |
-| -------- | ------------- |
-| Host     | localhost     |
-| Port     | 5433          |
-| User     | postgres      |
-| Password | password      |
-| Database | nu_dev_lens   |
+| Setting  | Value       |
+| -------- | ----------- |
+| Host     | localhost   |
+| Port     | 5433        |
+| User     | postgres    |
+| Password | password    |
+| Database | nu_dev_lens |
 
 The connection string in `.env` is:
 
