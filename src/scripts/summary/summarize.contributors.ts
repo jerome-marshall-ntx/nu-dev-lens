@@ -15,11 +15,10 @@ import {
   MAX_RETRIES,
   RETRY_DELAY_MS,
 } from "./summarize.config";
+import { processInParallel, retryWithBackoff } from "../utils";
 import {
   batchUpdateContributors,
   buildContributorInput,
-  processInParallel,
-  retryWithBackoff,
 } from "./summarize.utils";
 
 /**

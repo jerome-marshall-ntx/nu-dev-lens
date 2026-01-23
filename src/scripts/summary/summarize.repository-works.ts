@@ -14,14 +14,13 @@ import {
   MAX_RETRIES,
   RETRY_DELAY_MS,
 } from "./summarize.config";
+import { processInParallel, retryWithBackoff } from "../utils";
 import {
   batchUpdateRepositoryWorks,
   buildChunkInput,
   buildRepositoryInfo,
   buildRepositoryWorkInput,
   isWithinContextLimit,
-  processInParallel,
-  retryWithBackoff,
   splitCommitSummariesByTokens,
 } from "./summarize.utils";
 

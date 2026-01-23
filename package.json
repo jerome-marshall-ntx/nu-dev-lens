@@ -12,7 +12,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "summarize": "pnpm tsx src/scripts/summary/summarize.ts",
-    "embed": "pnpm tsx src/scripts/embed.ts",
+    "embed": "pnpm tsx src/scripts/embedding/embed.ts",
     "dev": "next dev --turbo",
     "fetch:github": "pnpm tsx src/scripts/fetch-github-contributors.ts",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,mdx}\" --cache",

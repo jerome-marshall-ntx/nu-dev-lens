@@ -4,6 +4,7 @@ import { db } from "@/server/db";
 import { commits, repositories, repositoryWorks } from "@/server/db/schema";
 import { generateText } from "ai";
 import { eq } from "drizzle-orm";
+import { processInParallel, retryWithBackoff } from "../utils";
 import { saveBackup } from "./summarize.backup";
 import {
   BATCH_UPDATE_SIZE,
@@ -15,8 +16,6 @@ import {
   batchUpdateCommits,
   buildCommitInfo,
   buildRepositoryInfo,
-  processInParallel,
-  retryWithBackoff,
 } from "./summarize.utils";
 
 /**
