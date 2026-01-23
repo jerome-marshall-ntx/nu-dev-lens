@@ -11,7 +11,7 @@
     "db:populate": "pnpm tsx src/scripts/populate-db.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "summarize": "pnpm tsx src/scripts/summarize.ts",
+    "summarize": "pnpm tsx src/scripts/summary/summarize.ts",
     "embed": "pnpm tsx src/scripts/embed.ts",
     "dev": "next dev --turbo",
     "fetch:github": "pnpm tsx src/scripts/fetch-github-contributors.ts",
