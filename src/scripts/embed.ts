@@ -14,7 +14,7 @@ const main = async () => {
       value: "sunny day at the beach",
       providerOptions: {
         ollama: {
-          dimensions: 1024,
+          dimensions: 1536,
         },
       },
     });
@@ -37,7 +37,7 @@ const main = async () => {
       values,
       providerOptions: {
         ollama: {
-          dimensions: 1024,
+          dimensions: 1536,
         },
       },
     });

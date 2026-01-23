@@ -1,5 +1,5 @@
 {
-  "id": "c6239d1e-cb8d-459f-8210-154be2e57318",
+  "id": "672909a5-7e14-4ab1-8d20-52f52a1568ec",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -46,6 +46,12 @@
         "summary": {
           "name": "summary",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1536)",
           "primaryKey": false,
           "notNull": false
         },
@@ -161,6 +167,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1536)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "createdAt": {
           "name": "createdAt",
           "type": "timestamp with time zone",
@@ -273,6 +285,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1536)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "rawData": {
           "name": "rawData",
           "type": "jsonb",
@@ -368,6 +386,12 @@
         "summary": {
           "name": "summary",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "vector(1536)",
           "primaryKey": false,
           "notNull": false
         },

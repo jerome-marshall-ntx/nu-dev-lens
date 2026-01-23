@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17.7
+    image: pgvector/pgvector:pg17
     container_name: nu-dev-lens-db
     restart: unless-stopped
     environment:

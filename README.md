@@ -22,12 +22,16 @@ This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3
 
    Copy `.env.example` to `.env` and update the values as needed.
 
-3. **Start the database** (see section below)
+3. **Start the database:**
+
+   ```bash
+   docker compose up -d
+   ```
 
 4. **Run database migrations:**
 
    ```bash
-   pnpm db:push
+   pnpm db:migrate
    ```
 
 5. **Start the development server:**
@@ -38,13 +42,25 @@ This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3
 
 ## Database
 
-This project uses PostgreSQL running in Docker. The database runs on **port 5433** (not the default 5432) to avoid conflicts with other local databases.
+This project uses PostgreSQL with the **pgvector extension** for storing AI embeddings. The database runs in Docker on **port 5433** (not the default 5432) to avoid conflicts with other local databases.
 
 ### Start the database
 
 ```bash
 docker compose up -d
 ```
+
+### Run migrations
+
+After starting the database for the first time, run the migrations:
+
+```bash
+pnpm db:migrate
+```
+
+This will:
+- Install the pgvector extension
+- Create all tables with embedding columns
 
 ### Stop the database
 
@@ -73,6 +89,8 @@ The connection string in `.env` is:
 ```
 postgresql://postgres:password@localhost:5433/nu_dev_lens
 ```
+
+**Note:** The database uses the `pgvector/pgvector:pg17` Docker image which includes the pgvector extension for vector similarity search.
 
 ## Tech Stack
 

@@ -3,7 +3,7 @@
 
 import type { StoredCommitData, StoredRepositoryData } from "@/types/github";
 import { relations, sql } from "drizzle-orm";
-import { index, jsonb, pgTableCreator } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTableCreator, vector } from "drizzle-orm/pg-core";
 
 /**
  * Multi-project schema feature of Drizzle ORM
@@ -28,6 +28,7 @@ export const repositories = createTable(
     avatarUrl: d.varchar({ length: 500 }).notNull(),
     url: d.varchar({ length: 500 }).notNull(),
     summary: d.text(), // Initially empty, populated by AI processing
+    embedding: vector('embedding', { dimensions: 1536 }),
     rawData: jsonb().$type<StoredRepositoryData>(), // Structured GitHub API response
     createdAt: d
       .timestamp({ withTimezone: true })
@@ -53,6 +54,7 @@ export const contributors = createTable(
     url: d.varchar({ length: 500 }).notNull(), // URLField
     avatarUrl: d.varchar({ length: 500 }).notNull(), // URLField
     summary: d.text(), // Initially empty, populated by AI processing
+    embedding: vector('embedding', { dimensions: 1536 }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -88,6 +90,7 @@ export const repositoryWorks = createTable(
         onDelete: "cascade",
       }),
     summary: d.text(), // Initially empty, populated by AI processing
+    embedding: vector('embedding', { dimensions: 1536 }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -118,6 +121,7 @@ export const commits = createTable(
     url: d.varchar({ length: 500 }).notNull(),
     rawData: jsonb().$type<StoredCommitData>().notNull(), // Typed commit data with diffs
     summary: d.text(), // Initially empty, populated by AI processing
+    embedding: vector('embedding', { dimensions: 1536 }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
