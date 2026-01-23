@@ -11,6 +11,8 @@
     "db:populate": "pnpm tsx src/scripts/populate-db.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:export": "pnpm tsx src/scripts/db-export.ts",
+    "db:import": "pnpm tsx src/scripts/db-import.ts",
     "summarize": "pnpm tsx src/scripts/summary/summarize.ts",
     "embed": "pnpm tsx src/scripts/embedding/embed.ts",
     "dev": "next dev --turbo",
