@@ -66,10 +66,22 @@ interface RepoConfig {
 }
 
 const REPOSITORIES: RepoConfig[] = [
-  { url: "https://github.com/shashi-ntx/test-clone-prism-reactjs", branch: "master" },
-  { url: "https://github.com/jerome-marshall-ntx/prism-ui-draas", branch: "master" },
-  { url: "https://github.com/jerome-marshall-ntx/prism-ui-security-dashboard", branch: "main" },
-  { url: "https://github.com/jerome-marshall-ntx/flow-ui-main", branch: "flow-ui-ng-master" },
+  {
+    url: "https://github.com/shashi-ntx/test-clone-prism-reactjs",
+    branch: "master",
+  },
+  {
+    url: "https://github.com/jerome-marshall-ntx/prism-ui-draas",
+    branch: "master",
+  },
+  {
+    url: "https://github.com/jerome-marshall-ntx/prism-ui-security-dashboard",
+    branch: "main",
+  },
+  {
+    url: "https://github.com/jerome-marshall-ntx/flow-ui-main",
+    branch: "flow-ui-ng-master",
+  },
   { url: "https://github.com/jerome-marshall-ntx/iam-ui", branch: "master" },
 ];
 
@@ -188,7 +200,7 @@ async function makeGithubRequest(
         if (retries > 0) {
           const resetTime = parseInt(
             (response.headers["x-ratelimit-reset"] as string) ??
-            (Date.now() / 1000 + 60).toString(),
+              (Date.now() / 1000 + 60).toString(),
           );
           const waitTime = Math.max(0, resetTime - Date.now() / 1000) + 5;
           console.log(`⏳ Rate limit hit, waiting ${waitTime.toFixed(0)}s...`);
@@ -376,7 +388,10 @@ async function fetchCommitDetails(
   // Add timeout to prevent hanging
   const timeoutMs = 60000; // 60 second timeout (some large commits take longer)
   const timeoutPromise = new Promise<null>((_, reject) => {
-    setTimeout(() => reject(new Error(`Timeout fetching commit ${commitSha}`)), timeoutMs);
+    setTimeout(
+      () => reject(new Error(`Timeout fetching commit ${commitSha}`)),
+      timeoutMs,
+    );
   });
 
   try {
@@ -392,7 +407,9 @@ async function fetchCommitDetails(
     }
     return null;
   } catch (error) {
-    console.error(`   ⚠️ Failed to fetch commit ${commitSha.slice(0, 7)}: ${(error as Error).message}`);
+    console.error(
+      `   ⚠️ Failed to fetch commit ${commitSha.slice(0, 7)}: ${(error as Error).message}`,
+    );
     return null;
   }
 }
@@ -443,7 +460,12 @@ async function processSingleRepository(
   }
 
   // Step 2: Fetch and Process Commits (PARALLELIZED VERSION)
-  const repoCommitsList = await fetchRepositoryCommits(owner, repo, token, branch);
+  const repoCommitsList = await fetchRepositoryCommits(
+    owner,
+    repo,
+    token,
+    branch,
+  );
   const commitsAuthoredByUserInRepo: Record<string, StoredCommitData[]> = {};
   const authorDetailsCache: Record<
     string,
@@ -806,7 +828,10 @@ async function processInParallel<T, R>(
         const result = await processor(item, currentIndex);
         results[currentIndex] = result;
       } catch (error) {
-        console.error(`   ⚠️ Error processing item ${currentIndex}:`, (error as Error).message);
+        console.error(
+          `   ⚠️ Error processing item ${currentIndex}:`,
+          (error as Error).message,
+        );
         results[currentIndex] = null;
       }
     }
@@ -851,10 +876,7 @@ async function main(): Promise<void> {
 
   let contributorsMap: Record<string, ContributorIngestionData>;
   try {
-    contributorsMap = await processRepositories(
-      REPOSITORIES,
-      GITHUB_TOKEN,
-    );
+    contributorsMap = await processRepositories(REPOSITORIES, GITHUB_TOKEN);
     console.log(`✅ Repository processing complete`);
   } catch (error) {
     const err = error as Error;
@@ -895,21 +917,23 @@ async function main(): Promise<void> {
     for (let i = 0; i < finalContributorList.length; i++) {
       const contributor = finalContributorList[i];
       const contributorJson = JSON.stringify(contributor, null, 4)
-        .split('\n')
-        .map(line => '    ' + line)
-        .join('\n');
+        .split("\n")
+        .map((line) => "    " + line)
+        .join("\n");
 
       await writeStream.write(contributorJson);
 
       if (i < finalContributorList.length - 1) {
-        await writeStream.write(',\n');
+        await writeStream.write(",\n");
       } else {
-        await writeStream.write('\n');
+        await writeStream.write("\n");
       }
 
       // Log progress every 10 contributors
       if ((i + 1) % 10 === 0) {
-        console.log(`   📝 Written ${i + 1}/${finalContributorList.length} contributors`);
+        console.log(
+          `   📝 Written ${i + 1}/${finalContributorList.length} contributors`,
+        );
       }
     }
 
@@ -920,9 +944,14 @@ async function main(): Promise<void> {
       commit_detail_limit_per_repo: MAX_COMMITS_TO_DETAIL_PER_REPO,
     };
 
-    await writeStream.write('  ],\n');
-    await writeStream.write(`  "metadata": ${JSON.stringify(metadata, null, 4).split('\n').map((l, i) => i === 0 ? l : '  ' + l).join('\n')}\n`);
-    await writeStream.write('}\n');
+    await writeStream.write("  ],\n");
+    await writeStream.write(
+      `  "metadata": ${JSON.stringify(metadata, null, 4)
+        .split("\n")
+        .map((l, i) => (i === 0 ? l : "  " + l))
+        .join("\n")}\n`,
+    );
+    await writeStream.write("}\n");
 
     await writeStream.close();
     console.log(`✅ Data saved successfully`);
@@ -955,6 +984,5 @@ export {
   fetchRepositoryCommits,
   makeGithubRequest,
   parseGithubUrl,
-  processRepositories
+  processRepositories,
 };
-

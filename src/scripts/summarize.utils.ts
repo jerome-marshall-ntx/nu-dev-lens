@@ -230,7 +230,9 @@ export function buildContributorInput(
   workSummaries: Array<{ repoName: string; summary: string }>,
 ): string {
   const validSummaries = workSummaries.filter(
-    (w) => w.summary?.trim() && !w.summary?.toLowerCase().includes("cannot summarize"),
+    (w) =>
+      w.summary?.trim() &&
+      !w.summary?.toLowerCase().includes("cannot summarize"),
   );
 
   if (validSummaries.length === 0) {
@@ -241,11 +243,11 @@ export function buildContributorInput(
 Repository work summaries:
 
 ${validSummaries
-      .map(
-        (work, idx) =>
-          `${idx + 1}. Repository: ${work.repoName}\n   ${work.summary}`,
-      )
-      .join("\n\n")}
+  .map(
+    (work, idx) =>
+      `${idx + 1}. Repository: ${work.repoName}\n   ${work.summary}`,
+  )
+  .join("\n\n")}
 </contributor_input>`;
 }
 

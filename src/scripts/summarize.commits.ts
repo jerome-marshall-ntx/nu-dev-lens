@@ -4,13 +4,13 @@ import { db } from "@/server/db";
 import { commits, repositories, repositoryWorks } from "@/server/db/schema";
 import { generateText } from "ai";
 import { eq } from "drizzle-orm";
+import { saveBackup } from "./summarize.backup";
 import {
   BATCH_UPDATE_SIZE,
   CONCURRENT_REQUESTS,
   MAX_RETRIES,
   RETRY_DELAY_MS,
 } from "./summarize.config";
-import { saveBackup } from "./summarize.backup";
 import {
   batchUpdateCommits,
   buildCommitInfo,
@@ -34,7 +34,10 @@ export async function summarizeCommits(): Promise<void> {
       },
     })
     .from(commits)
-    .innerJoin(repositoryWorks, eq(commits.repositoryWorkId, repositoryWorks.id))
+    .innerJoin(
+      repositoryWorks,
+      eq(commits.repositoryWorkId, repositoryWorks.id),
+    )
     .innerJoin(repositories, eq(repositoryWorks.repositoryId, repositories.id));
   // .where(isNull(commits.summary));
 

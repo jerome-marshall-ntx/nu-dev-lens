@@ -1,7 +1,7 @@
 import "@/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
 
@@ -11,17 +11,29 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const geist = Geist({
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const geistSans = Geist({
   variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable}`}>
-      <body>
+    <html lang="en" className={inter.variable}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         <TRPCReactProvider>{children}</TRPCReactProvider>
       </body>
     </html>

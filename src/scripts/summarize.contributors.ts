@@ -1,7 +1,11 @@
 import { summarizationModel } from "@/ai/models";
 import { SUMMARIZE_CONTRIBUTOR_PROMPT } from "@/ai/prompts";
 import { db } from "@/server/db";
-import { contributors, repositories, repositoryWorks } from "@/server/db/schema";
+import {
+  contributors,
+  repositories,
+  repositoryWorks,
+} from "@/server/db/schema";
 import { generateText } from "ai";
 import { eq, isNull } from "drizzle-orm";
 import { saveBackup } from "./summarize.backup";
@@ -64,9 +68,9 @@ export async function summarizeContributors(): Promise<void> {
       const workSummaries = workSummariesData
         .map((w) => ({ repoName: w.repoName, summary: w.summary }))
         .filter((w) => w.summary !== null) as Array<{
-          repoName: string;
-          summary: string;
-        }>;
+        repoName: string;
+        summary: string;
+      }>;
 
       if (workSummaries.length === 0) {
         console.log(
