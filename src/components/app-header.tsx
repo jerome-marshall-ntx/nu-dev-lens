@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Breadcrumb,
@@ -7,13 +7,13 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export function AppHeader() {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 px-4">
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
       <SidebarTrigger className="-ml-1" />
       <Separator
         orientation="vertical"
@@ -22,9 +22,7 @@ export function AppHeader() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem className="hidden md:block">
-            <BreadcrumbLink href="#">
-              Building Your Application
-            </BreadcrumbLink>
+            <BreadcrumbLink href="#">Building Your Application</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator className="hidden md:block" />
           <BreadcrumbItem>
@@ -33,5 +31,5 @@ export function AppHeader() {
         </BreadcrumbList>
       </Breadcrumb>
     </header>
-  )
+  );
 }

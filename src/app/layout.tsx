@@ -42,7 +42,7 @@ export default function RootLayout({
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
-              {children}
+              <div className="p-4">{children}</div>
             </SidebarInset>
           </SidebarProvider>
         </TRPCReactProvider>
