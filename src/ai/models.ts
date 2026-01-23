@@ -13,5 +13,6 @@ const models = {
   "ollama:qwen3-embedding:8b": ollama.embedding('qwen3-embedding:8b')
 } as const;
 
+export const chatModel = models["nai:gpt-oss-120b"];
 export const summarizationModel = models["nai:gpt-oss-120b"];
 export const embeddingModel = models["ollama:qwen3-embedding:8b"];
