@@ -1,7 +1,7 @@
 // Database schema for nu-dev-lens
 // Based on the three-phase system: Data Ingestion → AI Summarization → API Serving
 
-import type { StoredCommitData, StoredRepositoryData } from "@/types/github";
+import type { StoredCommitData } from "@/types/github";
 import { relations, sql } from "drizzle-orm";
 import { index, jsonb, pgTableCreator, vector } from "drizzle-orm/pg-core";
 
@@ -25,11 +25,7 @@ export const repositories = createTable(
     id: d.integer().primaryKey().generatedByDefaultAsIdentity(),
     name: d.varchar({ length: 255 }).notNull(),
     description: d.text(),
-    avatarUrl: d.varchar({ length: 500 }).notNull(),
     url: d.varchar({ length: 500 }).notNull(),
-    summary: d.text(), // Initially empty, populated by AI processing
-    embedding: vector('embedding', { dimensions: 1536 }),
-    rawData: jsonb().$type<StoredRepositoryData>(), // Structured GitHub API response
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
