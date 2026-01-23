@@ -159,6 +159,7 @@ async function main() {
   try {
     const results = await searchContributors(query, 10, minSimilarity);
     displayResults(results);
+    process.exit(0);
   } catch (error) {
     console.error("\n❌ Search failed:", error);
     process.exit(1);
