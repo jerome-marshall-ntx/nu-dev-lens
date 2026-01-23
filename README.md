@@ -6,7 +6,8 @@ This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) or [Bun](https://bun.sh/)
+- [Node.js](https://nodejs.org/) (v24.10.0 or higher)
+- [pnpm](https://pnpm.io/) (v9.0.0 or higher)
 - [Docker](https://docs.docker.com/get-docker/)
 
 ### Setup
@@ -14,7 +15,7 @@ This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3
 1. **Install dependencies:**
 
    ```bash
-   bun install
+   pnpm install
    ```
 
 2. **Set up environment variables:**
@@ -26,13 +27,13 @@ This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3
 4. **Run database migrations:**
 
    ```bash
-   bun run db:push
+   pnpm db:push
    ```
 
 5. **Start the development server:**
 
    ```bash
-   bun run dev
+   pnpm dev
    ```
 
 ## Database
@@ -59,13 +60,13 @@ docker compose logs
 
 ### Database connection details
 
-| Setting  | Value         |
-| -------- | ------------- |
-| Host     | localhost     |
-| Port     | 5433          |
-| User     | postgres      |
-| Password | password      |
-| Database | nu_dev_lens   |
+| Setting  | Value       |
+| -------- | ----------- |
+| Host     | localhost   |
+| Port     | 5433        |
+| User     | postgres    |
+| Password | password    |
+| Database | nu_dev_lens |
 
 The connection string in `.env` is:
 

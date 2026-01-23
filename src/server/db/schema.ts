@@ -1,10 +1,7 @@
 // Database schema for nu-dev-lens
 // Based on the three-phase system: Data Ingestion → AI Summarization → API Serving
 
-import type {
-  StoredCommitData,
-  StoredRepositoryData,
-} from "@/types/github";
+import type { StoredCommitData, StoredRepositoryData } from "@/types/github";
 import { relations, sql } from "drizzle-orm";
 import { index, jsonb, pgTableCreator } from "drizzle-orm/pg-core";
 
