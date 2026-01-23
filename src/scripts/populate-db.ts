@@ -9,7 +9,7 @@
  * and populates the PostgreSQL database using Drizzle ORM.
  *
  * Usage:
- *   bun run src/scripts/populate-db.ts [json-file-path] [--clear]
+ *   pnpm db:populate [json-file-path] [--clear]
  *
  * Arguments:
  *   json-file-path: Path to the JSON file (default: ./data/github_contributors_simplified_issues_commits_v4.json)
