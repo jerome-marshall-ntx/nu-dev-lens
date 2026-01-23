@@ -3,15 +3,13 @@
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
-  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
 import { getTitleByPathname } from "@/lib/navigation";
+import { usePathname } from "next/navigation";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -26,10 +24,6 @@ export function AppHeader() {
       />
       <Breadcrumb>
         <BreadcrumbList>
-          <BreadcrumbItem className="hidden md:block">
-            <BreadcrumbLink href="/">NuDevLens</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator className="hidden md:block" />
           <BreadcrumbItem>
             <BreadcrumbPage>{currentTitle}</BreadcrumbPage>
           </BreadcrumbItem>
