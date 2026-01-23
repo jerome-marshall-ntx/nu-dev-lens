@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1769161556884,
-      "tag": "0000_medical_alex_wilder",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1769165402539,
-      "tag": "0001_robust_harrier",
+      "when": 1769165727126,
+      "tag": "0000_safe_sentry",
       "breakpoints": true
     }
   ]
