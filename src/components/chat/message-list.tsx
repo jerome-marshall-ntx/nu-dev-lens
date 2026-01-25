@@ -11,6 +11,11 @@ import {
   MessageResponse,
 } from "@/components/ai-elements/message";
 import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
+import {
   Tool,
   ToolContent,
   ToolHeader,
@@ -43,7 +48,9 @@ export function MessageList({ messages, status }: MessageListProps) {
             (part) =>
               part.type === "text" ||
               part.type === "dynamic-tool" ||
-              part.type.startsWith("tool-"),
+              part.type.startsWith("tool-") ||
+              part.type === "reasoning" ||
+              part.type === "step-start",
           );
 
           if (!hasContent) return null;
@@ -56,6 +63,20 @@ export function MessageList({ messages, status }: MessageListProps) {
                   if (part.type === "text") {
                     return (
                       <MessageResponse key={index}>{part.text}</MessageResponse>
+                    );
+                  }
+
+                  // Render reasoning parts
+                  if (part.type === "reasoning" && "text" in part) {
+                    return (
+                      <Reasoning
+                        key={index}
+                        isStreaming={part.state === "streaming"}
+                        defaultOpen={false}
+                      >
+                        <ReasoningTrigger />
+                        <ReasoningContent>{part.text}</ReasoningContent>
+                      </Reasoning>
                     );
                   }
 

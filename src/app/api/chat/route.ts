@@ -1,5 +1,5 @@
 import { chatModel } from "@/ai/models";
-import { searchContributorsTool } from "@/ai/tools";
+import { searchContributorsTool, searchRepositoryWorksTool } from "@/ai/tools";
 import {
   convertToModelMessages,
   stepCountIs,
@@ -13,8 +13,17 @@ export async function POST(req: Request) {
   const result = streamText({
     model: chatModel,
     messages: await convertToModelMessages(messages),
-    tools: { searchContributors: searchContributorsTool },
+    tools: {
+      searchContributors: searchContributorsTool,
+      searchRepositoryWorks: searchRepositoryWorksTool,
+    },
     stopWhen: stepCountIs(5),
+    onError: (error) => {
+      console.error("🚀 ~ error:", error)
+    },
+    onFinish: (output) => {
+      console.log("🚀 ~ output:", output)
+    },
   });
 
   return result.toUIMessageStreamResponse();
