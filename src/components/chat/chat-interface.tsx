@@ -27,7 +27,7 @@ export function ChatInterface({
 
   return (
     <div className="relative flex size-full flex-col divide-y overflow-hidden">
-      <MessageList messages={messages} />
+      <MessageList messages={messages} status={status} />
       <div className="grid shrink-0 gap-4 pt-4">
         <ChatSuggestions onSuggestionClick={handleSuggestionClick} />
         <ChatInput status={status} onSubmit={handleInputSubmit} />

@@ -9,7 +9,7 @@ export const searchContributorsTool = tool({
     query: z
       .string()
       .describe(
-        "The expertise area or technical domain to search for (e.g., 'telemetry', 'frontend', 'testing')",
+        "Rewrite the user's question to be more specific and clear.",
       ),
   }),
   execute: async ({ query }) => {

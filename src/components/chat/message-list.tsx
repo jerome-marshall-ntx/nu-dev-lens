@@ -17,13 +17,23 @@ import {
   ToolInput,
   ToolOutput,
 } from "@/components/ai-elements/tool";
-import type { UIMessage } from "ai";
+import { cn } from "@/lib/utils";
+import type { ChatStatus, UIMessage } from "ai";
+import { BrainIcon } from "lucide-react";
+import { Shimmer } from "../ai-elements/shimmer";
 
 interface MessageListProps {
   messages: UIMessage[];
+  status?: ChatStatus;
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({ messages, status }: MessageListProps) {
+  // Check if AI is thinking (message submitted but not yet streaming)
+  const isThinking =
+    status === "submitted" &&
+    messages.length > 0 &&
+    messages[messages.length - 1]?.role === "user";
+
   return (
     <Conversation>
       <ConversationContent>
@@ -117,6 +127,22 @@ export function MessageList({ messages }: MessageListProps) {
             </Message>
           );
         })}
+
+        {/* Show thinking indicator when AI is processing */}
+        {isThinking && (
+          <Message from="assistant">
+            <MessageContent>
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-sm text-muted-foreground",
+                )}
+              >
+                <BrainIcon className="size-4 animate-pulse" />
+                <Shimmer duration={1.5}>Thinking...</Shimmer>
+              </div>
+            </MessageContent>
+          </Message>
+        )}
       </ConversationContent>
       <ConversationScrollButton />
     </Conversation>
