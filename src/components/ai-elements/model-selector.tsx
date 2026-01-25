@@ -42,8 +42,8 @@ export const ModelSelectorContent = ({
 }: ModelSelectorContentProps) => (
   <DialogContent
     className={cn(
-      "outline! border-none! p-0 outline-border! outline-solid!",
-      className
+      "border-none! p-0 outline! outline-border! outline-solid!",
+      className,
     )}
     {...props}
   >
@@ -194,8 +194,8 @@ export const ModelSelectorLogoGroup = ({
 }: ModelSelectorLogoGroupProps) => (
   <div
     className={cn(
-      "-space-x-1 flex shrink-0 items-center [&>img]:rounded-full [&>img]:bg-background [&>img]:p-px [&>img]:ring-1 dark:[&>img]:bg-foreground",
-      className
+      "flex shrink-0 items-center -space-x-1 [&>img]:rounded-full [&>img]:bg-background [&>img]:p-px [&>img]:ring-1 dark:[&>img]:bg-foreground",
+      className,
     )}
     {...props}
   />

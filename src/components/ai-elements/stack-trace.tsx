@@ -1,6 +1,5 @@
 "use client";
 
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -8,6 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import {
   AlertTriangleIcon,
   CheckIcon,
@@ -65,9 +65,9 @@ const parseStackFrame = (line: string): StackFrame => {
   if (withParensMatch) {
     const [, functionName, filePath, lineNum, colNum] = withParensMatch;
     const isInternal =
-      filePath.includes("node_modules") ||
-      filePath.startsWith("node:") ||
-      filePath.includes("internal/");
+      (filePath?.includes("node_modules") ?? false) ||
+      (filePath?.startsWith("node:") ?? false) ||
+      (filePath?.includes("internal/") ?? false);
     return {
       raw: trimmed,
       functionName: functionName ?? null,
@@ -119,14 +119,14 @@ const parseStackTrace = (trace: string): ParsedStackTrace => {
     };
   }
 
-  const firstLine = lines[0].trim();
+  const firstLine = lines[0]?.trim() ?? trace;
   let errorType: string | null = null;
   let errorMessage = firstLine;
 
   // Try to extract error type from "ErrorType: message" format
   const errorMatch = firstLine.match(ERROR_TYPE_REGEX);
   if (errorMatch) {
-    errorType = errorMatch[1];
+    errorType = errorMatch[1] ?? null;
     errorMessage = errorMatch[2] || "";
   }
 
@@ -179,7 +179,7 @@ export const StackTrace = memo(
         setIsOpen,
         onFilePathClick,
       }),
-      [parsedTrace, trace, isOpen, setIsOpen, onFilePathClick]
+      [parsedTrace, trace, isOpen, setIsOpen, onFilePathClick],
     );
 
     return (
@@ -187,7 +187,7 @@ export const StackTrace = memo(
         <div
           className={cn(
             "not-prose w-full overflow-hidden rounded-lg border bg-background font-mono text-sm",
-            className
+            className,
           )}
           {...props}
         >
@@ -195,7 +195,7 @@ export const StackTrace = memo(
         </div>
       </StackTraceContext.Provider>
     );
-  }
+  },
 );
 
 export type StackTraceHeaderProps = ComponentProps<typeof CollapsibleTrigger>;
@@ -210,7 +210,7 @@ export const StackTraceHeader = memo(
           <div
             className={cn(
               "flex w-full cursor-pointer items-center gap-3 p-3 text-left transition-colors hover:bg-muted/50",
-              className
+              className,
             )}
           >
             {children}
@@ -218,7 +218,7 @@ export const StackTraceHeader = memo(
         </CollapsibleTrigger>
       </Collapsible>
     );
-  }
+  },
 );
 
 export type StackTraceErrorProps = ComponentProps<"div">;
@@ -228,14 +228,14 @@ export const StackTraceError = memo(
     <div
       className={cn(
         "flex flex-1 items-center gap-2 overflow-hidden",
-        className
+        className,
       )}
       {...props}
     >
       <AlertTriangleIcon className="size-4 shrink-0 text-destructive" />
       {children}
     </div>
-  )
+  ),
 );
 
 export type StackTraceErrorTypeProps = ComponentProps<"span">;
@@ -252,7 +252,7 @@ export const StackTraceErrorType = memo(
         {children ?? trace.errorType}
       </span>
     );
-  }
+  },
 );
 
 export type StackTraceErrorMessageProps = ComponentProps<"span">;
@@ -266,7 +266,7 @@ export const StackTraceErrorMessage = memo(
         {children ?? trace.errorMessage}
       </span>
     );
-  }
+  },
 );
 
 export type StackTraceActionsProps = ComponentProps<"div">;
@@ -288,7 +288,7 @@ export const StackTraceActions = memo(
     >
       {children}
     </div>
-  )
+  ),
 );
 
 export type StackTraceCopyButtonProps = ComponentProps<typeof Button> & {
@@ -338,7 +338,7 @@ export const StackTraceCopyButton = memo(
         {children ?? <Icon size={14} />}
       </Button>
     );
-  }
+  },
 );
 
 export type StackTraceExpandButtonProps = ComponentProps<"div">;
@@ -355,12 +355,12 @@ export const StackTraceExpandButton = memo(
         <ChevronDownIcon
           className={cn(
             "size-4 text-muted-foreground transition-transform",
-            isOpen ? "rotate-180" : "rotate-0"
+            isOpen ? "rotate-180" : "rotate-0",
           )}
         />
       </div>
     );
-  }
+  },
 );
 
 export type StackTraceContentProps = ComponentProps<
@@ -383,8 +383,8 @@ export const StackTraceContent = memo(
         <CollapsibleContent
           className={cn(
             "overflow-auto border-t bg-muted/30",
-            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=open]:animate-in",
-            className
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0",
+            className,
           )}
           style={{ maxHeight }}
           {...props}
@@ -393,7 +393,7 @@ export const StackTraceContent = memo(
         </CollapsibleContent>
       </Collapsible>
     );
-  }
+  },
 );
 
 export type StackTraceFramesProps = ComponentProps<"div"> & {
@@ -420,7 +420,7 @@ export const StackTraceFrames = memo(
               "text-xs",
               frame.isInternal
                 ? "text-muted-foreground/50"
-                : "text-foreground/90"
+                : "text-foreground/90",
             )}
             key={`${frame.raw}-${index}`}
           >
@@ -436,7 +436,7 @@ export const StackTraceFrames = memo(
                 <button
                   className={cn(
                     "underline decoration-dotted hover:text-primary",
-                    onFilePathClick && "cursor-pointer"
+                    onFilePathClick && "cursor-pointer",
                   )}
                   disabled={!onFilePathClick}
                   onClick={() => {
@@ -444,7 +444,7 @@ export const StackTraceFrames = memo(
                       onFilePathClick?.(
                         frame.filePath,
                         frame.lineNumber ?? undefined,
-                        frame.columnNumber ?? undefined
+                        frame.columnNumber ?? undefined,
                       );
                     }
                   }}
@@ -463,11 +463,11 @@ export const StackTraceFrames = memo(
           </div>
         ))}
         {framesToShow.length === 0 && (
-          <div className="text-muted-foreground text-xs">No stack frames</div>
+          <div className="text-xs text-muted-foreground">No stack frames</div>
         )}
       </div>
     );
-  }
+  },
 );
 
 StackTrace.displayName = "StackTrace";

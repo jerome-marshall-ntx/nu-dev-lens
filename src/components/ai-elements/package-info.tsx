@@ -81,7 +81,7 @@ export const PackageInfoName = ({
   return (
     <div className={cn("flex items-center gap-2", className)} {...props}>
       <PackageIcon className="size-4 text-muted-foreground" />
-      <span className="font-medium font-mono text-sm">{children ?? name}</span>
+      <span className="font-mono text-sm font-medium">{children ?? name}</span>
     </div>
   );
 };
@@ -121,7 +121,7 @@ export const PackageInfoChangeType = ({
       className={cn(
         "gap-1 text-xs capitalize",
         changeTypeStyles[changeType],
-        className
+        className,
       )}
       variant="secondary"
       {...props}
@@ -148,8 +148,8 @@ export const PackageInfoVersion = ({
   return (
     <div
       className={cn(
-        "mt-2 flex items-center gap-2 font-mono text-muted-foreground text-sm",
-        className
+        "mt-2 flex items-center gap-2 font-mono text-sm text-muted-foreground",
+        className,
       )}
       {...props}
     >
@@ -175,7 +175,7 @@ export const PackageInfoDescription = ({
   children,
   ...props
 }: PackageInfoDescriptionProps) => (
-  <p className={cn("mt-2 text-muted-foreground text-sm", className)} {...props}>
+  <p className={cn("mt-2 text-sm text-muted-foreground", className)} {...props}>
     {children}
   </p>
 );
@@ -200,7 +200,7 @@ export const PackageInfoDependencies = ({
   ...props
 }: PackageInfoDependenciesProps) => (
   <div className={cn("space-y-2", className)} {...props}>
-    <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
+    <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
       Dependencies
     </span>
     <div className="space-y-1">{children}</div>

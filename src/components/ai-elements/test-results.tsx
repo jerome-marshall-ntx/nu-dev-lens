@@ -73,7 +73,7 @@ export const TestResultsHeader = ({
   <div
     className={cn(
       "flex items-center justify-between border-b px-4 py-3",
-      className
+      className,
     )}
     {...props}
   >
@@ -150,7 +150,7 @@ export const TestResultsDuration = ({
   };
 
   return (
-    <span className={cn("text-muted-foreground text-sm", className)} {...props}>
+    <span className={cn("text-sm text-muted-foreground", className)} {...props}>
       {children ?? formatDuration(summary.duration)}
     </span>
   );
@@ -186,7 +186,7 @@ export const TestResultsProgress = ({
               style={{ width: `${failedPercent}%` }}
             />
           </div>
-          <div className="flex justify-between text-muted-foreground text-xs">
+          <div className="flex justify-between text-xs text-muted-foreground">
             <span>
               {summary.passed}/{summary.total} tests passed
             </span>
@@ -252,13 +252,13 @@ export const TestSuiteName = ({
     <CollapsibleTrigger
       className={cn(
         "group flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/50",
-        className
+        className,
       )}
       {...props}
     >
       <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
       <TestStatusIcon status={status} />
-      <span className="font-medium text-sm">{children ?? name}</span>
+      <span className="text-sm font-medium">{children ?? name}</span>
     </CollapsibleTrigger>
   );
 };
@@ -422,7 +422,7 @@ export const TestDuration = ({
 
   return (
     <span
-      className={cn("ml-auto text-muted-foreground text-xs", className)}
+      className={cn("ml-auto text-xs text-muted-foreground", className)}
       {...props}
     >
       {children ?? `${duration}ms`}
@@ -440,7 +440,7 @@ export const TestError = ({
   <div
     className={cn(
       "mt-2 rounded-md bg-red-50 p-3 dark:bg-red-900/20",
-      className
+      className,
     )}
     {...props}
   >
@@ -457,8 +457,8 @@ export const TestErrorMessage = ({
 }: TestErrorMessageProps) => (
   <p
     className={cn(
-      "font-medium text-red-700 text-sm dark:text-red-400",
-      className
+      "text-sm font-medium text-red-700 dark:text-red-400",
+      className,
     )}
     {...props}
   >
@@ -475,8 +475,8 @@ export const TestErrorStack = ({
 }: TestErrorStackProps) => (
   <pre
     className={cn(
-      "mt-2 overflow-auto font-mono text-red-600 text-xs dark:text-red-400",
-      className
+      "mt-2 overflow-auto font-mono text-xs text-red-600 dark:text-red-400",
+      className,
     )}
     {...props}
   >

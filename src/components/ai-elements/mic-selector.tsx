@@ -1,6 +1,5 @@
 "use client";
 
-import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -15,6 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { ChevronsUpDownIcon } from "lucide-react";
 import {
   type ComponentProps,
@@ -287,7 +287,7 @@ export const useAudioDevices = () => {
 
       const deviceList = await navigator.mediaDevices.enumerateDevices();
       const audioInputs = deviceList.filter(
-        (device) => device.kind === "audioinput"
+        (device) => device.kind === "audioinput",
       );
 
       setDevices(audioInputs);
@@ -321,7 +321,7 @@ export const useAudioDevices = () => {
 
       const deviceList = await navigator.mediaDevices.enumerateDevices();
       const audioInputs = deviceList.filter(
-        (device) => device.kind === "audioinput"
+        (device) => device.kind === "audioinput",
       );
 
       setDevices(audioInputs);
@@ -355,7 +355,7 @@ export const useAudioDevices = () => {
     return () => {
       navigator.mediaDevices.removeEventListener(
         "devicechange",
-        handleDeviceChange
+        handleDeviceChange,
       );
     };
   }, [hasPermission, loadDevicesWithPermission, loadDevicesWithoutPermission]);

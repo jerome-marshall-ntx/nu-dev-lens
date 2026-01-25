@@ -69,7 +69,7 @@ export const EnvironmentVariablesHeader = ({
   <div
     className={cn(
       "flex items-center justify-between border-b px-4 py-3",
-      className
+      className,
     )}
     {...props}
   >
@@ -84,7 +84,7 @@ export const EnvironmentVariablesTitle = ({
   children,
   ...props
 }: EnvironmentVariablesTitleProps) => (
-  <h3 className={cn("font-medium text-sm", className)} {...props}>
+  <h3 className={cn("text-sm font-medium", className)} {...props}>
     {children ?? "Environment Variables"}
   </h3>
 );
@@ -99,7 +99,7 @@ export const EnvironmentVariablesToggle = ({
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
-      <span className="text-muted-foreground text-xs">
+      <span className="text-xs text-muted-foreground">
         {showValues ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}
       </span>
       <Switch
@@ -151,7 +151,7 @@ export const EnvironmentVariable = ({
     <div
       className={cn(
         "flex items-center justify-between gap-4 px-4 py-3",
-        className
+        className,
       )}
       {...props}
     >
@@ -212,9 +212,9 @@ export const EnvironmentVariableValue = ({
   return (
     <span
       className={cn(
-        "font-mono text-muted-foreground text-sm",
+        "font-mono text-sm text-muted-foreground",
         !showValues && "select-none",
-        className
+        className,
       )}
       {...props}
     >

@@ -142,7 +142,7 @@ const PersonaWithModel = memo(
     });
     const viewModelInstanceColor = useViewModelInstanceColor(
       "color",
-      viewModelInstance
+      viewModelInstance,
     );
 
     useEffect(() => {
@@ -155,16 +155,20 @@ const PersonaWithModel = memo(
     }, [viewModelInstanceColor, theme, source.dynamicColor]);
 
     return children;
-  }
+  },
 );
+
+PersonaWithModel.displayName = "PersonaWithModel";
 
 interface PersonaWithoutModelProps {
   children: ReactNode;
 }
 
 const PersonaWithoutModel = memo(
-  ({ children }: PersonaWithoutModelProps) => children
+  ({ children }: PersonaWithoutModelProps) => children,
 );
+
+PersonaWithoutModel.displayName = "PersonaWithoutModel";
 
 export const Persona: FC<PersonaProps> = memo(
   ({
@@ -206,11 +210,11 @@ export const Persona: FC<PersonaProps> = memo(
       () => ({
         onLoad: ((loadedRive) =>
           callbacksRef.current.onLoad?.(
-            loadedRive
+            loadedRive,
           )) as RiveParameters["onLoad"],
         onLoadError: ((err) =>
           callbacksRef.current.onLoadError?.(
-            err
+            err,
           )) as RiveParameters["onLoadError"],
         onReady: () => callbacksRef.current.onReady?.(),
         onPause: ((event) =>
@@ -220,7 +224,7 @@ export const Persona: FC<PersonaProps> = memo(
         onStop: ((event) =>
           callbacksRef.current.onStop?.(event)) as RiveParameters["onStop"],
       }),
-      []
+      [],
     );
 
     const { rive, RiveComponent } = useRive({
@@ -238,7 +242,7 @@ export const Persona: FC<PersonaProps> = memo(
     const listeningInput = useStateMachineInput(
       rive,
       stateMachine,
-      "listening"
+      "listening",
     );
     const thinkingInput = useStateMachineInput(rive, stateMachine, "thinking");
     const speakingInput = useStateMachineInput(rive, stateMachine, "speaking");
@@ -266,5 +270,7 @@ export const Persona: FC<PersonaProps> = memo(
         <RiveComponent className={cn("size-16 shrink-0", className)} />
       </Component>
     );
-  }
+  },
 );
+
+Persona.displayName = "Persona";
