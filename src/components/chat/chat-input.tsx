@@ -29,7 +29,7 @@ export function ChatInput({ status, onSubmit }: ChatInputProps) {
   };
 
   return (
-    <div className="w-full px-4 pb-4">
+    <div className="w-full">
       <PromptInput onSubmit={handleSubmit}>
         <PromptInputBody>
           <PromptInputTextarea placeholder="What would you like to know?" />
