@@ -1,4 +1,5 @@
 import { chatModel } from '@/ai/models';
+import { searchContributorsTool } from '@/ai/tools';
 import { convertToModelMessages, streamText, type UIMessage } from 'ai';
 
 export async function POST(req: Request) {
@@ -7,6 +8,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: chatModel,
     messages: await convertToModelMessages(messages),
+    tools: { searchContributors: searchContributorsTool },
   });
 
   return result.toUIMessageStreamResponse();
