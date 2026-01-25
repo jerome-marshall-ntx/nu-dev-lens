@@ -12,6 +12,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model: chatModel,
+    system: ` When mentionning a contributor, use the format: <contributor id="id">contributor name</contributor>.`,
     messages: await convertToModelMessages(messages),
     tools: {
       searchContributors: searchContributorsTool,

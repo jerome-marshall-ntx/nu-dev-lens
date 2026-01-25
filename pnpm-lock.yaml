@@ -125,6 +125,9 @@ importers:
       recharts:
         specifier: 2.15.4
         version: 2.15.4(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      rehype-raw:
+        specifier: ^7.0.0
+        version: 7.0.0
       server-only:
         specifier: ^0.0.1
         version: 0.0.1

@@ -15,8 +15,14 @@ import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
+import type {
+  ComponentProps,
+  ComponentType,
+  HTMLAttributes,
+  ReactElement,
+} from "react";
 import { createContext, memo, useContext, useEffect, useState } from "react";
+import rehypeRaw from "rehype-raw";
 import { Streamdown } from "streamdown";
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
@@ -300,6 +306,22 @@ export const MessageBranchPage = ({
   );
 };
 
+// Custom component to render contributor tags
+const ContributorTag = ({
+  children,
+  id,
+}: {
+  children?: React.ReactNode;
+  id?: string;
+}) => (
+  <span
+    className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium text-primary"
+    data-contributor-id={id}
+  >
+    {children}
+  </span>
+);
+
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
 export const MessageResponse = memo(
@@ -310,6 +332,13 @@ export const MessageResponse = memo(
         className,
       )}
       plugins={{ code, mermaid, math, cjk }}
+      rehypePlugins={[rehypeRaw]}
+      parseIncompleteMarkdown={true}
+      components={
+        {
+          contributor: ContributorTag,
+        } as Record<string, ComponentType<unknown>>
+      }
       {...props}
     />
   ),
