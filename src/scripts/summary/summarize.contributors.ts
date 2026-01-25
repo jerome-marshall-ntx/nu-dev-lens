@@ -8,6 +8,7 @@ import {
 } from "@/server/db/schema";
 import { generateText } from "ai";
 import { eq, isNull } from "drizzle-orm";
+import { processInParallel, retryWithBackoff } from "../utils";
 import { saveBackup } from "./summarize.backup";
 import {
   BATCH_UPDATE_SIZE,
@@ -15,7 +16,6 @@ import {
   MAX_RETRIES,
   RETRY_DELAY_MS,
 } from "./summarize.config";
-import { processInParallel, retryWithBackoff } from "../utils";
 import {
   batchUpdateContributors,
   buildContributorInput,

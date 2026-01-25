@@ -41,7 +41,11 @@ export async function embedRepositoryWorks(): Promise<void> {
   const allEmbeddings: Array<{ id: number; embedding: number[] }> = [];
 
   // Process repository works in batches
-  for (let i = 0; i < repoWorksWithSummaries.length; i += EMBEDDING_BATCH_SIZE) {
+  for (
+    let i = 0;
+    i < repoWorksWithSummaries.length;
+    i += EMBEDDING_BATCH_SIZE
+  ) {
     const batch = repoWorksWithSummaries.slice(i, i + EMBEDDING_BATCH_SIZE);
     const batchNum = Math.floor(i / EMBEDDING_BATCH_SIZE) + 1;
     const totalBatches = Math.ceil(total / EMBEDDING_BATCH_SIZE);
@@ -77,7 +81,9 @@ export async function embedRepositoryWorks(): Promise<void> {
         });
       }
 
-      console.log(`   ✓ Successfully embedded ${embeddings.length} repository works`);
+      console.log(
+        `   ✓ Successfully embedded ${embeddings.length} repository works`,
+      );
     } catch (error) {
       console.error(
         `   ❌ Error embedding batch ${batchNum}:`,
@@ -93,10 +99,7 @@ export async function embedRepositoryWorks(): Promise<void> {
   );
 
   try {
-    await batchUpdateRepositoryWorkEmbeddings(
-      allEmbeddings,
-      BATCH_UPDATE_SIZE,
-    );
+    await batchUpdateRepositoryWorkEmbeddings(allEmbeddings, BATCH_UPDATE_SIZE);
   } catch (dbError) {
     console.error(`\n❌ Database save failed:`, dbError);
     throw dbError;

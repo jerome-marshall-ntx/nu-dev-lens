@@ -30,16 +30,20 @@ export const searchContributorsByEmbedding = async (
       summary: contributors.summary,
       // Calculate similarity score (1 - cosine distance = cosine similarity)
       // Cosine similarity ranges from -1 to 1, where 1 means identical
-      similarity: sql<number>`1 - (${cosineDistance(contributors.embedding, queryEmbedding)})`
+      similarity: sql<number>`1 - (${cosineDistance(contributors.embedding, queryEmbedding)})`,
     })
     .from(contributors)
     .where(isNotNull(contributors.embedding)) // Only search contributors with embeddings
-    .orderBy(desc(sql`1 - (${cosineDistance(contributors.embedding, queryEmbedding)})`))
+    .orderBy(
+      desc(
+        sql`1 - (${cosineDistance(contributors.embedding, queryEmbedding)})`,
+      ),
+    )
     .limit(limit * 2); // Get more results to filter
 
   // Filter by minimum similarity threshold and limit to requested amount
   const results = allResults
-    .filter(r => r.similarity >= minSimilarity)
+    .filter((r) => r.similarity >= minSimilarity)
     .slice(0, limit);
 
   return results;

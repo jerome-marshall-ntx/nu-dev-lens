@@ -4,10 +4,10 @@ import "dotenv/config";
 /**
  * Simple test script to search for contributors using semantic search.
  * Uses embeddings and cosine similarity to find relevant contributors.
- * 
+ *
  * Usage:
  *   tsx src/scripts/test-search.ts "your search query"
- * 
+ *
  * Example:
  *   tsx src/scripts/test-search.ts "frontend developer who works with React"
  */
@@ -52,7 +52,7 @@ function displayResults(results: SearchResult[]): void {
 
     // Add emoji based on relevance
     let relevanceEmoji = "💫";
-    if (similarity >= 0.50) relevanceEmoji = "🔥";
+    if (similarity >= 0.5) relevanceEmoji = "🔥";
     else if (similarity >= 0.35) relevanceEmoji = "✨";
     else if (similarity >= 0.25) relevanceEmoji = "⭐";
 
@@ -62,16 +62,19 @@ function displayResults(results: SearchResult[]): void {
 
     if (result.summary) {
       // Truncate summary if too long
-      const summaryPreview = result.summary.length > 200
-        ? result.summary.substring(0, 200) + "..."
-        : result.summary;
+      const summaryPreview =
+        result.summary.length > 200
+          ? result.summary.substring(0, 200) + "..."
+          : result.summary;
       console.log(`   Summary: ${summaryPreview}`);
     }
   });
 
   console.log("\n" + "─".repeat(80));
   console.log("\n💡 Tip: Use more detailed queries for better matches!");
-  console.log('   Example: "frontend developer who works with React and TypeScript"');
+  console.log(
+    '   Example: "frontend developer who works with React and TypeScript"',
+  );
 }
 
 /**
@@ -84,15 +87,25 @@ async function main() {
   if (!query) {
     console.error("❌ Error: Please provide a search query");
     console.log("\nUsage:");
-    console.log('  pnpm tsx src/scripts/test-search.ts "your search query" [min-similarity]');
+    console.log(
+      '  pnpm tsx src/scripts/test-search.ts "your search query" [min-similarity]',
+    );
     console.log("\nExamples:");
     console.log('  pnpm tsx src/scripts/test-search.ts "frontend developer"');
     console.log('  pnpm tsx src/scripts/test-search.ts "security expert" 0.3');
-    console.log('  pnpm tsx src/scripts/test-search.ts "someone who works with databases"');
+    console.log(
+      '  pnpm tsx src/scripts/test-search.ts "someone who works with databases"',
+    );
     console.log("\nTips for better results:");
-    console.log('  • Use detailed queries: "developer who works with React and TypeScript"');
-    console.log('  • Match summary style: "someone who builds telemetry systems"');
-    console.log('  • Adjust min-similarity: 0.2 (default), 0.3 (stricter), 0.4 (very strict)');
+    console.log(
+      '  • Use detailed queries: "developer who works with React and TypeScript"',
+    );
+    console.log(
+      '  • Match summary style: "someone who builds telemetry systems"',
+    );
+    console.log(
+      "  • Adjust min-similarity: 0.2 (default), 0.3 (stricter), 0.4 (very strict)",
+    );
     process.exit(1);
   }
 

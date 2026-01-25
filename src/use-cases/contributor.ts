@@ -14,6 +14,10 @@ export async function searchContributorsByQuery(
   minSimilarity: number = 0.2,
 ) {
   const queryEmbedding = await embedQuery(query);
-  const results = await searchContributorsByEmbedding(queryEmbedding, limit, minSimilarity);
+  const results = await searchContributorsByEmbedding(
+    queryEmbedding,
+    limit,
+    minSimilarity,
+  );
   return results;
 }

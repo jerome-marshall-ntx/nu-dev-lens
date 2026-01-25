@@ -234,9 +234,6 @@ async function populateDatabase(
       repositoriesToInsert.push({
         name: repoData.name,
         url: repoData.url,
-        avatarUrl: "",
-        summary: null,
-        rawData: null,
       });
     }
   }

@@ -41,7 +41,11 @@ export async function embedContributors(): Promise<void> {
   const allEmbeddings: Array<{ id: number; embedding: number[] }> = [];
 
   // Process contributors in batches
-  for (let i = 0; i < contributorsWithSummaries.length; i += EMBEDDING_BATCH_SIZE) {
+  for (
+    let i = 0;
+    i < contributorsWithSummaries.length;
+    i += EMBEDDING_BATCH_SIZE
+  ) {
     const batch = contributorsWithSummaries.slice(i, i + EMBEDDING_BATCH_SIZE);
     const batchNum = Math.floor(i / EMBEDDING_BATCH_SIZE) + 1;
     const totalBatches = Math.ceil(total / EMBEDDING_BATCH_SIZE);
@@ -77,7 +81,9 @@ export async function embedContributors(): Promise<void> {
         });
       }
 
-      console.log(`   ✓ Successfully embedded ${embeddings.length} contributors`);
+      console.log(
+        `   ✓ Successfully embedded ${embeddings.length} contributors`,
+      );
     } catch (error) {
       console.error(
         `   ❌ Error embedding batch ${batchNum}:`,

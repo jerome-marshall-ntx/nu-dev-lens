@@ -10,7 +10,7 @@ const nai = createOpenAICompatible({
 
 const models = {
   "nai:gpt-oss-120b": nai("eng-pool-01"),
-  "ollama:qwen3-embedding:8b": ollama.embedding('qwen3-embedding:8b')
+  "ollama:qwen3-embedding:8b": ollama.embedding("qwen3-embedding:8b"),
 } as const;
 
 export const chatModel = models["nai:gpt-oss-120b"];

@@ -459,7 +459,7 @@ function FormExample() {
                   <ComboboxContent>
                     <ComboboxEmpty>No frameworks found.</ComboboxEmpty>
                     <ComboboxList>
-                      {(item: typeof frameworks[number]) => (
+                      {(item: (typeof frameworks)[number]) => (
                         <ComboboxItem key={item} value={item}>
                           {item}
                         </ComboboxItem>

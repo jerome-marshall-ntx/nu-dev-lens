@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import * as React from "react";
 import { usePathname } from "next/navigation";
+import * as React from "react";
 
 import {
   Sidebar,
@@ -15,9 +15,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { navigationData } from "@/lib/navigation";
 import Link from "next/link";
 import { Separator } from "./ui/separator";
-import { navigationData } from "@/lib/navigation";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();

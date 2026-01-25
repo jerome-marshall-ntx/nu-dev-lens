@@ -50,7 +50,7 @@ export const contributors = createTable(
     url: d.varchar({ length: 500 }).notNull(), // URLField
     avatarUrl: d.varchar({ length: 500 }).notNull(), // URLField
     summary: d.text(), // Initially empty, populated by AI processing
-    embedding: vector('embedding', { dimensions: 1536 }),
+    embedding: vector("embedding", { dimensions: 1536 }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -86,7 +86,7 @@ export const repositoryWorks = createTable(
         onDelete: "cascade",
       }),
     summary: d.text(), // Initially empty, populated by AI processing
-    embedding: vector('embedding', { dimensions: 1536 }),
+    embedding: vector("embedding", { dimensions: 1536 }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
@@ -117,7 +117,7 @@ export const commits = createTable(
     url: d.varchar({ length: 500 }).notNull(),
     rawData: jsonb().$type<StoredCommitData>().notNull(), // Typed commit data with diffs
     summary: d.text(), // Initially empty, populated by AI processing
-    embedding: vector('embedding', { dimensions: 1536 }),
+    embedding: vector("embedding", { dimensions: 1536 }),
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

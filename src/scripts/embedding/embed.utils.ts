@@ -1,9 +1,7 @@
 import { db } from "@/server/db";
 import { contributors, repositoryWorks } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
-import {
-  BATCH_UPDATE_SIZE
-} from "./embed.config";
+import { BATCH_UPDATE_SIZE } from "./embed.config";
 
 /**
  * Batch updates contributor embeddings efficiently.
