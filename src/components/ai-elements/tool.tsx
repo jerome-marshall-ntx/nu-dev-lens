@@ -65,7 +65,7 @@ export const getStatusBadge = (status: ToolPart["state"]) => {
   };
 
   return (
-    <Badge className="gap-1.5 rounded-full text-xs" variant="secondary">
+    <Badge className="ml-auto gap-1.5 rounded-full text-xs" variant="secondary">
       {icons[status]}
       {labels[status]}
     </Badge>
@@ -91,7 +91,7 @@ export const ToolHeader = ({
       )}
       {...props}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex w-full items-center gap-2">
         <WrenchIcon className="size-4 text-muted-foreground" />
         <span className="text-sm font-medium">{title ?? derivedName}</span>
         {getStatusBadge(state)}
@@ -106,7 +106,7 @@ export type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 export const ToolContent = ({ className, ...props }: ToolContentProps) => (
   <CollapsibleContent
     className={cn(
-      "text-popover-foreground outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2",
+      "min-w-0 text-popover-foreground outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:animate-in data-[state=open]:slide-in-from-top-2",
       className,
     )}
     {...props}
@@ -154,7 +154,10 @@ export const ToolOutput = ({
   }
 
   return (
-    <div className={cn("space-y-2 p-4", className)} {...props}>
+    <div
+      className={cn("min-w-0 space-y-2 overflow-hidden p-4", className)}
+      {...props}
+    >
       <h4 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {errorText ? "Error" : "Result"}
       </h4>
