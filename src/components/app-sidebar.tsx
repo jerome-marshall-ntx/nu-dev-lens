@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { navigationData } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-import { PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
 
 function SidebarToggleMenuItem() {
   const { toggleSidebar, state } = useSidebar();
@@ -31,9 +31,9 @@ function SidebarToggleMenuItem() {
     <SidebarMenuItem>
       <SidebarMenuButton onClick={toggleSidebar} tooltip="Toggle Sidebar">
         {isCollapsed ? (
-          <PanelLeftOpen className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         ) : (
-          <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
+          <ChevronLeft className="h-4 w-4 text-muted-foreground" />
         )}
         <span>{isCollapsed ? "Expand" : "Collapse"}</span>
       </SidebarMenuButton>
@@ -99,6 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuItem>
                 );
               })}
+              <SidebarToggleMenuItem />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -112,7 +113,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
-          <SidebarToggleMenuItem />
         </SidebarMenu>
       </SidebarFooter>
 
