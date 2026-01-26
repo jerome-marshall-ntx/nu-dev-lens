@@ -88,7 +88,7 @@ export default async function ContributorDetailsPage({
       </Link>
 
       {/* Profile Header */}
-      <div className="rounded-xl border border-border bg-card/50 p-6">
+      <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm">
         <ContributorProfile contributor={contributor} />
       </div>
 
