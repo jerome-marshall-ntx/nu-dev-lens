@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
@@ -8,6 +10,7 @@ interface StatCardProps {
   description?: string;
   className?: string;
   iconClassName?: string;
+  href?: string;
 }
 
 export function StatCard({
@@ -17,14 +20,16 @@ export function StatCard({
   description,
   className,
   iconClassName,
+  href,
 }: StatCardProps) {
-  return (
-    <div
-      className={cn(
-        "group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5",
-        className,
-      )}
-    >
+  const cardClassName = cn(
+    "group relative overflow-hidden rounded-xl p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
+    href && "cursor-pointer",
+    className,
+  );
+
+  const content = (
+    <>
       <div className="flex items-center gap-4">
         <div
           className={cn(
@@ -44,6 +49,16 @@ export function StatCard({
       {description && (
         <p className="mt-2 text-xs text-muted-foreground">{description}</p>
       )}
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className={cardClassName}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={cardClassName}>{content}</div>;
 }
