@@ -1,5 +1,7 @@
 "use client";
 
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -36,6 +38,43 @@ function SidebarToggleMenuItem() {
           <ChevronLeft className="h-4 w-4 text-muted-foreground" />
         )}
         <span>{isCollapsed ? "Expand" : "Collapse"}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function ThemeToggleMenuItem() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
+
+  if (!mounted) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip="Toggle Theme">
+          <Sun className="h-4 w-4 text-muted-foreground" />
+          <span>Toggle Theme</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton onClick={toggleTheme} tooltip="Toggle Theme">
+        {theme === "dark" ? (
+          <Sun className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <Moon className="h-4 w-4 text-muted-foreground" />
+        )}
+        <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -107,6 +146,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter className="p-2">
         <SidebarMenu>
+          <ThemeToggleMenuItem />
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Settings">
               <Settings className="h-4 w-4 text-muted-foreground" />
