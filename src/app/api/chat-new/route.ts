@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   const stream = createUIMessageStream<OurMessage>({
     execute: async ({ writer }) => {
       const result = await runAgentLoop(messages, {
-        writeMessagePart: writer.write,
+        write: writer.write,
       });
 
       writer.merge(result.toUIMessageStream());

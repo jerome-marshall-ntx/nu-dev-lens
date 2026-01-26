@@ -53,25 +53,37 @@ export const generateSearchQuery = async (
       ? "people/developers based on their skills and experience"
       : "code, projects, or technical implementations";
 
+  const searchTargetDescription =
+    searchType === "contributors"
+      ? "AI-generated contributor profiles that summarize each engineer's expertise, skills, and areas of work across repositories"
+      : "AI-generated summaries of code contributions, features implemented, and technical work done in repositories";
+
   const result = await generateText({
     model: chatModel,
     system: `
-You are a search query optimizer. Your task is to create effective search queries for finding ${typeDescription}.
+You are a semantic search query optimizer. Your task is to create queries optimized for semantic similarity matching against ${searchTargetDescription}.
 
-QUERY OPTIMIZATION RULES:
-- Extract the core intent from the user's request
-- Focus on specific skills, technologies, or features mentioned
-- Remove conversational filler words
-- Keep queries concise but descriptive (3-10 words ideal)
-- Use technical terms when the user mentions them
+SEMANTIC SEARCH OPTIMIZATION RULES:
+- Write the query as a natural language description of what you're looking for
+- Use descriptive phrases rather than keyword lists (semantic search matches meaning, not exact words)
+- Include relevant synonyms and related concepts to broaden semantic matching
+- Describe the expertise, skills, or work patterns you want to find
+- Frame the query to match how contributor profiles or work summaries would be written
+- Avoid question formats - use declarative descriptions instead
+
+EXAMPLES:
+- Instead of: "React performance expert"
+- Use: "developer experienced with React performance optimization, component rendering, and frontend speed improvements"
+
+- Instead of: "database work"
+- Use: "work involving database design, SQL optimization, data modeling, and backend data layer improvements"
     `,
     prompt: `Message History:
 ${messageHistory}
 
 ${lastFeedback ? `\nLast feedback from evaluation:\n${lastFeedback}` : ""}
 
-
-Create an optimized search query to find ${typeDescription}.
+Create a semantic search query optimized to find ${typeDescription}.
 Return ONLY the search query, nothing else.`,
   });
 
@@ -94,23 +106,23 @@ export const decideNextAction = async (ctx: SystemContext) => {
       }),
     }),
     system: `
-You are a research coordinator for a developer tools platform. Your task is to analyze search results against the user's original question and decide the next action.
+You are a research coordinator for NuDevLens, an AI-powered tool that helps find engineering experts by analyzing GitHub activity. Your task is to evaluate search results and decide whether to continue searching or provide an answer.
 
-PROCESS:
-1. Identify what information the user is specifically asking for
-2. Analyze what relevant information has been found in the search results
-3. Identify any gaps between what was asked and what was found
-4. Decide if more searching would help, or if you have enough to answer
+EVALUATION PROCESS:
+1. What is the user actually trying to find? (a person with specific skills? work in a specific area?)
+2. Do the search results contain profiles or work summaries that match this need?
+3. Would a different search angle (different terminology, broader/narrower scope) yield better results?
 
 DECISION CRITERIA:
-- Use "answer" when you have enough relevant results to help the user
-- Use "continue" when the results are missing key information AND more searching would likely help
-- Use "answer" if you've already done multiple searches (avoid endless loops)
+- "answer": You have relevant contributor profiles or work summaries to share
+- "answer": Results partially match - some useful information is better than none
+- "continue": Results are off-target AND you have a clear idea for a better search approach
 
-When providing feedback (only required when choosing "continue"):
-- Be specific about what information is missing
-- Explain what type of search would fill the gap
-- Suggest whether to search for contributors or repository-works
+FEEDBACK FOR RETRYING (only when choosing "continue"):
+Your feedback will be used to generate a new semantic search query. Be specific:
+- What expertise or work type should the next query describe?
+- What related terms, technologies, or concepts should be included?
+- Should it search for contributors (people) or repository-works (code/projects)?
     `,
     prompt: `Message History:
 ${messageHistory}
@@ -118,16 +130,9 @@ ${messageHistory}
 Search Results So Far:
 ${searchResults || "No searches performed yet."}
 
-Based on this context, choose the next action:
-1. If you need more information, respond with "continue" and explain what's missing.
-2. If you have enough information to help the user, respond with "answer".
-
-Remember:
-- Only use "continue" if more searching would genuinely help
-- Use "answer" when you have useful results to share
-- Feedback is only required when choosing "continue"
-
-Your decision:`,
+Evaluate the search results against what the user is looking for.
+Choose "continue" only if you have a specific strategy for a better search.
+Choose "answer" if you have useful results to share, even if partial.`,
   });
 
   return result.output;
@@ -143,14 +148,23 @@ export const generateAnswer = async (ctx: SystemContext) => {
   const result = streamText({
     model: chatModel,
     system: `
-You are a helpful assistant for a developer tools platform. Your task is to answer the user's question using the search results you've gathered.
+You are NuDevLens, an AI assistant that helps people find engineering experts within their organization. You analyze GitHub activity to understand who has expertise in different areas.
 
 RESPONSE GUIDELINES:
-- Directly address what the user asked for
-- Reference specific contributors or repository works from the search results
-- Be concise but informative
-- If the results don't fully answer the question, acknowledge limitations
-- Format your response clearly (use bullet points for lists of people or projects)
+1. Lead with the answer - name the people or work that match what they're looking for
+2. Explain WHY each result is relevant - what in their profile/work indicates this expertise?
+3. Be specific - mention technologies, features, or areas of work from the summaries
+4. Keep it actionable - the goal is to help the user find the right person to talk to
+
+FORMATTING:
+- Use bullet points when listing multiple contributors or projects
+- Bold contributor names for easy scanning
+- Keep explanations concise (1-2 sentences per result)
+
+LIMITATIONS:
+- If results are only partially relevant, say so and explain what was found
+- If no good matches exist, be honest and suggest how to refine the search
+- Don't invent expertise - only reference what's in the search results
     `,
     prompt: `Message History:
 ${messageHistory}
@@ -158,7 +172,7 @@ ${messageHistory}
 Search Results:
 ${searchResults || "No results found."}
 
-Based on the search results above, provide a helpful answer to the user's question.`,
+Help the user find who they're looking for based on the search results above.`,
   });
 
   return result;

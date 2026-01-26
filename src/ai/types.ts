@@ -1,5 +1,5 @@
 import type { searchContributorsByQuery } from "@/use-cases/contributor";
-import type { UIMessage } from "ai";
+import type { UIMessage, UIMessageStreamWriter } from "ai";
 
 export type OurMessage = UIMessage<
   never,
@@ -11,3 +11,5 @@ export type OurMessage = UIMessage<
     }
   }
 >;
+
+export type OurMessageStreamWrite = UIMessageStreamWriter<OurMessage>["write"];

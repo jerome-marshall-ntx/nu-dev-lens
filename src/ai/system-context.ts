@@ -36,6 +36,10 @@ export class SystemContext {
     this.step++;
   }
 
+  getStep() {
+    return this.step;
+  }
+
   addContext(context: Context) {
     this.context.push(context);
   }
