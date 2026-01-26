@@ -1,5 +1,11 @@
 import type { ContributorDetails } from "@/data-access/contributor";
-import { ExternalLink, FolderGit2, GitCommitHorizontal } from "lucide-react";
+import { formatMonthYear } from "@/lib/utils";
+import {
+  Calendar,
+  ExternalLink,
+  FolderGit2,
+  GitCommitHorizontal,
+} from "lucide-react";
 import Image from "next/image";
 
 interface ContributorProfileProps {
@@ -21,19 +27,26 @@ export function ContributorProfile({ contributor }: ContributorProfileProps) {
       {/* Info */}
       <div className="flex flex-col items-center gap-4 sm:items-start">
         {/* Name and GitHub Link */}
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">
-            {contributor.username}
-          </h1>
-          <a
-            href={contributor.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-          >
-            <ExternalLink className="h-4 w-4" />
-            GitHub
-          </a>
+        <div className="flex flex-col items-center gap-2 sm:items-start">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {contributor.username}
+            </h1>
+            <a
+              href={contributor.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              <ExternalLink className="h-4 w-4" />
+              GitHub
+            </a>
+          </div>
+          {/* Member Since */}
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>Member since {formatMonthYear(contributor.createdAt)}</span>
+          </div>
         </div>
 
         {/* Stats Row */}
