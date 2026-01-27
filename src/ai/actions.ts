@@ -378,8 +378,8 @@ RESPONSE GUIDELINES:
 4. Keep it actionable - the goal is to help the user find the right person to talk to
 
 FORMATTING:
-- Use bullet points when listing multiple contributors or projects
-- Bold contributor names for easy scanning
+- Use tables when listing multiple contributors or projects
+- When mentioning a contributor anywhere, use the format: <contributor id="id">contributor name</contributor> <work id="id">work description</work>
 - Keep explanations concise (1-2 sentences per result)
 
 LIMITATIONS:
