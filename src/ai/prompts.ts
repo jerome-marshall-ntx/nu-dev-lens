@@ -45,13 +45,16 @@ Example format:
 - DO NOT use phrases like "This enhances..." or "This demonstrates..."
 </avoid>
 
-<domain_and_org_specific>
-Include product-specific terminology in the description when relevant:
-- Feature names: "isolation policy wizard", "security policy visualization", "category picker"
-- Domain concepts: "microsegmentation", "policy CRUD", "address groups", "service groups"
-- Product areas: "remote syslog", "AD firewall", "network security"
-These terms help engineers find experts in specific product areas.
-</domain_and_org_specific>
+<nutanix_product_context>
+Nutanix is a hybrid multicloud computing company that provides a unified software platform for
+running applications, AI, and managing data across on-premises datacenters, edge, and public clouds.
+The code you are summarizing is part of Nutanix's management UI applications (Prism UI, subapps).
+
+CRITICAL: The <repository_info> section describes a Nutanix product/subapp with its KEY FEATURES.
+- When a commit relates to a feature listed in the repository info, use that EXACT FEATURE NAME
+- These are PRODUCT FEATURES within Nutanix management applications, NOT generic infrastructure concepts
+- Always prefer product-specific terminology over generic technical terms
+</nutanix_product_context>
 
 <contextual_inference>
 If the commit message is brief, infer purpose from file paths:
@@ -74,11 +77,11 @@ If the provided data lacks a meaningful message and file context, output only: "
 </requirements>
 
 <examples>
-- "Fixed null pointer exception during token parsing by adding validation before processing. Expertise: Java, authentication, error handling, defensive programming"
-- "Converted synchronous data fetching to async/await pattern, improving API response times. Expertise: TypeScript, async patterns, performance optimization, API integration"
-- "Added CRUD endpoints for user profiles with input validation middleware. Expertise: REST API design, request validation, Node.js, middleware patterns"
-- "Migrated styling to use new design-system color variables across security policy pages. Expertise: CSS/LESS, design systems, theming, frontend architecture"
-- "Added full-text filtering and attribute-based grouping to the policy graph visualization component. Expertise: React, data visualization, Redux, search/filtering, security policy UI"
+- "Enhanced Load Balancer configuration form with improved validation and error messaging. Expertise: Load Balancer feature, Flow UI, React forms, validation"
+- "Fixed Recovery Plan wizard step navigation to properly handle multi-site failover scenarios. Expertise: Recovery Plans, DRaaS, wizard components, state management"
+- "Added full-text filtering and attribute-based grouping to the Security Policy visualization component. Expertise: Security Policies, Flow UI, React, data visualization, Redux"
+- "Implemented role permission checks for Authorization Policy management screens. Expertise: Authorization Policies, IAM, access control, React components"
+- "Migrated styling to use new design-system color variables across microsegmentation pages. Expertise: CSS/LESS, design systems, theming, microsegmentation UI"
 </examples>`;
 
 /**
@@ -115,6 +118,8 @@ Output MUST follow this exact two-part format:
 - Quantify when helpful: "primarily focused on...", "also contributed to...", "minor work on..."
 - Note if their work is broad (many different areas) or deep (focused on specific domain)
 - For the activity list, describe WHAT they did in natural language, not just technologies
+- Use PRODUCT FEATURE NAMES from the repository info (e.g., "Load Balancer", "Security Policies", "Recovery Plans")
+- These are Nutanix product features, not generic infrastructure - preserve the exact terminology
 </synthesis_goals>
 
 <avoid>
@@ -140,23 +145,23 @@ If no meaningful commit summaries are provided, output only: "Cannot summarize"
 </requirements>
 
 <examples>
-- "**Focused on frontend component development**, building and refining the security policy visualization interface and isolation policy wizard. Contributed significant bug fixes for UI interaction issues including click-outside detection and popup handling. Improved **state management patterns** across multiple components and enhanced the overall user experience for policy configuration workflows.
+- "**Focused on Security Policy UI development**, building and refining the **Security Policy visualization** interface and **isolation policy wizard** in Flow UI. Contributed significant bug fixes for UI interaction issues including click-outside detection and popup handling. Improved **state management patterns** across multiple components and enhanced the overall user experience for **microsegmentation** configuration workflows.
 
 **Primary Activities & Areas of Focus:**
-- Building and refining security policy visualization components
+- Building and refining Security Policy visualization components
 - Developing the isolation policy wizard interface
-- Fixing UI interaction bugs and improving click handling
-- Implementing Redux state management patterns
-- Enhancing data visualization for policy graphs"
+- Fixing UI interaction bugs in Flow UI components
+- Implementing Redux state management for policy workflows
+- Enhancing data visualization for microsegmentation graphs"
 
-- "**Primarily worked on backend API development**, implementing comprehensive CRUD endpoints for user management with robust input validation. Improved **error handling patterns** across the API layer and added integration tests to ensure reliability. Also contributed to middleware improvements and request validation logic.
+- "**Primarily worked on Recovery Plan features** in DRaaS, implementing comprehensive workflows for **failover operations** and **availability zone** configuration. Improved **error handling patterns** across the disaster recovery UI and added integration tests for Recovery Plan validation. Also contributed to network mapping components for multi-site protection.
 
 **Primary Activities & Areas of Focus:**
-- Implementing user management API endpoints
-- Adding input validation and request sanitization
-- Improving error handling and response patterns
-- Writing integration tests for API endpoints
-- Developing reusable middleware components"
+- Implementing Recovery Plan wizard and configuration UI
+- Building failover and test failover workflow components
+- Improving availability zone management interfaces
+- Writing integration tests for disaster recovery features
+- Developing network mapping visualization components"
 </examples>`;
 
 /**
@@ -195,6 +200,8 @@ Use **bold** to highlight key skills, technologies, and focus areas throughout t
 - Infer DEPTH of expertise from consistency (same skills appearing across multiple repos = deeper expertise)
 - Note BREADTH if they work across many different areas
 - Highlight any DOMAIN EXPERTISE (security, authentication, payments, etc.)
+- Preserve PRODUCT FEATURE NAMES (e.g., "Load Balancer feature", "Recovery Plans", "Security Policies")
+- These refer to Nutanix product features, not generic infrastructure concepts
 </profile_goals>
 
 <inference_guidelines>
@@ -228,9 +235,9 @@ If no meaningful repository work summaries are provided, output only: "Cannot su
 </requirements>
 
 <examples>
-- "A **frontend specialist** with deep expertise in **React**, **TypeScript**, and **Redux** state management. Consistently builds **data visualization components** and **interactive policy management interfaces** across multiple security-focused projects, demonstrating strong skills in **UI component architecture** and **CSS/LESS** styling. Shows particular strength in **security policy UI** development and maintains solid testing practices with **Jest** and **React Testing Library**."
+- "A **frontend specialist** with deep expertise in **React**, **TypeScript**, and **Redux** state management. Consistently builds **Security Policy visualization** components and **microsegmentation** interfaces in **Flow UI**, demonstrating strong skills in **UI component architecture** and **CSS/LESS** styling. Shows particular strength in **Security Policy** and **Load Balancer** feature development with solid testing practices using **Jest**."
 
-- "A **full-stack developer** proficient in both **React** frontend development and **Node.js** backend APIs, comfortable working across the entire web stack. Demonstrates particular strength in **authentication flows** and **security features**, implementing them end-to-end with **TypeScript**. Maintains good testing coverage using **Jest** on both frontend and backend, with solid experience in **PostgreSQL** and **REST API integration**."
+- "A **frontend developer** focused on **disaster recovery UI** development, proficient in building complex wizard workflows and multi-step forms. Demonstrates particular strength in **Recovery Plan** configuration and **availability zone** management features in **DRaaS**. Maintains good testing coverage using **Jest** and **React Testing Library**, with solid experience in **network mapping visualization** and **failover workflow** components."
 </examples>`;
 
 /**
@@ -291,12 +298,12 @@ If no meaningful commit summaries are provided, output only: "Cannot summarize"
 </requirements>
 
 <example>
-**Focused on authentication and session management**, implementing secure login flows and token refresh mechanisms. Also contributed to API middleware for request validation and error handling improvements.
+**Focused on Security Policy configuration workflows**, implementing the isolation policy wizard and policy rule management interfaces. Also contributed to Address Group and Service Group management components with improved validation.
 
-- Implementing JWT-based authentication flows
-- Building session management and token refresh logic
-- Adding request validation middleware
-- Improving error handling and logging
+- Implementing Security Policy wizard steps and validation
+- Building Address Group and Service Group management UI
+- Adding microsegmentation rule configuration components
+- Improving error handling in policy creation flows
 
-Key expertise: TypeScript, authentication, JWT, middleware, error handling, API security, session management
+Key expertise: Security Policies, Flow UI, microsegmentation, React, wizard components, form validation, Redux
 </example>`;

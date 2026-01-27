@@ -6,7 +6,7 @@ import {
 import { db } from "@/server/db";
 import { commits, repositories, repositoryWorks } from "@/server/db/schema";
 import { generateText } from "ai";
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { processInParallel, retryWithBackoff } from "../utils";
 import { saveBackup } from "./summarize.backup";
 import {
@@ -40,7 +40,7 @@ export async function summarizeRepositoryWorks(): Promise<void> {
     })
     .from(repositoryWorks)
     .innerJoin(repositories, eq(repositoryWorks.repositoryId, repositories.id))
-    .where(isNull(repositoryWorks.summary));
+  // .where(isNull(repositoryWorks.summary));
 
   const total = repoWorksToProcess.length;
   console.log(`\n📦 Found ${total} repository works without summaries.`);

@@ -39,14 +39,28 @@ Based on the conversation above, classify what type of search the user needs.`,
 };
 
 /**
+ * Formats repository descriptions for inclusion in prompts.
+ */
+function formatRepositoryContext(
+  repos: { name: string; description: string | null }[]
+): string {
+  return repos
+    .filter((r) => r.description)
+    .map((r) => `- ${r.name}: ${r.description}`)
+    .join("\n\n");
+}
+
+/**
  * Generates the search query based on what the user is looking for
  */
 export const generateSearchQuery = async (
   ctx: SystemContext,
-  searchType: "contributors" | "repository-works"
+  searchType: "contributors" | "repository-works",
+  repositoryDescriptions: { name: string; description: string | null }[]
 ) => {
   const messageHistory = ctx.getMessageHistory();
   const lastFeedback = ctx.getLastFeedback();
+  const repositoryContext = formatRepositoryContext(repositoryDescriptions);
 
   const typeDescription =
     searchType === "contributors"
@@ -63,20 +77,42 @@ export const generateSearchQuery = async (
     system: `
 You are a semantic search query optimizer. Your task is to create queries optimized for semantic similarity matching against ${searchTargetDescription}.
 
+NUTANIX DOMAIN CONTEXT:
+You are searching within Nutanix engineering work. Nutanix is a hybrid multicloud computing company
+that provides a unified software platform for running applications, AI, and managing data across
+on-premises datacenters, edge locations, and public clouds. Their products include:
+- Nutanix Cloud Infrastructure (NCI) - hyperconverged compute, storage, virtualization
+- Nutanix Cloud Manager (NCM) - automation, self-service, orchestration
+- Prism Central/Prism Element (PC/PE) - unified management interface
+- Flow Network Security - microsegmentation and network security policies
+- And various UI subapps that provide management interfaces for these capabilities
+
+All search results represent work on PRODUCT FEATURES within Nutanix applications (Prism UI, Flow UI, etc.).
+
+CRITICAL: When users mention terms like "load balancer", "security policies", "recovery plans" -
+they are referring to PRODUCT FEATURES in Nutanix management UIs, NOT generic infrastructure concepts.
+Do NOT expand these into generic terms like "nginx", "traffic distribution", "session affinity".
+
+AVAILABLE PRODUCTS AND FEATURES:
+${repositoryContext}
+
 SEMANTIC SEARCH OPTIMIZATION RULES:
 - Write the query as a natural language description of what you're looking for
+- Use the exact feature names from the products above when relevant
+- Frame queries to match how contributor summaries would describe work on these features
 - Use descriptive phrases rather than keyword lists (semantic search matches meaning, not exact words)
-- Include relevant synonyms and related concepts to broaden semantic matching
 - Describe the expertise, skills, or work patterns you want to find
-- Frame the query to match how contributor profiles or work summaries would be written
 - Avoid question formats - use declarative descriptions instead
 
 EXAMPLES:
+- Instead of: "load balancer" (generic)
+- Use: "Load Balancer feature in Flow UI, network load balancer configuration UI components"
+
+- Instead of: "recovery plans" (generic)
+- Use: "Recovery Plan feature in DRaaS, disaster recovery configuration UI, failover workflows"
+
 - Instead of: "React performance expert"
 - Use: "developer experienced with React performance optimization, component rendering, and frontend speed improvements"
-
-- Instead of: "database work"
-- Use: "work involving database design, SQL optimization, data modeling, and backend data layer improvements"
     `,
     prompt: `Message History:
 ${messageHistory}

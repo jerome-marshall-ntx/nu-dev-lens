@@ -1,7 +1,9 @@
-import { config } from "dotenv";
-import { summarizeContributors } from "./summarize.contributors";
+globalThis.AI_SDK_LOG_WARNINGS = false;
 
-config();
+import "dotenv/config";
+import { summarizeCommits } from "./summarize.commits";
+import { summarizeContributors } from "./summarize.contributors";
+import { summarizeRepositoryWorks } from "./summarize.repository-works";
 
 /**
  * Main entry point for the summarization script.
@@ -13,10 +15,10 @@ config();
 const main = async () => {
   try {
     // Phase 1: Summarize commits (Level 1)
-    // await summarizeCommits();
+    await summarizeCommits();
 
     // Phase 2: Summarize repository works (Level 2) - depends on Level 1
-    // await summarizeRepositoryWorks();
+    await summarizeRepositoryWorks();
 
     // Phase 3: Summarize contributors (Level 3) - depends on Level 2
     await summarizeContributors();

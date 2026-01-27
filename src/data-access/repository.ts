@@ -193,3 +193,18 @@ export async function getRepositoryKeyContributors(
 export type RepositoryContributor = Awaited<
   ReturnType<typeof getRepositoryKeyContributors>
 >[number];
+
+/**
+ * Get all repository names and descriptions.
+ * Used to provide product context for search query generation.
+ */
+export async function getAllRepositoryDescriptions() {
+  const repos = await db
+    .select({
+      name: repositories.name,
+      description: repositories.description,
+    })
+    .from(repositories);
+
+  return repos;
+}

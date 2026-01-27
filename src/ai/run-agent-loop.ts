@@ -1,4 +1,5 @@
 
+import { getAllRepositoryDescriptions } from "@/data-access/repository";
 import { searchContributorsByQuery } from "@/use-cases/contributor";
 import { searchRepositoryWorksByQuery } from "@/use-cases/repository-work";
 import type { streamText, UIMessage } from "ai";
@@ -17,6 +18,8 @@ export async function runAgentLoop(
   write({ type: "start" });
   const ctx = new SystemContext(messages);
 
+  const repositoryDescriptions = await getAllRepositoryDescriptions();
+
   while (!ctx.shouldStop()) {
     write({ type: "start-step" });
     const reasoningId = `reasoning-${nanoid()}`;
@@ -26,7 +29,7 @@ export async function runAgentLoop(
     const searchType = await getSearchType(ctx);
     write({ type: "reasoning-delta", id: reasoningId, delta: searchType.reasoning });
 
-    const searchQuery = await generateSearchQuery(ctx, searchType.type);
+    const searchQuery = await generateSearchQuery(ctx, searchType.type, repositoryDescriptions);
     write({ type: "reasoning-delta", id: reasoningId, delta: "\n\nSearch query: " + searchQuery });
 
     const toolCallId = `tool-input-${nanoid()}`;
@@ -76,9 +79,14 @@ export async function runAgentLoop(
     }
 
     ctx.incrementStep();
+
+    // If we've reached the max iterations, force generate an answer
+    if (ctx.shouldStop()) {
+      const answer = await generateAnswer(ctx);
+      return answer;
+    }
   }
 
-  // Fallback: should not reach here if shouldStop() works correctly
-  // but TypeScript requires a return statement
-  throw new Error("Agent loop exited without generating an answer");
+  // Fallback: generate answer if loop exits without one (e.g., if shouldStop() is true from start)
+  return generateAnswer(ctx);
 }

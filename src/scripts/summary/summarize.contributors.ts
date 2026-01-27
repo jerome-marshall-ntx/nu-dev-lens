@@ -7,7 +7,7 @@ import {
   repositoryWorks,
 } from "@/server/db/schema";
 import { generateText } from "ai";
-import { eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { processInParallel, retryWithBackoff } from "../utils";
 import { saveBackup } from "./summarize.backup";
 import {
@@ -30,7 +30,7 @@ export async function summarizeContributors(): Promise<void> {
   const contributorsToProcess = await db
     .select()
     .from(contributors)
-    .where(isNull(contributors.summary));
+  // .where(isNull(contributors.summary));
 
   const total = contributorsToProcess.length;
   console.log(`\n👤 Found ${total} contributors without summaries.`);
@@ -67,9 +67,9 @@ export async function summarizeContributors(): Promise<void> {
       const workSummaries = workSummariesData
         .map((w) => ({ repoName: w.repoName, summary: w.summary }))
         .filter((w) => w.summary !== null) as Array<{
-        repoName: string;
-        summary: string;
-      }>;
+          repoName: string;
+          summary: string;
+        }>;
 
       if (workSummaries.length === 0) {
         console.log(
