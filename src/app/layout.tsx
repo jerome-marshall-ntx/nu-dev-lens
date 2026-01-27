@@ -46,8 +46,8 @@ export default function RootLayout({
           <TRPCReactProvider>
             <SidebarProvider>
               <AppSidebar />
-              <SidebarInset>
-                <div className="min-w-0 flex-1 overflow-hidden p-6">
+              <SidebarInset className="h-svh overflow-hidden">
+                <div className="h-full min-w-0 flex-1 overflow-y-auto p-6">
                   {children}
                 </div>
               </SidebarInset>

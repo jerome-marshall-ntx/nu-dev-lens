@@ -1,7 +1,7 @@
 "use client";
 
 import type { ContributorWithStats } from "@/data-access/contributor";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { ContributorCard } from "./contributor-card";
 import { ContributorsSearch } from "./contributors-search";
@@ -12,6 +12,10 @@ interface ContributorsGridProps {
 
 export function ContributorsGrid({ contributors }: ContributorsGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+  }, []);
 
   const filteredContributors = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -31,7 +35,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
       {/* Search */}
       <ContributorsSearch
         value={searchQuery}
-        onChange={setSearchQuery}
+        onChange={handleSearchChange}
         resultCount={filteredContributors.length}
         totalCount={contributors.length}
       />

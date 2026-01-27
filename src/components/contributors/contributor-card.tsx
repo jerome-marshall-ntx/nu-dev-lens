@@ -1,53 +1,43 @@
-"use client";
-
 import type { ContributorWithStats } from "@/data-access/contributor";
 import { cn } from "@/lib/utils";
-import { ExternalLink, FolderGit2, GitCommitHorizontal } from "lucide-react";
+import { ExternalLink, FolderGit2, GitCommitHorizontal, User } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { memo } from "react";
+import { Streamdown } from 'streamdown';
 
 interface ContributorCardProps {
   contributor: ContributorWithStats;
   className?: string;
 }
 
-export function ContributorCard({
+export const ContributorCard = memo(function ContributorCard({
   contributor,
   className,
 }: ContributorCardProps) {
-  const router = useRouter();
-
-  const handleCardClick = () => {
-    router.push(`/contributors/${contributor.username}`);
-  };
-
-  const handleExternalLinkClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
-    <div
-      onClick={handleCardClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          handleCardClick();
-        }
-      }}
-      role="button"
-      tabIndex={0}
+    <Link
+      href={`/contributors/${contributor.username}`}
       className={cn(
-        "group relative flex cursor-pointer items-start gap-4 rounded-xl bg-card p-5 ring-1 ring-border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:ring-primary/20",
+        "group relative flex cursor-pointer items-start gap-4 rounded-xl bg-card p-5 ring-1 ring-border transition-[transform,shadow,ring-color] duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:ring-primary/20",
         className,
       )}
     >
       {/* Avatar */}
-      <Image
-        src={contributor.avatarUrl}
-        alt={`${contributor.username}'s avatar`}
-        width={56}
-        height={56}
-        className="shrink-0 rounded-full ring-2 ring-primary/10"
-      />
+      {contributor.avatarUrl ? (
+        <Image
+          src={contributor.avatarUrl}
+          alt={`${contributor.username}'s avatar`}
+          width={56}
+          height={56}
+          className="shrink-0 rounded-full ring-2 ring-primary/10"
+          loading="eager"
+        />
+      ) : (
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-primary/10">
+          <User className="h-7 w-7 text-muted-foreground" />
+        </div>
+      )}
 
       {/* Info */}
       <div className="min-w-0 flex-1">
@@ -55,23 +45,25 @@ export function ContributorCard({
           <h3 className="truncate font-semibold text-foreground">
             {contributor.username}
           </h3>
-          <a
-            href={contributor.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={handleExternalLinkClick}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.open(contributor.url, "_blank", "noopener,noreferrer");
+            }}
             className="text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
             aria-label="View on GitHub"
           >
             <ExternalLink className="h-4 w-4" />
-          </a>
+          </button>
         </div>
 
         {/* Summary */}
         {contributor.summary ? (
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-            {contributor.summary}
-          </p>
+          <div className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+            <Streamdown>{contributor.summary}</Streamdown>
+          </div>
         ) : (
           <p className="mt-1 text-sm italic text-muted-foreground/60">
             No summary available yet
@@ -92,6 +84,6 @@ export function ContributorCard({
           </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
-}
+});

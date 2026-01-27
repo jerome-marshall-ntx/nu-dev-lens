@@ -3,8 +3,8 @@
 import type { RepositoryWithStats } from "@/data-access/repository";
 import { useMemo, useState } from "react";
 
-import { RepositoryCard } from "./RepositoryCard";
 import { RepositoriesSearch } from "./RepositoriesSearch";
+import { RepositoryCard } from "./RepositoryCard";
 
 interface RepositoriesGridProps {
   repositories: RepositoryWithStats[];

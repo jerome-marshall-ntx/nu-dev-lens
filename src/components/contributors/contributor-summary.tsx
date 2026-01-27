@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
-
+import { Streamdown } from 'streamdown';
 interface ContributorSummaryProps {
   summary: string | null;
 }
@@ -16,9 +16,11 @@ export function ContributorSummary({ summary }: ContributorSummaryProps) {
       </CardHeader>
       <CardContent>
         {summary ? (
-          <p className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
-            {summary}
-          </p>
+          <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
+            <Streamdown>
+              {summary}
+            </Streamdown>
+          </div>
         ) : (
           <p className="italic text-muted-foreground/60">
             No AI-generated summary available yet. This contributor&apos;s work

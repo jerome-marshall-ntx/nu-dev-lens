@@ -1,8 +1,7 @@
 import {
   FolderGit2,
   LayoutDashboard,
-  MessageSquare,
-  Users,
+  Users
 } from "lucide-react";
 
 // Shared navigation data - single source of truth for all navigation items

@@ -5,7 +5,7 @@ import {
   FolderGit2,
   GitCommitHorizontal,
 } from "lucide-react";
-
+import { Streamdown } from 'streamdown';
 interface ContributorReposProps {
   repositories: ContributorRepository[];
 }
@@ -79,9 +79,11 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
             {/* Work Summary */}
             {repo.summary && (
               <div className="mt-3 border-t border-border pt-3">
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {repo.summary}
-                </p>
+                <div className="text-sm leading-relaxed text-muted-foreground">
+                  <Streamdown>
+                    {repo.summary}
+                  </Streamdown>
+                </div>
               </div>
             )}
           </div>
