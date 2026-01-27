@@ -4,10 +4,10 @@ import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 
 const SUGGESTIONS = [
   "Who has the most experience with telemetry?",
-  "Find engineers who worked on React Components",
-  "Who knows the IAM UI codebase best?",
-  "Which engineers have contributed to Flow UI?",
-  "Who can help with Prism UI authentication?",
+  "Who can help with ARIA and accessibility compliance?",
+  "Find engineers experienced with disaster recovery UI",
+  "Who knows the IAM and RBAC interfaces best?",
+  "Which engineers have CI/CD pipeline expertise?",
 ];
 
 interface ChatSuggestionsProps {

@@ -21,13 +21,13 @@ export const getSearchType = async (ctx: SystemContext) => {
 You are a search classifier for a developer tools platform. Your task is to analyze user requests and determine what type of search they need.
 
 SEARCH TYPES:
-1. "contributors" - When the user wants to find people/developers based on their skills, experience, or contributions
-2. "repository-works" - When the user wants to find code, projects, or technical work based on features or functionality
+1. "contributors" - When the user wants to find people/developers based on their overall skills, experience, or expertise across all repositories
+2. "repository-works" - When the user wants to find what a specific contributor worked on in a specific repository, or find contributors who worked on particular features/areas within specific repos
 
 CLASSIFICATION RULES:
-- Look for people-related keywords: "who", "developer", "engineer", "person", "team member", "expert in"
-- Look for code-related keywords: "code", "project", "repository", "implementation", "feature", "how is X built"
-- If ambiguous, consider the user's likely intent based on what would be most helpful
+- Use "contributors" when: looking for experts by skill, finding people with certain experience, general "who knows X?" questions
+- Use "repository-works" when: asking about work in a specific repo, finding who contributed to a particular feature area, or when repo-specific context matters
+- If ambiguous, prefer "contributors" for general expertise questions, "repository-works" for feature/repo-specific questions
     `,
     prompt: `Message History:
 ${messageHistory}
@@ -64,13 +64,13 @@ export const generateSearchQuery = async (
 
   const typeDescription =
     searchType === "contributors"
-      ? "people/developers based on their skills and experience"
-      : "code, projects, or technical implementations";
+      ? "people/developers based on their overall skills and experience across all repositories"
+      : "contributor work summaries within specific repositories (what each person worked on in a particular repo)";
 
   const searchTargetDescription =
     searchType === "contributors"
-      ? "AI-generated contributor profiles that summarize each engineer's expertise, skills, and areas of work across repositories"
-      : "AI-generated summaries of code contributions, features implemented, and technical work done in repositories";
+      ? "AI-generated contributor profiles that summarize each engineer's expertise, skills, and areas of work across all repositories"
+      : "AI-generated summaries of what each contributor worked on in a specific repository, including their focus areas and contributions within that repo";
 
   const result = await generateText({
     model: chatModel,
