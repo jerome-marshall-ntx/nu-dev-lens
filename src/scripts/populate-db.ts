@@ -16,6 +16,9 @@
  *   --clear: Clear existing data before populating
  */
 
+// Load environment variables BEFORE importing env validation
+import "dotenv/config";
+
 import { db } from "@/server/db";
 import {
   commits,

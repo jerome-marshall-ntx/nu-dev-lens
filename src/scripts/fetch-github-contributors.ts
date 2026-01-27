@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // -*- coding: utf-8 -*-
 
+// Load environment variables BEFORE importing env validation
+import "dotenv/config";
+
 import { env } from "@/env";
 import type {
   ContributorIngestionData,
@@ -9,11 +12,9 @@ import type {
   StoredCommitData,
 } from "@/types/github";
 import axios, { type AxiosResponse } from "axios";
-import { config } from "dotenv";
 import { promises as fs } from "fs";
+import path from "path";
 import { fileURLToPath } from "url";
-
-config();
 
 // --- Script-Specific Type Definitions ---
 
@@ -200,7 +201,7 @@ async function makeGithubRequest(
         if (retries > 0) {
           const resetTime = parseInt(
             (response.headers["x-ratelimit-reset"] as string) ??
-              (Date.now() / 1000 + 60).toString(),
+            (Date.now() / 1000 + 60).toString(),
           );
           const waitTime = Math.max(0, resetTime - Date.now() / 1000) + 5;
           console.log(`⏳ Rate limit hit, waiting ${waitTime.toFixed(0)}s...`);
@@ -902,9 +903,18 @@ async function main(): Promise<void> {
 
   const outputFilename =
     "github_contributors_simplified_issues_commits_v4.json";
-  const outputPath = `./data/${outputFilename}`;
+  const outputDir = "./data";
+  const outputPath = path.join(outputDir, outputFilename);
 
   try {
+    // Ensure the data directory exists
+    try {
+      await fs.access(outputDir);
+    } catch {
+      console.log(`📁 Creating data directory: ${outputDir}`);
+      await fs.mkdir(outputDir, { recursive: true });
+    }
+
     console.log(`💾 Saving data to ${outputFilename} (streaming)...`);
 
     // Stream write to avoid memory issues with large JSON
@@ -984,5 +994,6 @@ export {
   fetchRepositoryCommits,
   makeGithubRequest,
   parseGithubUrl,
-  processRepositories,
+  processRepositories
 };
+
