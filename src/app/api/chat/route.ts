@@ -1,10 +1,13 @@
+// Disable AI SDK warning logging
+globalThis.AI_SDK_LOG_WARNINGS = false;
+
 import { chatModel } from "@/ai/models";
 import { searchContributorsTool, searchRepositoryWorksTool } from "@/ai/tools";
 import {
   convertToModelMessages,
   stepCountIs,
   streamText,
-  type UIMessage,
+  type UIMessage
 } from "ai";
 
 export async function POST(req: Request) {
@@ -18,7 +21,7 @@ export async function POST(req: Request) {
       searchContributors: searchContributorsTool,
       searchRepositoryWorks: searchRepositoryWorksTool,
     },
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(10),
     onError: (error) => {
       console.error("🚀 ~ error:", error)
     },

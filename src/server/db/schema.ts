@@ -168,14 +168,14 @@ export const commitsRelations = relations(commits, ({ one }) => ({
 // TYPESCRIPT TYPES - Inferred from schema for type safety
 // ============================================================================
 
-export type InsertRepository = typeof repositories.$inferInsert;
-export type SelectRepository = typeof repositories.$inferSelect;
+export type InsertRepositoryDb = typeof repositories.$inferInsert;
+export type RepositoryDb = typeof repositories.$inferSelect;
 
-export type InsertContributor = typeof contributors.$inferInsert;
-export type SelectContributor = typeof contributors.$inferSelect;
+export type InsertContributorDb = typeof contributors.$inferInsert;
+export type ContributorDb = typeof contributors.$inferSelect;
 
-export type InsertRepositoryWork = typeof repositoryWorks.$inferInsert;
-export type SelectRepositoryWork = typeof repositoryWorks.$inferSelect;
+export type InsertRepositoryWorkDb = typeof repositoryWorks.$inferInsert;
+export type RepositoryWorkDb = typeof repositoryWorks.$inferSelect;
 
-export type InsertCommit = typeof commits.$inferInsert;
-export type SelectCommit = typeof commits.$inferSelect;
+export type InsertCommitDb = typeof commits.$inferInsert;
+export type CommitDb = typeof commits.$inferSelect;
