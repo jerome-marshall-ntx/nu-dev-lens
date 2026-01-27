@@ -63,6 +63,24 @@ export type RepositoryWithStats = Awaited<
 >[number];
 
 /**
+ * Get a single repository by name.
+ * Used for looking up repositories by name in AI tool calls.
+ * @param name - The repository name to search for (case-insensitive)
+ */
+export async function getRepositoryByName(name: string) {
+  const repository = await db.query.repositories.findFirst({
+    where: sql`LOWER(${repositories.name}) = LOWER(${name})`,
+  });
+
+  return repository ?? null;
+}
+
+/** Type for repository by name result */
+export type RepositoryByName = NonNullable<
+  Awaited<ReturnType<typeof getRepositoryByName>>
+>;
+
+/**
  * Get a single repository by ID with full details.
  * Used for the repository details page.
  */

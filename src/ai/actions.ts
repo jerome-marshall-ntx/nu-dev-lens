@@ -3,8 +3,193 @@ import z from "zod";
 import { chatModel } from "./models";
 import type { SystemContext } from "./system-context";
 
+// ============================================================================
+// TOOL TYPES - Used for tool selection
+// ============================================================================
+
+/**
+ * Available tools that can be selected by the AI
+ */
+export const ToolType = {
+  SEARCH_CONTRIBUTORS: "search-contributors",
+  SEARCH_REPOSITORY_WORKS: "search-repository-works",
+  GET_TOP_CONTRIBUTORS: "get-top-contributors",
+  GET_CONTRIBUTOR_STATS: "get-contributor-stats",
+  LIST_REPOSITORIES: "list-repositories",
+} as const;
+
+export type ToolType = (typeof ToolType)[keyof typeof ToolType];
+
+/**
+ * Schema for tool selection output
+ */
+const toolSelectionSchema = z.object({
+  tools: z
+    .array(
+      z.enum([
+        "search-contributors",
+        "search-repository-works",
+        "get-top-contributors",
+        "get-contributor-stats",
+        "list-repositories",
+      ])
+    )
+    .describe("Which tool(s) to use to answer this question. Can select multiple."),
+  repositoryName: z
+    .string()
+    .describe(
+      "The EXACT repository name from the available repositories list. Required when using get-top-contributors. Map user's query to the matching repo name (e.g., if user says 'IAM', find the repo with 'iam' in its name from the list)."
+    ),
+  username: z
+    .string()
+    .describe(
+      "A GitHub username of a person (e.g., 'john-doe', 'jane-smith'). Required for get-contributor-stats tool. This is a PERSON's username, NOT a repository name."
+    ),
+  reasoning: z.string().describe("Brief explanation of why these tools were selected"),
+});
+
+export type ToolSelection = z.infer<typeof toolSelectionSchema>;
+
+/**
+ * Selects which tool(s) to use based on the user's query.
+ * This replaces the simpler getSearchType function with more options.
+ */
+export const selectTools = async (
+  ctx: SystemContext,
+  repositoryDescriptions: { name: string; description: string | null }[]
+): Promise<ToolSelection> => {
+  const messageHistory = ctx.getMessageHistory();
+  const repoNames = repositoryDescriptions.map((r) => r.name).join(", ");
+
+  const result = await generateText({
+    model: chatModel,
+    output: Output.object({
+      schema: toolSelectionSchema,
+    }),
+    system: `
+You are a tool selector for NuDevLens, a developer expertise discovery platform. Your task is to analyze user requests and decide which tool(s) to use.
+
+AVAILABLE TOOLS:
+
+1. "search-contributors" (Semantic Search)
+   - Find people by skills, expertise, or experience across ALL repositories
+   - Use for: "who knows React?", "find a security expert", "who has experience with testing?"
+   - Returns: contributor profiles with AI-generated summaries of their expertise
+
+2. "search-repository-works" (Semantic Search)
+   - Find what contributors worked on in SPECIFIC repositories
+   - Use for: "who worked on the login feature?", "find contributors to Flow UI security"
+   - Returns: work summaries showing what each person did in a specific repo
+
+3. "get-top-contributors" (Database Query - Quantitative)
+   - Get contributors RANKED BY COMMIT COUNT for a specific repository
+   - Use for: "who has the most commits?", "most experienced in repo X?", "top contributors to Flow UI?"
+   - REQUIRES: repositoryName parameter
+   - Returns: list of contributors with commit counts, sorted by most commits
+
+4. "get-contributor-stats" (Database Query - Quantitative)
+   - Get detailed stats for a SPECIFIC person
+   - Use for: "how many commits does John have?", "what repos has Jane worked on?"
+   - REQUIRES: username parameter
+   - Returns: commit count, repository count for that person
+
+5. "list-repositories" (Database Query)
+   - List all available repositories
+   - Use when: user asks about available repos, or you need to clarify which repo they mean
+   - Returns: repository names with descriptions
+
+DECISION RULES - ALWAYS PREFER MULTIPLE TOOLS:
+
+The best answers come from combining multiple data sources. ALWAYS use 2+ tools when possible to provide richer, more complete context.
+
+RECOMMENDED TOOL COMBINATIONS:
+
+1. Repository questions → Use BOTH quantitative + qualitative:
+   - get-top-contributors (who has most commits) + search-repository-works (what they actually worked on)
+   - This gives both the ranking AND the context of their contributions
+
+2. Expertise questions → Use BOTH search tools:
+   - search-contributors (overall expertise) + search-repository-works (specific work examples)
+   - This shows both their general skills AND concrete examples
+
+3. Person-specific questions → Combine stats + context:
+   - get-contributor-stats (numbers) + search-contributors (expertise summary)
+   - This gives both quantitative data AND qualitative insights
+
+4. "Top contributor" or "most experienced" questions → ALWAYS use multiple:
+   - get-top-contributors (commit ranking) + search-repository-works (what they did)
+   - Numbers alone don't tell the full story - always add context
+
+SINGLE TOOL is only acceptable for:
+- "list-repositories" when user just wants to see available repos
+- Very simple factual queries like "how many commits does X have?" (just get-contributor-stats)
+
+- When a SPECIFIC REPOSITORY is mentioned:
+  → Extract the repository name and set repositoryName parameter
+  → Use get-top-contributors AND search-repository-works for complete picture
+
+- When a SPECIFIC PERSON is mentioned:
+  → Extract the username and set username parameter
+  → Use get-contributor-stats AND search-contributors for full context
+
+AVAILABLE REPOSITORIES (use EXACTLY these names for repositoryName parameter):
+${repoNames}
+
+PARAMETER EXTRACTION - CRITICAL:
+
+1. repositoryName (for get-top-contributors):
+   - MUST be one of the exact repository names listed above
+   - Map user's informal names to the exact repository name:
+     * "IAM" or "iam" → look for a repo containing "iam" in the list above
+     * "Flow" or "flow" → look for a repo containing "flow" in the list above  
+     * "DRaaS" or "disaster recovery" → look for a repo containing "draas" in the list above
+   - Set this field when using get-top-contributors tool
+
+2. username (for get-contributor-stats):
+   - A GitHub username of a PERSON (e.g., "john-doe", "jane-smith")
+   - This is NOT a repository name - it's a person's GitHub account name
+   - Set this field when using get-contributor-stats tool
+
+IMPORTANT - MULTI-TOOL APPROACH:
+- DEFAULT to selecting 2+ tools for comprehensive answers
+- Single tool responses are the EXCEPTION, not the rule
+- More context = better answers for the user
+- ALWAYS set repositoryName when using get-top-contributors
+- ALWAYS set username when using get-contributor-stats
+`,
+    prompt: `Message History:
+${messageHistory}
+
+Based on the conversation, select which tool(s) to use and extract any parameters needed.
+
+OUTPUT FORMAT - You MUST return a JSON object with these fields:
+{
+  "tools": ["tool-name-here"],  // REQUIRED: array of tool names
+  "repositoryName": "exact-repo-name",  // optional: set when using get-top-contributors
+  "username": "github-username",  // optional: set when using get-contributor-stats  
+  "reasoning": "Brief explanation"  // REQUIRED: why you chose these tools
+}
+
+EXAMPLE for "Who is the top contributor to IAM?":
+{
+  "tools": ["get-top-contributors", "search-repository-works"],
+  "repositoryName": "jerome-marshall-ntx/iam-ui",
+  "reasoning": "Using get-top-contributors to find who has the most commits, AND search-repository-works to understand what they actually worked on. This gives both the ranking and meaningful context about their contributions."
+}
+
+EXAMPLE for "Who knows React?":
+{
+  "tools": ["search-contributors", "search-repository-works"],
+  "reasoning": "Using search-contributors to find people with React expertise, AND search-repository-works to find specific examples of React work they've done. This provides both general expertise and concrete evidence."
+}`,
+  });
+
+  return result.output;
+};
+
 /**
  * Determines what type of search the user needs (contributors or repository works)
+ * @deprecated Use selectTools instead for more flexible tool selection
  */
 export const getSearchType = async (ctx: SystemContext) => {
   const messageHistory = ctx.getMessageHistory();
