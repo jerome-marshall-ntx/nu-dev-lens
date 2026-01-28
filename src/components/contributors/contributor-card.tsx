@@ -1,10 +1,19 @@
+import {
+  ExpertiseTag,
+  ExpertiseTagGroup,
+} from "@/components/ui/expertise-tag";
 import type { ContributorWithStats } from "@/data-access/contributor";
+import { extractExpertiseTags } from "@/lib/expertise-utils";
 import { cn } from "@/lib/utils";
-import { ExternalLink, FolderGit2, GitCommitHorizontal, User } from "lucide-react";
+import {
+  ExternalLink,
+  FolderGit2,
+  GitCommitHorizontal,
+  User,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { memo } from "react";
-import { Streamdown } from 'streamdown';
+import { memo, useMemo } from "react";
 
 interface ContributorCardProps {
   contributor: ContributorWithStats;
@@ -15,12 +24,18 @@ export const ContributorCard = memo(function ContributorCard({
   contributor,
   className,
 }: ContributorCardProps) {
+  // Extract expertise tags from the summary
+  const expertiseTags = useMemo(
+    () => extractExpertiseTags(contributor.summary, 4),
+    [contributor.summary]
+  );
+
   return (
     <Link
       href={`/contributors/${contributor.username}`}
       className={cn(
         "group relative flex cursor-pointer items-start gap-4 rounded-xl bg-card p-5 ring-1 ring-border transition-[transform,shadow,ring-color] duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:ring-primary/20",
-        className,
+        className
       )}
     >
       {/* Avatar */}
@@ -59,15 +74,29 @@ export const ContributorCard = memo(function ContributorCard({
           </button>
         </div>
 
-        {/* Summary */}
+        {/* Summary - truncated to 1 line when we have tags */}
         {contributor.summary ? (
-          <div className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-            <Streamdown>{contributor.summary}</Streamdown>
-          </div>
+          <p
+            className={cn(
+              "mt-1 text-sm text-muted-foreground",
+              expertiseTags.length > 0 ? "line-clamp-1" : "line-clamp-2"
+            )}
+          >
+            {contributor.summary.replace(/\*\*/g, "")}
+          </p>
         ) : (
           <p className="mt-1 text-sm italic text-muted-foreground/60">
             No summary available yet
           </p>
+        )}
+
+        {/* Expertise Tags */}
+        {expertiseTags.length > 0 && (
+          <ExpertiseTagGroup className="mt-2">
+            {expertiseTags.map((tag) => (
+              <ExpertiseTag key={tag} label={tag} variant="filled" size="sm" />
+            ))}
+          </ExpertiseTagGroup>
         )}
 
         {/* Stats */}

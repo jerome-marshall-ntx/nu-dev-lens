@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 
 import { AppSidebar } from "@/components/app-sidebar";
+import { FloatingSearchWidget } from "@/components/search";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TRPCReactProvider } from "@/trpc/react";
@@ -51,6 +52,7 @@ export default function RootLayout({
                   {children}
                 </div>
               </SidebarInset>
+              <FloatingSearchWidget />
             </SidebarProvider>
           </TRPCReactProvider>
         </ThemeProvider>

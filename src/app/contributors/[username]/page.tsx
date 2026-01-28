@@ -1,3 +1,4 @@
+import { ActivityChart } from "@/components/contributors/activity-chart";
 import { ContributorCommits } from "@/components/contributors/contributor-commits";
 import { ContributorProfile } from "@/components/contributors/contributor-profile";
 import { ContributorRepos } from "@/components/contributors/contributor-repos";
@@ -65,11 +66,14 @@ export default async function ContributorDetailsPage({
   // Fetch related data in parallel with error handling
   let repositories: ContributorRepository[] = [];
   let commits: ContributorCommit[] = [];
+  let allCommitsForChart: ContributorCommit[] = [];
 
   try {
-    [repositories, commits] = await Promise.all([
+    [repositories, commits, allCommitsForChart] = await Promise.all([
       getContributorRepositories(contributor.id),
       getContributorCommits(contributor.id, 10),
+      // Fetch more commits for the activity chart (last 6 months worth)
+      getContributorCommits(contributor.id, 500),
     ]);
   } catch (error) {
     console.error("Error fetching contributor data:", error);
@@ -101,7 +105,8 @@ export default async function ContributorDetailsPage({
         </div>
 
         {/* Right Column */}
-        <div>
+        <div className="space-y-6">
+          <ActivityChart commits={allCommitsForChart} months={6} />
           <ContributorCommits commits={commits} />
         </div>
       </div>

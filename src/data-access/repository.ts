@@ -8,7 +8,7 @@ import {
 import { count, desc, eq, inArray, sql } from "drizzle-orm";
 
 /**
- * Get all repositories with their commit counts.
+ * Get all repositories with their commit counts, contributor counts, and top contributors.
  * Used for the repositories list page.
  */
 export async function getAllRepositoriesWithStats() {
@@ -28,8 +28,9 @@ export async function getAllRepositoriesWithStats() {
     return [];
   }
 
-  // Get commit counts per repository
   const repoIds = allRepositories.map((r) => r.id);
+
+  // Get commit counts per repository
   const commitCounts = await db
     .select({
       repositoryId: repositoryWorks.repositoryId,
@@ -40,15 +41,78 @@ export async function getAllRepositoriesWithStats() {
     .where(inArray(repositoryWorks.repositoryId, repoIds))
     .groupBy(repositoryWorks.repositoryId);
 
-  // Create lookup map
+  // Get contributor counts per repository
+  const contributorCounts = await db
+    .select({
+      repositoryId: repositoryWorks.repositoryId,
+      count: sql<number>`count(distinct ${repositoryWorks.contributorId})`,
+    })
+    .from(repositoryWorks)
+    .where(inArray(repositoryWorks.repositoryId, repoIds))
+    .groupBy(repositoryWorks.repositoryId);
+
+  // Get top 4 contributors per repository (for avatar stack)
+  const topContributorsData = await db
+    .select({
+      repositoryId: repositoryWorks.repositoryId,
+      contributorId: contributors.id,
+      username: contributors.username,
+      avatarUrl: contributors.avatarUrl,
+      commitCount: count(commits.id),
+    })
+    .from(contributors)
+    .innerJoin(repositoryWorks, eq(repositoryWorks.contributorId, contributors.id))
+    .innerJoin(commits, eq(commits.repositoryWorkId, repositoryWorks.id))
+    .where(inArray(repositoryWorks.repositoryId, repoIds))
+    .groupBy(repositoryWorks.repositoryId, contributors.id)
+    .orderBy(desc(count(commits.id)));
+
+  // Get most recent commit date per repository (for activity indicator)
+  const lastActivityData = await db
+    .select({
+      repositoryId: repositoryWorks.repositoryId,
+      lastActivity: sql<Date>`max(${commits.createdAt})`,
+    })
+    .from(commits)
+    .innerJoin(repositoryWorks, eq(commits.repositoryWorkId, repositoryWorks.id))
+    .where(inArray(repositoryWorks.repositoryId, repoIds))
+    .groupBy(repositoryWorks.repositoryId);
+
+  // Create lookup maps
   const commitCountMap = new Map(
     commitCounts.map((c) => [c.repositoryId, Number(c.count)])
   );
+  const contributorCountMap = new Map(
+    contributorCounts.map((c) => [c.repositoryId, Number(c.count)])
+  );
+  const lastActivityMap = new Map(
+    lastActivityData.map((a) => [a.repositoryId, a.lastActivity])
+  );
+
+  // Group top contributors by repository (limit 4 per repo)
+  const topContributorsMap = new Map<
+    number,
+    { id: number; username: string; avatarUrl: string }[]
+  >();
+  for (const tc of topContributorsData) {
+    const existing = topContributorsMap.get(tc.repositoryId) ?? [];
+    if (existing.length < 4) {
+      existing.push({
+        id: tc.contributorId,
+        username: tc.username,
+        avatarUrl: tc.avatarUrl,
+      });
+      topContributorsMap.set(tc.repositoryId, existing);
+    }
+  }
 
   // Combine data
   const results = allRepositories.map((repo) => ({
     ...repo,
     commitCount: commitCountMap.get(repo.id) ?? 0,
+    contributorCount: contributorCountMap.get(repo.id) ?? 0,
+    topContributors: topContributorsMap.get(repo.id) ?? [],
+    lastActivity: lastActivityMap.get(repo.id) ?? null,
   }));
 
   // Sort by commit count descending

@@ -1,6 +1,7 @@
 import {
   KeyContributors,
   RepositoryActivity,
+  RepositoryActivityChart,
   RepositoryHeader,
   RepositorySummary,
 } from "@/components/repositories";
@@ -72,11 +73,14 @@ export default async function RepositoryDetailsPage({
   // Fetch related data in parallel with error handling
   let commits: RepositoryCommit[] = [];
   let contributors: RepositoryContributor[] = [];
+  let allCommitsForChart: RepositoryCommit[] = [];
 
   try {
-    [commits, contributors] = await Promise.all([
+    [commits, contributors, allCommitsForChart] = await Promise.all([
       getRepositoryRecentCommits(repository.id, 10),
       getRepositoryKeyContributors(repository.id, 6),
+      // Fetch more commits for the activity chart
+      getRepositoryRecentCommits(repository.id, 500),
     ]);
   } catch (error) {
     console.error("Error fetching repository data:", error);
@@ -108,7 +112,8 @@ export default async function RepositoryDetailsPage({
         </div>
 
         {/* Right Column */}
-        <div>
+        <div className="space-y-6">
+          <RepositoryActivityChart commits={allCommitsForChart} months={6} />
           <RepositoryActivity commits={commits} />
         </div>
       </div>
