@@ -102,21 +102,37 @@ DECISION RULES - ALWAYS PREFER MULTIPLE TOOLS:
 
 The best answers come from combining multiple data sources. ALWAYS use 2+ tools when possible to provide richer, more complete context.
 
+CRITICAL - "EXPERT" QUERIES REQUIRE COMMIT DATA:
+When users ask for an "expert", "best developer", "most experienced", or "who knows X best" for a SPECIFIC REPOSITORY/PRODUCT:
+- COMMIT COUNT is the PRIMARY indicator of expertise - someone with 500 commits knows more than someone with 10
+- You MUST use get-top-contributors to get the commit ranking data
+- Combine with search-repository-works to understand WHAT they worked on
+- This gives you BOTH the quantitative proof (commits) AND qualitative context (what they did)
+
+Example: "Who is the IAM UI expert?" or "Find me a developer expert in IAM"
+→ MUST use: get-top-contributors (for IAM repo) + search-repository-works
+→ The person with the most commits to that repo is likely the expert!
+
 RECOMMENDED TOOL COMBINATIONS:
 
-1. Repository questions → Use BOTH quantitative + qualitative:
+1. "Expert in [product/repo]" questions → ALWAYS use get-top-contributors + search:
+   - get-top-contributors (commit count = proof of expertise) + search-repository-works (what they worked on)
+   - Commit count is the STRONGEST signal of expertise in a specific codebase
+   - Example: "IAM expert" → get-top-contributors for IAM repo + search-repository-works for context
+
+2. Repository questions → Use BOTH quantitative + qualitative:
    - get-top-contributors (who has most commits) + search-repository-works (what they actually worked on)
    - This gives both the ranking AND the context of their contributions
 
-2. Expertise questions → Use BOTH search tools:
+3. General expertise questions (no specific repo) → Use BOTH search tools:
    - search-contributors (overall expertise) + search-repository-works (specific work examples)
    - This shows both their general skills AND concrete examples
 
-3. Person-specific questions → Combine stats + context:
+4. Person-specific questions → Combine stats + context:
    - get-contributor-stats (numbers) + search-contributors (expertise summary)
    - This gives both quantitative data AND qualitative insights
 
-4. "Top contributor" or "most experienced" questions → ALWAYS use multiple:
+5. "Top contributor" or "most experienced" questions → ALWAYS use multiple:
    - get-top-contributors (commit ranking) + search-repository-works (what they did)
    - Numbers alone don't tell the full story - always add context
 
@@ -170,6 +186,13 @@ OUTPUT FORMAT - You MUST return a JSON object with these fields:
   "reasoning": "Brief explanation"  // REQUIRED: why you chose these tools
 }
 
+EXAMPLE for "Who is the IAM expert?" or "Find a developer expert in IAM UI":
+{
+  "tools": ["get-top-contributors", "search-repository-works"],
+  "repositoryName": "jerome-marshall-ntx/iam-ui",
+  "reasoning": "For 'expert' queries, commit count is the primary indicator of expertise. Using get-top-contributors to find who has the most commits (= most experienced), AND search-repository-works to understand what they worked on. The developer with the most commits is likely the expert."
+}
+
 EXAMPLE for "Who is the top contributor to IAM?":
 {
   "tools": ["get-top-contributors", "search-repository-works"],
@@ -177,7 +200,7 @@ EXAMPLE for "Who is the top contributor to IAM?":
   "reasoning": "Using get-top-contributors to find who has the most commits, AND search-repository-works to understand what they actually worked on. This gives both the ranking and meaningful context about their contributions."
 }
 
-EXAMPLE for "Who knows React?":
+EXAMPLE for "Who knows React?" (general skill, no specific repo):
 {
   "tools": ["search-contributors", "search-repository-works"],
   "reasoning": "Using search-contributors to find people with React expertise, AND search-repository-works to find specific examples of React work they've done. This provides both general expertise and concrete evidence."
