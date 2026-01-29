@@ -33,9 +33,9 @@ function SidebarToggleMenuItem() {
     <SidebarMenuItem>
       <SidebarMenuButton onClick={toggleSidebar} tooltip="Toggle Sidebar">
         {isCollapsed ? (
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground" />
         ) : (
-          <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+          <ChevronLeft className="h-4 w-4 text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground" />
         )}
         <span>{isCollapsed ? "Expand" : "Collapse"}</span>
       </SidebarMenuButton>
@@ -59,7 +59,7 @@ function ThemeToggleMenuItem() {
     return (
       <SidebarMenuItem>
         <SidebarMenuButton tooltip="Toggle Theme">
-          <Sun className="h-4 w-4 text-muted-foreground" />
+          <Sun className="h-4 w-4 text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground" />
           <span>Toggle Theme</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -70,9 +70,9 @@ function ThemeToggleMenuItem() {
     <SidebarMenuItem>
       <SidebarMenuButton onClick={toggleTheme} tooltip="Toggle Theme">
         {theme === "dark" ? (
-          <Sun className="h-4 w-4 text-muted-foreground" />
+          <Sun className="h-4 w-4 text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground" />
         ) : (
-          <Moon className="h-4 w-4 text-muted-foreground" />
+          <Moon className="h-4 w-4 text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground" />
         )}
         <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
       </SidebarMenuButton>
@@ -128,8 +128,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           className={cn(
                             "h-4 w-4",
                             isActive
-                              ? "text-primary"
-                              : "text-muted-foreground",
+                              ? "text-sidebar-accent-foreground"
+                              : "text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground",
                           )}
                         />
                         <span>{item.title}</span>
@@ -149,7 +149,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <ThemeToggleMenuItem />
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Settings">
-              <Settings className="h-4 w-4 text-muted-foreground" />
+              <Settings className="h-4 w-4 text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground" />
               <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
