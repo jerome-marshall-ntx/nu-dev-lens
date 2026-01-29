@@ -17,12 +17,12 @@ export default async function RepositoriesPage() {
       </div>
 
       {/* Repositories Section */}
-      <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm">
-        <div className="mb-5 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shadow-sm">
-            <FolderGit2 className="h-4 w-4 text-primary" />
+      <div className="glass-layered rounded-[2rem] p-6">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+            <FolderGit2 className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-lg font-semibold">All Repositories</h2>
+          <h2 className="text-xl font-semibold tracking-tight">All Repositories</h2>
         </div>
         <RepositoriesGrid repositories={repositories} />
       </div>

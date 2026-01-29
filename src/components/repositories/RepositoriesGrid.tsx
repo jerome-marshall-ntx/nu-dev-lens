@@ -123,19 +123,16 @@ export function RepositoriesGrid({ repositories }: RepositoriesGridProps) {
               active={activityFilter === "active"}
               onClick={() => setActivityFilter("active")}
               label="Active"
-              indicator="bg-green-500"
             />
             <FilterButton
               active={activityFilter === "recent"}
               onClick={() => setActivityFilter("recent")}
               label="Recent"
-              indicator="bg-orange-500"
             />
             <FilterButton
               active={activityFilter === "inactive"}
               onClick={() => setActivityFilter("inactive")}
               label="Inactive"
-              indicator="bg-muted-foreground/50"
             />
           </div>
         </div>

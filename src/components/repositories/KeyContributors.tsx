@@ -19,12 +19,12 @@ interface KeyContributorsProps {
 export function KeyContributors({ contributors }: KeyContributorsProps) {
   if (contributors.length === 0) {
     return (
-      <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm">
-        <div className="mb-5 flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-chart-1/10 shadow-sm">
-            <Users className="h-4 w-4 text-chart-1" />
+      <div className="glass-layered rounded-[2rem] p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+            <Users className="h-5 w-5 text-chart-1" />
           </div>
-          <h2 className="text-lg font-semibold">Key Contributors</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Key Contributors</h2>
         </div>
         <p className="italic text-muted-foreground/60">
           No contributors found.
@@ -34,14 +34,14 @@ export function KeyContributors({ contributors }: KeyContributorsProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm">
+    <div className="glass-layered rounded-[2rem] p-6">
       <div className="mb-5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-chart-1/10 shadow-sm">
-            <Users className="h-4 w-4 text-chart-1" />
+        <div className="flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+            <Users className="h-5 w-5 text-chart-1" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Key Contributors</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Key Contributors</h2>
             <p className="text-xs text-muted-foreground">
               Top {contributors.length} by commits
             </p>
@@ -89,7 +89,7 @@ function ContributorTile({ contributor }: ContributorTileProps) {
       role="button"
       tabIndex={0}
       className={cn(
-        "group flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-card/50 p-3 transition-all hover:border-primary/20 hover:bg-card"
+        "group flex cursor-pointer items-start gap-3 rounded-2xl p-3 transition-all duration-200 glass-subtle hover:glass"
       )}
     >
       {/* Avatar */}

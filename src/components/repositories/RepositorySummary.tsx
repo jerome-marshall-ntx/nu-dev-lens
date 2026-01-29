@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 
 interface RepositorySummaryProps {
@@ -7,24 +6,22 @@ interface RepositorySummaryProps {
 
 export function RepositorySummary({ description }: RepositorySummaryProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+    <div className="glass-layered rounded-[2rem] p-6">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
           <FileText className="h-5 w-5 text-primary" />
-          Repository Summary
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {description ? (
-          <p className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
-            {description}
-          </p>
-        ) : (
-          <p className="italic text-muted-foreground/60">
-            No description available for this repository.
-          </p>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+        <h2 className="text-xl font-semibold tracking-tight">Repository Summary</h2>
+      </div>
+      {description ? (
+        <p className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
+          {description}
+        </p>
+      ) : (
+        <p className="italic text-muted-foreground/60">
+          No description available for this repository.
+        </p>
+      )}
+    </div>
   );
 }

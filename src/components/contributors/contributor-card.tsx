@@ -34,7 +34,8 @@ export const ContributorCard = memo(function ContributorCard({
     <Link
       href={`/contributors/${contributor.username}`}
       className={cn(
-        "group relative flex cursor-pointer items-start gap-4 rounded-xl bg-card p-5 ring-1 ring-border transition-[transform,shadow,ring-color] duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:ring-primary/20",
+        "group relative flex cursor-pointer items-start gap-4 rounded-3xl p-5 transition-all duration-300",
+        "glass-interactive",
         className
       )}
     >

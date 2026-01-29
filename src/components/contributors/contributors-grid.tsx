@@ -1,5 +1,6 @@
 "use client";
 
+import { SearchEmptyState } from "@/components/ui/empty-state";
 import {
   Pagination,
   PaginationContent,
@@ -9,7 +10,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { SearchEmptyState } from "@/components/ui/empty-state";
 import type { ContributorWithStats } from "@/data-access/contributor";
 import type { ExpertiseCategory } from "@/lib/expertise-utils";
 import {
@@ -23,7 +23,7 @@ import { ContributorCard } from "./contributor-card";
 import { ContributorsSearch } from "./contributors-search";
 import { ExpertiseFilter } from "./expertise-filter";
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 9;
 
 type SortOption = "commits" | "repos" | "name";
 

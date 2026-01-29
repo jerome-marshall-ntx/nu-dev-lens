@@ -96,16 +96,16 @@ export function RepositoryActivityChart({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm",
+        "glass-layered rounded-[2rem] p-6",
         className
       )}
     >
-      <div className="mb-5 flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-chart-3/10 shadow-sm">
-          <Activity className="h-4 w-4 text-chart-3" />
+      <div className="mb-5 flex items-center gap-3">
+        <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+          <Activity className="h-5 w-5 text-chart-3" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Repository Activity</h2>
+          <h2 className="text-xl font-semibold tracking-tight">Repository Activity</h2>
           <p className="text-xs text-muted-foreground">Commits over time</p>
         </div>
       </div>
@@ -120,26 +120,26 @@ export function RepositoryActivityChart({
               dataKey="month"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
               tickMargin={8}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
               tickMargin={8}
               allowDecimals={false}
             />
             <Tooltip
-              cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }}
+              cursor={{ fill: "var(--muted)", opacity: 0.5 }}
               contentStyle={{
-                backgroundColor: "hsl(var(--popover))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
+                backgroundColor: "var(--popover)",
+                border: "1px solid var(--border)",
+                borderRadius: "12px",
                 boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
               }}
               labelStyle={{
-                color: "hsl(var(--foreground))",
+                color: "var(--foreground)",
                 fontWeight: 600,
                 marginBottom: "4px",
               }}
@@ -150,7 +150,7 @@ export function RepositoryActivityChart({
             />
             <Bar
               dataKey="commits"
-              fill="hsl(var(--chart-3))"
+              fill="var(--chart-3)"
               radius={[4, 4, 0, 0]}
               maxBarSize={40}
             />

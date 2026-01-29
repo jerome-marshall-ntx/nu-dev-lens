@@ -99,7 +99,7 @@ export default async function RepositoryDetailsPage({
       </Link>
 
       {/* Repository Header */}
-      <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm">
+      <div className="glass-layered rounded-[2rem] p-6">
         <RepositoryHeader repository={repository} />
       </div>
 

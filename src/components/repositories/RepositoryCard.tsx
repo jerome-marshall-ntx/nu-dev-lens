@@ -81,22 +81,13 @@ export function RepositoryCard({ repository, className }: RepositoryCardProps) {
       role="button"
       tabIndex={0}
       className={cn(
-        "group relative flex cursor-pointer items-start gap-4 rounded-xl bg-card p-5 ring-1 ring-border transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:ring-primary/20",
+        "group relative flex cursor-pointer items-start gap-4 rounded-3xl p-5 transition-all duration-300",
+        "glass-interactive",
         className
       )}
     >
-      {/* Activity Indicator */}
-      <div
-        className={cn(
-          "absolute right-4 top-4 h-2.5 w-2.5 rounded-full",
-          activityStatus.color,
-          activityStatus.pulse && "animate-pulse"
-        )}
-        title={activityStatus.label}
-      />
-
       {/* Repository Icon */}
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 ring-2 ring-primary/10">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl glass-icon">
         <FolderGit2 className="h-7 w-7 text-primary" />
       </div>
 

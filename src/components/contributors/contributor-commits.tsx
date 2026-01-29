@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ContributorCommit } from "@/data-access/contributor";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { ExternalLink, GitCommitHorizontal } from "lucide-react";
@@ -10,32 +9,32 @@ interface ContributorCommitsProps {
 export function ContributorCommits({ commits }: ContributorCommitsProps) {
   if (commits.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <div className="glass-layered rounded-[2rem] p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <GitCommitHorizontal className="h-5 w-5 text-primary" />
-            Recent Commits
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="italic text-muted-foreground/60">No commits found.</p>
-        </CardContent>
-      </Card>
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Recent Commits</h2>
+        </div>
+        <p className="italic text-muted-foreground/60">No commits found.</p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <GitCommitHorizontal className="h-5 w-5 text-primary" />
-          Recent Commits
-          <span className="ml-auto text-sm font-normal text-muted-foreground">
-            Last {commits.length} {commits.length === 1 ? "commit" : "commits"}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="glass-layered rounded-[2rem] p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+            <GitCommitHorizontal className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Recent Commits</h2>
+        </div>
+        <span className="text-sm text-muted-foreground">
+          Last {commits.length} {commits.length === 1 ? "commit" : "commits"}
+        </span>
+      </div>
+      <div>
         {/* Timeline container */}
         <div className="relative">
           {commits.map((commit, index) => {
@@ -46,7 +45,7 @@ export function ContributorCommits({ commits }: ContributorCommitsProps) {
                 {/* Timeline line and dot */}
                 <div className="flex flex-col items-center">
                   {/* Dot */}
-                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-primary/20 bg-background transition-colors group-hover:border-primary/50">
+                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl glass-subtle transition-colors group-hover:glass">
                     <GitCommitHorizontal className="h-4 w-4 text-primary" />
                   </div>
                   {/* Connecting line */}
@@ -63,12 +62,12 @@ export function ContributorCommits({ commits }: ContributorCommitsProps) {
                   )}
                 >
                   {/* Time badge */}
-                  <span className="mb-2 inline-block rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  <span className="mb-2 inline-block rounded-full glass-subtle px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                     {formatRelativeTime(commit.createdAt)}
                   </span>
 
                   {/* Commit card */}
-                  <div className="rounded-lg border border-border bg-muted/30 p-3 transition-colors group-hover:border-primary/20 group-hover:bg-muted/50">
+                  <div className="rounded-2xl glass-subtle p-3 transition-all duration-200 group-hover:glass">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         {/* Commit message */}
@@ -110,7 +109,7 @@ export function ContributorCommits({ commits }: ContributorCommitsProps) {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

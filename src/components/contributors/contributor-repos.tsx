@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ContributorRepository } from "@/data-access/contributor";
 import {
   ExternalLink,
@@ -6,6 +5,7 @@ import {
   GitCommitHorizontal,
 } from "lucide-react";
 import { Streamdown } from 'streamdown';
+
 interface ContributorReposProps {
   repositories: ContributorRepository[];
 }
@@ -13,39 +13,39 @@ interface ContributorReposProps {
 export function ContributorRepos({ repositories }: ContributorReposProps) {
   if (repositories.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
+      <div className="glass-layered rounded-[2rem] p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <FolderGit2 className="h-5 w-5 text-primary" />
-            Repository Contributions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="italic text-muted-foreground/60">
-            No repository contributions found.
-          </p>
-        </CardContent>
-      </Card>
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Repository Contributions</h2>
+        </div>
+        <p className="italic text-muted-foreground/60">
+          No repository contributions found.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <FolderGit2 className="h-5 w-5 text-primary" />
-          Repository Contributions
-          <span className="ml-auto text-sm font-normal text-muted-foreground">
-            {repositories.length}{" "}
-            {repositories.length === 1 ? "repository" : "repositories"}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="glass-layered rounded-[2rem] p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+            <FolderGit2 className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Repository Contributions</h2>
+        </div>
+        <span className="text-sm text-muted-foreground">
+          {repositories.length}{" "}
+          {repositories.length === 1 ? "repository" : "repositories"}
+        </span>
+      </div>
+      <div className="space-y-4">
         {repositories.map((repo) => (
           <div
             key={repo.id}
-            className="rounded-lg border border-border bg-muted/30 p-4"
+            className="rounded-2xl glass-subtle p-4 transition-all duration-200 hover:glass"
           >
             {/* Repo Header */}
             <div className="flex items-start justify-between gap-4">
@@ -78,7 +78,7 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
 
             {/* Work Summary */}
             {repo.summary && (
-              <div className="mt-3 border-t border-border pt-3">
+              <div className="mt-3 border-t border-border/30 pt-3">
                 <div className="text-sm leading-relaxed text-muted-foreground">
                   <Streamdown>
                     {repo.summary}
@@ -88,7 +88,7 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
             )}
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
