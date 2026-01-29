@@ -48,77 +48,79 @@
 }
 
 :root {
-  /* Apple Liquid Glass - Light mode with subtle mesh gradient */
+  /* Frosted Glass - Light mode with soft gradient background */
   --background-gradient: 
-    radial-gradient(ellipse at 20% 20%, oklch(0.95 0.02 250 / 60%) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, oklch(0.92 0.025 200 / 50%) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, oklch(0.94 0.015 280 / 40%) 0%, transparent 60%),
-    linear-gradient(180deg, oklch(0.97 0.005 250) 0%, oklch(0.93 0.01 240) 100%);
-  --background-solid: oklch(0.96 0.005 250);
-  --foreground: oklch(0.15 0.01 250);
+    radial-gradient(ellipse at 10% 10%, oklch(0.85 0.06 240 / 80%) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 15%, oklch(0.82 0.08 200 / 70%) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 85%, oklch(0.80 0.07 280 / 65%) 0%, transparent 50%),
+    radial-gradient(ellipse at 15% 75%, oklch(0.83 0.05 320 / 60%) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, oklch(0.78 0.04 260 / 40%) 0%, transparent 60%),
+    linear-gradient(135deg, oklch(0.88 0.02 250) 0%, oklch(0.82 0.03 220) 50%, oklch(0.85 0.02 280) 100%);
+  --background-solid: oklch(0.88 0.02 250);
+  --foreground: oklch(0.15 0.02 250);
   
-  /* Liquid glass card - very high transparency */
-  --card: oklch(1 0 0 / 45%);
-  --card-foreground: oklch(0.15 0.01 250);
+  /* Frosted glass card */
+  --card: oklch(1 0 0 / 65%);
+  --card-foreground: oklch(0.15 0.02 250);
   
-  --popover: oklch(1 0 0 / 70%);
-  --popover-foreground: oklch(0.15 0.01 250);
+  --popover: oklch(1 0 0 / 85%);
+  --popover-foreground: oklch(0.15 0.02 250);
   
-  /* Primary - Apple-style blue-grey */
-  --primary: oklch(0.45 0.12 250);
+  /* Primary - vibrant blue */
+  --primary: oklch(0.50 0.18 250);
   --primary-foreground: oklch(0.99 0.005 250);
   
   /* Secondary */
-  --secondary: oklch(0.92 0.005 250 / 60%);
-  --secondary-foreground: oklch(0.25 0.01 250);
+  --secondary: oklch(0.92 0.02 250 / 80%);
+  --secondary-foreground: oklch(0.20 0.02 250);
   
-  --muted: oklch(0.90 0.005 250 / 50%);
-  --muted-foreground: oklch(0.40 0.01 250);
+  --muted: oklch(0.90 0.02 250 / 70%);
+  --muted-foreground: oklch(0.30 0.03 250);
   
-  --accent: oklch(0.50 0.10 220);
+  --accent: oklch(0.55 0.15 220);
   --accent-foreground: oklch(0.99 0.005 220);
   
   --destructive: oklch(0.55 0.22 25);
   
-  /* Glass borders - very subtle, almost invisible */
-  --border: oklch(0.50 0.01 250 / 15%);
-  --input: oklch(0.50 0.01 250 / 10%);
-  --ring: oklch(0.45 0.12 250);
+  /* Frosted borders - soft white edges */
+  --border: oklch(1 0 0 / 50%);
+  --input: oklch(1 0 0 / 40%);
+  --ring: oklch(0.50 0.18 250);
   
-  /* Chart colors - muted, sophisticated */
-  --chart-1: oklch(0.55 0.10 220);
-  --chart-2: oklch(0.50 0.08 250);
-  --chart-3: oklch(0.45 0.10 280);
-  --chart-4: oklch(0.40 0.08 200);
-  --chart-5: oklch(0.35 0.06 230);
+  /* Chart colors - vibrant */
+  --chart-1: oklch(0.55 0.16 220);
+  --chart-2: oklch(0.50 0.14 250);
+  --chart-3: oklch(0.50 0.16 280);
+  --chart-4: oklch(0.45 0.14 200);
+  --chart-5: oklch(0.45 0.12 230);
   
   --radius: 1.25rem;
   
-  /* Sidebar */
-  --sidebar: oklch(1 0 0 / 35%);
-  --sidebar-foreground: oklch(0.15 0.01 250);
-  --sidebar-primary: oklch(0.45 0.12 250);
+  /* Sidebar - frosted */
+  --sidebar: oklch(1 0 0 / 55%);
+  --sidebar-foreground: oklch(0.15 0.02 250);
+  --sidebar-primary: oklch(0.50 0.18 250);
   --sidebar-primary-foreground: oklch(0.99 0.005 250);
-  --sidebar-accent: oklch(0.50 0.10 220);
+  --sidebar-accent: oklch(0.55 0.15 220);
   --sidebar-accent-foreground: oklch(0.99 0.005 220);
-  --sidebar-border: oklch(0.50 0.01 250 / 12%);
-  --sidebar-ring: oklch(0.45 0.12 250);
+  --sidebar-border: oklch(1 0 0 / 40%);
+  --sidebar-ring: oklch(0.50 0.18 250);
   
-  /* Apple Liquid Glass variables */
-  --glass-bg: oklch(1 0 0 / 50%);
-  --glass-bg-hover: oklch(1 0 0 / 65%);
-  --glass-bg-strong: oklch(1 0 0 / 75%);
-  --glass-bg-subtle: oklch(1 0 0 / 30%);
-  --glass-border: oklch(1 0 0 / 60%);
-  --glass-border-subtle: oklch(0.50 0.01 250 / 12%);
+  /* Frosted Glass variables */
+  --glass-bg: oklch(1 0 0 / 70%);
+  --glass-bg-hover: oklch(1 0 0 / 80%);
+  --glass-bg-strong: oklch(1 0 0 / 90%);
+  --glass-bg-subtle: oklch(1 0 0 / 50%);
+  --glass-border: oklch(1 0 0 / 80%);
+  --glass-border-subtle: oklch(1 0 0 / 50%);
   --glass-shadow: 
-    0 2px 4px oklch(0.30 0.02 250 / 4%),
-    0 8px 16px oklch(0.30 0.02 250 / 6%);
+    0 4px 6px oklch(0.30 0.03 250 / 10%),
+    0 10px 20px oklch(0.30 0.03 250 / 15%);
   --glass-shadow-lg: 
-    0 4px 8px oklch(0.30 0.02 250 / 5%),
-    0 16px 32px oklch(0.30 0.02 250 / 8%);
-  --glass-blur: 40px;
-  --glass-blur-lg: 60px;
+    0 8px 16px oklch(0.30 0.03 250 / 15%),
+    0 24px 48px oklch(0.30 0.03 250 / 20%);
+  --glass-blur: 24px;
+  --glass-blur-lg: 40px;
   --glass-saturate: 180%;
 }
 
@@ -204,60 +206,63 @@
   }
 }
 
-/* Apple Liquid Glass utility classes */
+/* Frosted Glass utility classes */
 @layer utilities {
-  /* Base liquid glass - high blur, high transparency */
+  /* Base frosted glass */
   .glass {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
+    border: 1px solid var(--glass-border);
     box-shadow: 
       var(--glass-shadow),
-      inset 0 0.5px 0 oklch(1 0 0 / 40%);
+      inset 0 1px 0 oklch(1 0 0 / 60%),
+      inset 0 -1px 0 oklch(0 0 0 / 5%);
   }
   
-  /* Stronger glass effect */
+  /* Stronger frosted glass effect */
   .glass-strong {
-    background: var(--accent-foreground);
+    background: var(--glass-bg-strong);
     backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
-    border: 0.5px solid rgba(222, 222, 222, 0.6);
+    border: 1px solid var(--glass-border);
     box-shadow: 
       var(--glass-shadow-lg),
-      inset 0 0.5px 0 oklch(1 0 0 / 50%);
+      inset 0 1px 0 oklch(1 0 0 / 70%),
+      inset 0 -1px 0 oklch(0 0 0 / 5%);
   }
   
-  /* Subtle glass effect */
+  /* Subtle frosted glass effect */
   .glass-subtle {
     background: var(--glass-bg-subtle);
-    backdrop-filter: blur(20px) saturate(var(--glass-saturate));
-    -webkit-backdrop-filter: blur(20px) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border-subtle);
+    backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border-subtle);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 40%);
   }
   
-  /* Glass card with Apple-style specular highlight */
+  /* Frosted glass card with specular highlight */
   .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
     box-shadow: 
       var(--glass-shadow),
-      inset 0 0.5px 0 oklch(1 0 0 / 50%),
-      inset 0 0 0 0.5px oklch(1 0 0 / 10%);
+      inset 0 1px 0 oklch(1 0 0 / 60%),
+      inset 0 0 0 1px oklch(1 0 0 / 20%);
   }
   
-  /* Interactive glass with smooth transitions */
+  /* Interactive frosted glass with smooth transitions */
   .glass-interactive {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
+    border: 1px solid var(--glass-border);
     box-shadow: 
       var(--glass-shadow),
-      inset 0 0.5px 0 oklch(1 0 0 / 40%);
+      inset 0 1px 0 oklch(1 0 0 / 60%);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
@@ -265,19 +270,19 @@
     background: var(--glass-bg-hover);
     box-shadow: 
       var(--glass-shadow-lg),
-      inset 0 0.5px 0 oklch(1 0 0 / 60%);
-    transform: translateY(-1px);
+      inset 0 1px 0 oklch(1 0 0 / 80%);
+    transform: translateY(-2px);
   }
   
-  /* Glass button - Apple style */
+  /* Frosted glass button */
   .glass-btn {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
+    border: 1px solid var(--glass-border);
     box-shadow: 
-      0 1px 2px oklch(0.30 0.02 250 / 5%),
-      inset 0 0.5px 0 oklch(1 0 0 / 40%);
+      0 2px 4px oklch(0.30 0.02 250 / 8%),
+      inset 0 1px 0 oklch(1 0 0 / 50%);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
@@ -327,52 +332,39 @@
       inset 0 0.5px 0 oklch(1 0 0 / 40%);
   }
   
-  /* Glass pill/badge */
+  /* Frosted glass pill/badge */
   .glass-pill {
     background: var(--glass-bg);
-    backdrop-filter: blur(20px) saturate(var(--glass-saturate));
-    -webkit-backdrop-filter: blur(20px) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
+    backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    border: 1px solid var(--glass-border);
     border-radius: 9999px;
-    box-shadow: inset 0 0.5px 0 oklch(1 0 0 / 30%);
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 50%);
   }
   
-  /* Material depth - layered glass */
-  /* .glass-layered {
+  /* Layered frosted glass - main container style */
+  .glass-layered {
     background: 
-      linear-gradient(180deg, oklch(1 0 0 / 8%) 0%, transparent 50%),
+      linear-gradient(180deg, oklch(1 0 0 / 15%) 0%, oklch(1 0 0 / 5%) 100%),
       var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
+    border: 1px solid var(--glass-border);
     box-shadow: 
       var(--glass-shadow),
-      inset 0 0.5px 0 oklch(1 0 0 / 50%);
+      inset 0 1px 0 oklch(1 0 0 / 70%),
+      inset 0 -1px 0 oklch(0 0 0 / 5%);
   }
-   */
-
-   .glass-layered {
-    background: 
-      linear-gradient(0deg, oklch(1 0 0 / 8%) 0%, transparent 50%),
-      var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
-    box-shadow: 
-      var(--glass-shadow),
-      inset 0 0.5px 0 oklch(1 0 0 / 50%);
-  }
-  
 
   /* Vibrancy effect - more saturated */
   .glass-vibrant {
     background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur)) saturate(200%) brightness(105%);
-    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(200%) brightness(105%);
-    border: 0.5px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur)) saturate(220%) brightness(105%);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(220%) brightness(105%);
+    border: 1px solid var(--glass-border);
     box-shadow: 
       var(--glass-shadow),
-      inset 0 0.5px 0 oklch(1 0 0 / 50%);
+      inset 0 1px 0 oklch(1 0 0 / 60%);
   }
   
   /* Dark mode specific - ultra dark glass */
@@ -380,9 +372,9 @@
     background: oklch(0.15 0.01 250 / 60%);
     backdrop-filter: blur(var(--glass-blur-lg)) saturate(120%);
     -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(120%);
-    border: 0.5px solid oklch(1 0 0 / 10%);
+    border: 1px solid oklch(1 0 0 / 12%);
     box-shadow: 
       0 8px 32px oklch(0 0 0 / 40%),
-      inset 0 0.5px 0 oklch(1 0 0 / 8%);
+      inset 0 1px 0 oklch(1 0 0 / 10%);
   }
 }
