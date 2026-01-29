@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { SearchEmptyState } from "@/components/ui/empty-state";
 import type { ContributorWithStats } from "@/data-access/contributor";
 import type { ExpertiseCategory } from "@/lib/expertise-utils";
@@ -8,11 +17,13 @@ import {
   filterByCategory,
 } from "@/lib/expertise-utils";
 import { ArrowDownAZ, ArrowUpDown, GitCommitHorizontal } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ContributorCard } from "./contributor-card";
 import { ContributorsSearch } from "./contributors-search";
 import { ExpertiseFilter } from "./expertise-filter";
+
+const PAGE_SIZE = 15;
 
 type SortOption = "commits" | "repos" | "name";
 
@@ -24,6 +35,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<ExpertiseCategory[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>("commits");
+  const [page, setPage] = useState(1);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
@@ -69,6 +81,18 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
 
     return result;
   }, [contributors, searchQuery, selectedCategories, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredContributors.length / PAGE_SIZE));
+  const paginatedContributors = useMemo(
+    () =>
+      filteredContributors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredContributors, page]
+  );
+
+  // Reset to page 1 when filters or sort change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedCategories, sortBy]);
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -125,11 +149,123 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
 
       {/* Grid */}
       {filteredContributors.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredContributors.map((contributor) => (
-            <ContributorCard key={contributor.id} contributor={contributor} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {paginatedContributors.map((contributor) => (
+              <ContributorCard key={contributor.id} contributor={contributor} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col items-center gap-4 pt-4">
+              <p className="text-sm text-muted-foreground">
+                Page {page} of {totalPages} · Showing{" "}
+                {(page - 1) * PAGE_SIZE + 1}–
+                {Math.min(page * PAGE_SIZE, filteredContributors.length)} of{" "}
+                {filteredContributors.length}
+              </p>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page > 1) setPage((p) => p - 1);
+                      }}
+                      aria-disabled={page <= 1}
+                      className={
+                        page <= 1
+                          ? "pointer-events-none opacity-50"
+                          : undefined
+                      }
+                    />
+                  </PaginationItem>
+                  {(() => {
+                    const maxVisible = 5;
+                    if (totalPages <= maxVisible) {
+                      return Array.from(
+                        { length: totalPages },
+                        (_, i) => i + 1
+                      ).map((p) => (
+                        <PaginationItem key={p}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setPage(p);
+                            }}
+                            isActive={page === p}
+                          >
+                            {p}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ));
+                    }
+                    const pages: (number | "ellipsis")[] = [];
+                    if (page <= 3) {
+                      pages.push(1, 2, 3, "ellipsis", totalPages);
+                    } else if (page >= totalPages - 2) {
+                      pages.push(
+                        1,
+                        "ellipsis",
+                        totalPages - 2,
+                        totalPages - 1,
+                        totalPages
+                      );
+                    } else {
+                      pages.push(
+                        1,
+                        "ellipsis",
+                        page - 1,
+                        page,
+                        page + 1,
+                        "ellipsis",
+                        totalPages
+                      );
+                    }
+                    return pages.map((p, i) =>
+                      p === "ellipsis" ? (
+                        <PaginationItem key={`ellipsis-${i}`}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      ) : (
+                        <PaginationItem key={p}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setPage(p);
+                            }}
+                            isActive={page === p}
+                          >
+                            {p}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    );
+                  })()}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page < totalPages) setPage((p) => p + 1);
+                      }}
+                      aria-disabled={page >= totalPages}
+                      className={
+                        page >= totalPages
+                          ? "pointer-events-none opacity-50"
+                          : undefined
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </>
       ) : (
         <SearchEmptyState
           query={searchQuery || selectedCategories.join(", ")}
