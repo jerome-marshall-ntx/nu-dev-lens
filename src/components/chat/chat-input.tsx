@@ -6,7 +6,6 @@ import {
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTextarea,
-  PromptInputTools,
   type PromptInputMessage,
 } from "@/components/ai-elements/prompt-input";
 import type { ChatStatus } from "ai";
@@ -35,7 +34,6 @@ export function ChatInput({ status, onSubmit }: ChatInputProps) {
           <PromptInputTextarea placeholder="What would you like to know?" />
         </PromptInputBody>
         <PromptInputFooter>
-          <PromptInputTools />
           <PromptInputSubmit
             disabled={status === "streaming"}
             status={status}

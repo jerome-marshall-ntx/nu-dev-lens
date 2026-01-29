@@ -1,5 +1,6 @@
 "use client";
 
+import { CONTRIBUTOR_CLICK_EVENT } from "@/components/ai-elements/message";
 import { ChatInterface } from "@/components/chat";
 import {
   Dialog,
@@ -51,6 +52,21 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
       }
     }
   }, [open, sendMessage, messages.length]);
+
+  // Close modal when a contributor is clicked
+  React.useEffect(() => {
+    const handleContributorClick = () => {
+      setOpen(false);
+    };
+
+    window.addEventListener(CONTRIBUTOR_CLICK_EVENT, handleContributorClick);
+    return () => {
+      window.removeEventListener(
+        CONTRIBUTOR_CLICK_EVENT,
+        handleContributorClick,
+      );
+    };
+  }, []);
 
   return (
     <>
