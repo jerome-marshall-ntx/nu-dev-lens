@@ -15,14 +15,14 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm">
-      <div className="mb-5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 shadow-sm">
-            <Activity className="h-4 w-4 text-green-500" />
+    <div className="glass-layered rounded-[2rem] p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+            <Activity className="h-5 w-5 text-chart-3" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Recent Activity</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Recent Activity</h2>
             <p className="text-xs text-muted-foreground">
               Latest commits across repositories
             </p>
@@ -57,9 +57,9 @@ function ActivityItem({ activity }: { activity: RecentActivity }) {
     : "recently";
 
   return (
-    <div className="group flex items-start gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50">
+    <div className="group flex items-start gap-3 rounded-2xl p-3 transition-all duration-200 hover:glass-subtle">
       {/* Icon */}
-      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
+      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl glass-subtle">
         <GitCommitHorizontal className="h-3.5 w-3.5 text-primary" />
       </div>
 

@@ -8,22 +8,22 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  useSidebar,
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import { navigationData } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 function SidebarToggleMenuItem() {
   const { toggleSidebar, state } = useSidebar();
@@ -147,12 +147,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter className="p-2">
         <SidebarMenu>
           <ThemeToggleMenuItem />
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings">
-              <Settings className="h-4 w-4 text-muted-foreground group-hover/menu-item:text-sidebar-accent-foreground" />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
 

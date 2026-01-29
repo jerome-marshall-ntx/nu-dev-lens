@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NoDataEmptyState } from "@/components/ui/empty-state";
 import type { TopContributor } from "@/data-access/dashboard-stats";
-import { FolderGit2, GitCommitHorizontal, Trophy, Users } from "lucide-react";
+import { FolderGit2, GitCommitHorizontal, Trophy } from "lucide-react";
 import Link from "next/link";
 
 interface TopContributorsListProps {
@@ -16,34 +16,34 @@ export function TopContributorsList({
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card via-card/80 to-muted/30 p-6 shadow-lg shadow-black/5 backdrop-blur-sm">
-      <div className="mb-5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 shadow-sm">
-            <Trophy className="h-4 w-4 text-amber-500" />
+    <div className="glass-layered rounded-[2rem] p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
+            <Trophy className="h-5 w-5 text-chart-1" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Top Contributors</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Top Contributors</h2>
             <p className="text-xs text-muted-foreground">Most active this month</p>
           </div>
         </div>
         <Link
           href="/contributors"
-          className="text-sm text-primary hover:underline"
+          className="glass-btn rounded-full px-4 py-1.5 text-sm text-primary transition-all duration-200"
         >
           View all
         </Link>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-1">
         {contributors.map((contributor, index) => (
           <Link
             key={contributor.id}
             href={`/contributors/${contributor.username}`}
-            className="group flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+            className="group flex items-center gap-3 rounded-2xl p-3 transition-all duration-200 hover:glass-subtle"
           >
             {/* Rank */}
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl glass-subtle text-xs font-semibold text-muted-foreground">
               {index + 1}
             </div>
 

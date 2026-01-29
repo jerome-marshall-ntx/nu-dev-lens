@@ -58,16 +58,18 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full bg-primary px-4 py-3 text-primary-foreground shadow-lg transition-all hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2",
-          "md:rounded-xl md:px-4 md:py-2.5",
+          "fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full px-5 py-3.5 text-foreground transition-all duration-300 focus:outline-none",
+          "glass-strong hover:scale-[1.02] active:scale-[0.98]",
           className
         )}
         aria-label="Find an expert"
       >
-        <Search className="h-5 w-5" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full glass-subtle">
+          <Search className="h-4 w-4 text-primary" />
+        </div>
         <span className="hidden md:inline-flex items-center gap-2 text-sm font-medium">
-            Search...
-          <Kbd className="bg-primary-foreground/20 text-primary-foreground">
+          Search...
+          <Kbd className="glass-subtle rounded-md px-1.5 py-0.5 text-xs text-muted-foreground">
             ⌘K
           </Kbd>
         </span>
