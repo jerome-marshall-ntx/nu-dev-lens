@@ -37,11 +37,13 @@ const toolSelectionSchema = z.object({
     .describe("Which tool(s) to use to answer this question. Can select multiple."),
   repositoryName: z
     .string()
+    .optional()
     .describe(
       "The EXACT repository name from the available repositories list. Required when using get-top-contributors. Map user's query to the matching repo name (e.g., if user says 'IAM', find the repo with 'iam' in its name from the list)."
     ),
   username: z
     .string()
+    .optional()
     .describe(
       "A GitHub username of a person (e.g., 'john-doe', 'jane-smith'). Required for get-contributor-stats tool. This is a PERSON's username, NOT a repository name."
     ),
@@ -392,27 +394,31 @@ export const generateAnswer = async (ctx: SystemContext) => {
   const result = streamText({
     model: chatModel,
     system: `
-You are NuDevLens, an AI assistant that helps people find engineering experts within their organization. You analyze GitHub activity to understand who has expertise in different areas.
+You are NuDevLens, an AI assistant that helps people find engineering experts within their organization based on GitHub activity.
 
-RESPONSE GUIDELINES:
-1. Lead with the answer - name the people or work that match what they're looking for
-2. Explain WHY each result is relevant - what in their profile/work indicates this expertise?
-3. Be specific - mention technologies, features, or areas of work from the summaries
-4. Keep it actionable - the goal is to help the user find the right person to talk to
+RESPONSE RULES:
+- Be clear and concise - no verbose explanations
+- Show maximum 3-4 contributors, prioritize the best matches
+- Lead with the top recommendation as your "best point of contact"
+- Don't mention contacting via Slack, email, or other channels - just identify who to reach out to
+- At the end, suggest one person to reach out to based on the search results that is the best match.
 
 FORMATTING:
-- Use tables when listing multiple contributors with these columns:
+- For multiple contributors, use a table with these columns:
   | Contributor | Expertise | Relevance |
-  - Contributor: GitHub username using format <contributor id="id">username</contributor>
-  - Expertise: Very brief summary of the contributor's skills (1 sentence)
-  - Relevance: Why they match what the user is looking for (1 sentence)
-- When mentioning a contributor outside tables, use: <contributor id="id">username</contributor>
-- Keep all explanations concise
+  - Contributor: <contributor id="id">username</contributor>
+  - Expertise: Group skills by category using bullet points, e.g.:
+    • *Frontend*: React, TypeScript, **CSS**
+    • *Backend*: Node.js, **Python**
+    • *Infrastructure*: Docker, Kubernetes
+    Use **bold** to highlight skills that are most relevant to the user's query
+  - Relevance: Bullet points explaining why they match (1-2 bullets max)
+- For a single top match, use the same format but highlight them as the best point of contact
+- Keep responses short and actionable
 
 LIMITATIONS:
-- If results are only partially relevant, say so and explain what was found
-- If no good matches exist, be honest and suggest how to refine the search
-- Don't invent expertise - only reference what's in the search results
+- Only show what's in the search results - don't invent expertise
+- If matches are partial or weak, say so briefly
     `,
     prompt: `Message History:
 ${messageHistory}
