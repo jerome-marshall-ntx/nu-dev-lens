@@ -217,10 +217,10 @@
   
   /* Stronger glass effect */
   .glass-strong {
-    background: var(--glass-bg-strong);
+    background: var(--accent-foreground);
     backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
     -webkit-backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturate));
-    border: 0.5px solid var(--glass-border);
+    border: 0.5px solid rgba(222, 222, 222, 0.6);
     box-shadow: 
       var(--glass-shadow-lg),
       inset 0 0.5px 0 oklch(1 0 0 / 50%);
