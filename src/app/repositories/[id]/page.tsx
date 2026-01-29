@@ -77,7 +77,7 @@ export default async function RepositoryDetailsPage({
 
   try {
     [commits, contributors, allCommitsForChart] = await Promise.all([
-      getRepositoryRecentCommits(repository.id, 10),
+      getRepositoryRecentCommits(repository.id, 5),
       getRepositoryKeyContributors(repository.id, 6),
       // Fetch more commits for the activity chart
       getRepositoryRecentCommits(repository.id, 500),

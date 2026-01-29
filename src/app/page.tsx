@@ -12,7 +12,7 @@ export default async function Home() {
   // Fetch data in parallel
   const [topContributors, recentActivity] = await Promise.all([
     getTopContributors(5),
-    getRecentActivity(8),
+    getRecentActivity(5),
   ]);
 
   return (

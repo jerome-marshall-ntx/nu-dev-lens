@@ -33,7 +33,7 @@ export function RepositoryActivity({ commits }: RepositoryActivityProps) {
           <GitCommitHorizontal className="h-5 w-5 text-primary" />
           Recent Activity
           <span className="ml-auto text-sm font-normal text-muted-foreground">
-            {commits.length} {commits.length === 1 ? "commit" : "commits"}
+            Last {commits.length} {commits.length === 1 ? "commit" : "commits"}
           </span>
         </CardTitle>
       </CardHeader>
@@ -93,7 +93,7 @@ export function RepositoryActivity({ commits }: RepositoryActivityProps) {
 
                         {/* AI Summary if available */}
                         {commit.summary && (
-                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground line-clamp-2">
                             {commit.summary}
                           </p>
                         )}
