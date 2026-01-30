@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Moon, ScanSearch, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -80,6 +80,46 @@ function ThemeToggleMenuItem() {
   );
 }
 
+function SidebarHeaderContent() {
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+
+  // Keep consistent height to prevent vertical shift when collapsing
+  return (
+    <SidebarHeader className="p-4">
+      <Link
+        href="/"
+        className={cn(
+          "flex h-10 items-center gap-3 px-2", // h-10 = 40px to match logo height
+          isCollapsed && "justify-center px-0",
+        )}
+      >
+        {isCollapsed ? (
+          /* Lens icon - shown when collapsed */
+          <ScanSearch className="h-5 w-5 text-primary" />
+        ) : (
+          <>
+            {/* Full logo - shown when expanded */}
+            <Image
+              src="/logo.png"
+              alt="NuDevLens Logo"
+              width={40}
+              height={40}
+              className="rounded-lg"
+            />
+            <div className="flex flex-col">
+              <span className="font-semibold tracking-tight">NuDev Lens</span>
+              <span className="text-xs text-muted-foreground">
+                Developer Insights
+              </span>
+            </div>
+          </>
+        )}
+      </Link>
+    </SidebarHeader>
+  );
+}
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const [mounted, setMounted] = React.useState(false);
@@ -90,23 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props} variant="floating" collapsible="icon">
-      <SidebarHeader className="p-4">
-        <Link href="/" className="flex items-center gap-3 px-2">
-          <Image
-            src="/logo.png"
-            alt="NuDevLens Logo"
-            width={40}
-            height={40}
-            className="rounded-lg"
-          />
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-semibold tracking-tight">NuDev Lens</span>
-            <span className="text-xs text-muted-foreground">
-              Developer Insights
-            </span>
-          </div>
-        </Link>
-      </SidebarHeader>
+      <SidebarHeaderContent />
 
       <SidebarContent>
         <SidebarGroup>
@@ -134,7 +158,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                             "h-4 w-4",
                             isActive
                               ? "text-foreground"
-                              : "text-muted-foreground group-hover/menu-item:text-foreground"
+                              : "text-muted-foreground group-hover/menu-item:text-foreground",
                           )}
                         />
                         <span>{item.title}</span>
@@ -149,7 +173,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="mt-auto p-2">
         <SidebarMenu>
           <ThemeToggleMenuItem />
         </SidebarMenu>

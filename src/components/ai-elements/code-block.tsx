@@ -58,15 +58,14 @@ const addKeysToTokens = (lines: ThemedToken[][]): KeyedLine[] =>
     })),
   }));
 
-// Token rendering component
+// Token rendering component - use white text, no syntax highlighting colors
 const TokenSpan = ({ token }: { token: ThemedToken }) => (
   <span
-    className="dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)]"
     style={
       {
-        color: token.color,
-        backgroundColor: token.bgColor,
-        ...token.htmlStyle,
+        // Force white text, ignore token colors
+        color: "inherit",
+        backgroundColor: "transparent",
         fontStyle: isItalic(token.fontStyle) ? "italic" : undefined,
         fontWeight: isBold(token.fontStyle) ? "bold" : undefined,
         textDecoration: isUnderline(token.fontStyle) ? "underline" : undefined,
@@ -269,10 +268,12 @@ const CodeBlockBody = memo(
     return (
       <pre
         className={cn(
-          "m-0 p-4 text-sm dark:!bg-[var(--shiki-dark-bg)] dark:!text-[var(--shiki-dark)]",
+          "m-0 p-4 text-sm",
+          // Always use dark background with white text
+          "!bg-transparent !text-white",
           className,
         )}
-        style={preStyle}
+        style={{ backgroundColor: "transparent", color: "inherit" }}
       >
         <code
           className={cn(
@@ -308,7 +309,9 @@ export const CodeBlockContainer = ({
 }: HTMLAttributes<HTMLDivElement> & { language: string }) => (
   <div
     className={cn(
-      "group relative w-full overflow-hidden rounded-md border bg-background text-foreground",
+      "group relative w-full overflow-hidden rounded-md border",
+      // Use dark theme colors for code blocks in both modes
+      "border-white/10 bg-[oklch(0.12_0.01_250)] text-white",
       className,
     )}
     data-language={language}
@@ -328,7 +331,9 @@ export const CodeBlockHeader = ({
 }: HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex items-center justify-between bg-muted/80 px-3 py-2 text-xs text-muted-foreground",
+      "flex items-center justify-between px-3 py-2 text-xs",
+      // Use dark theme colors for code block header in both modes
+      "border-b border-white/10 bg-white/5 text-white/70",
       className,
     )}
     {...props}

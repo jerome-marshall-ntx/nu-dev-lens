@@ -95,13 +95,13 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
 
       {/* Chat Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex h-[85vh] max-h-[85vh] w-[80vw] min-w-[80vw] flex-col gap-0 overflow-hidden rounded-[2rem] border border-white/10 bg-background/60 p-0 backdrop-blur-xl">
-          <DialogHeader className="border-glass-border-subtle shrink-0 border-b px-8 pt-6 pb-5">
+        <DialogContent className="flex h-[85vh] max-h-[85vh] w-[80vw] min-w-[80vw] flex-col gap-0 overflow-hidden rounded-[2rem] border border-zinc-200/80 bg-white/80 p-0 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-background/60">
+          <DialogHeader className="shrink-0 border-b border-zinc-200/60 bg-zinc-50/50 px-8 pt-6 pb-5 dark:border-white/5 dark:bg-transparent">
             <DialogTitle className="text-lg font-semibold">
               Find an Expert
             </DialogTitle>
           </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-hidden px-8 pt-6 pb-6">
+          <div className="min-h-0 flex-1 overflow-hidden bg-white/40 px-8 pt-6 pb-6 dark:bg-transparent">
             <ChatInterface
               messages={messages}
               status={status}
