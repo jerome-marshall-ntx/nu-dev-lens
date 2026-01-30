@@ -128,7 +128,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Sort by:</span>
-          <div className="flex gap-1">
+          <div className="flex gap-3">
             <SortButton
               active={sortBy === "commits"}
               onClick={() => setSortBy("commits")}

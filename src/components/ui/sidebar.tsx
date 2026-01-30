@@ -204,7 +204,7 @@ function Sidebar({
 
   return (
     <div
-      className="group peer hidden text-sidebar-foreground md:block"
+      className="group peer hidden bg-background text-sidebar-foreground md:block"
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -219,7 +219,7 @@ function Sidebar({
           "group-data-[collapsible=offExamples]:w-0",
           "group-data-[side=right]:rotate-180",
           variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
+            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(6)))]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
         )}
       />
@@ -232,7 +232,7 @@ function Sidebar({
             : "right-0 group-data-[collapsible=offExamples]:right-[calc(var(--sidebar-width)*-1)]",
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
-            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
+            ? "bg-transparent p-3 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(6))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
           className,
         )}
@@ -241,7 +241,12 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="group-data-[variant=floating]:glass-strong flex size-full flex-col group-data-[variant=floating]:rounded-3xl"
+          className={cn(
+            "flex size-full flex-col",
+            variant === "floating"
+              ? "glass-layered rounded-3xl border border-white/50 shadow-xl dark:border-white/10 dark:bg-zinc-900"
+              : "bg-sidebar",
+          )}
         >
           {children}
         </div>
@@ -474,9 +479,9 @@ const sidebarMenuButtonVariants = cva(
     variants: {
       variant: {
         default:
-          "hover:glass-subtle data-active:glass-strong hover:border-l-primary/60 hover:text-foreground data-active:border-l-primary data-active:font-medium data-active:text-foreground",
+          "hover:glass-subtle data-active:glass-card hover:border-l-primary/60 hover:text-foreground data-active:border-l-primary data-active:font-medium data-active:text-foreground",
         outline:
-          "glass-subtle data-active:glass-strong hover:border-l-primary/60 hover:text-foreground data-active:border-l-primary data-active:text-foreground",
+          "glass-subtle data-active:glass-card hover:border-l-primary/60 hover:text-foreground data-active:border-l-primary data-active:text-foreground",
       },
       size: {
         default: "h-9 text-sm",
