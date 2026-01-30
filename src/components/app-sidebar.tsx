@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, ScanSearch, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
@@ -94,26 +94,21 @@ function SidebarHeaderContent() {
           isCollapsed && "justify-center px-0",
         )}
       >
-        {isCollapsed ? (
-          /* Lens icon - shown when collapsed */
-          <ScanSearch className="h-5 w-5 text-primary" />
-        ) : (
-          <>
-            {/* Full logo - shown when expanded */}
-            <Image
-              src="/logo.png"
-              alt="NuDevLens Logo"
-              width={40}
-              height={40}
-              className="rounded-lg"
-            />
-            <div className="flex flex-col">
-              <span className="font-semibold tracking-tight">NuDev Lens</span>
-              <span className="text-xs text-muted-foreground">
-                Developer Insights
-              </span>
-            </div>
-          </>
+        {/* Logo - shown in both expanded and collapsed states */}
+        <Image
+          src="/logo.png"
+          alt="NuDevLens Logo"
+          width={40}
+          height={40}
+          className="rounded-lg"
+        />
+        {!isCollapsed && (
+          <div className="flex flex-col">
+            <span className="font-semibold tracking-tight">NuDev Lens</span>
+            <span className="text-xs text-muted-foreground">
+              Developer Insights
+            </span>
+          </div>
         )}
       </Link>
     </SidebarHeader>
