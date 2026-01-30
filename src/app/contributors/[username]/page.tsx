@@ -15,6 +15,8 @@ import { AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 interface ContributorDetailsPageProps {
   params: Promise<{
     username: string;

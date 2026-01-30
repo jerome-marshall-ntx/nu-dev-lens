@@ -2,6 +2,8 @@ import { RepositoriesGrid } from "@/components/repositories";
 import { getAllRepositoriesWithStats } from "@/data-access/repository";
 import { FolderGit2 } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function RepositoriesPage() {
   const repositories = await getAllRepositoriesWithStats();
 
@@ -22,7 +24,9 @@ export default async function RepositoriesPage() {
           <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <FolderGit2 className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight">All Repositories</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            All Repositories
+          </h2>
         </div>
         <RepositoriesGrid repositories={repositories} />
       </div>

@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { AlertCircle, FolderGit2, Search, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { AlertCircle, FolderGit2, Search, Users } from "lucide-react";
 import * as React from "react";
 
 interface EmptyStateProps {
@@ -43,9 +43,9 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-xl border border-dashed py-12 px-6 text-center",
+        "flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center",
         variantStyles[variant],
-        className
+        className,
       )}
     >
       <div
@@ -53,15 +53,16 @@ export function EmptyState({
           "mb-4 flex h-12 w-12 items-center justify-center rounded-full",
           variant === "error"
             ? "bg-destructive/10 text-destructive"
-            : "bg-muted text-muted-foreground"
+            : "bg-muted text-muted-foreground",
         )}
       >
+        {/* @ts-expect-error - Icon is not a valid JSX element */}
         <Icon className="h-6 w-6" />
       </div>
       <h3
         className={cn(
           "text-lg font-medium",
-          variant === "error" ? "text-destructive" : "text-foreground"
+          variant === "error" ? "text-destructive" : "text-foreground",
         )}
       >
         {title}
