@@ -1,0 +1,1669 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NuDevLens Architecture</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary-blue: #5b6cf0;
+        --primary-purple: #7c5bf0;
+        --accent-purple: #9b7cff;
+        --light-blue: #eef1ff;
+        --light-purple: #f4f0ff;
+        --dark-navy: #1a1a3e;
+        --darker-navy: #13132b;
+        --text-dark: #1f2937;
+        --text-gray: #6b7280;
+        --white: #ffffff;
+        --success-green: #10b981;
+        --card-shadow: 0 4px 24px rgba(91, 108, 240, 0.08);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background: linear-gradient(180deg, #f0f2ff 0%, #e8eaff 100%);
+        min-height: 100vh;
+        padding: 40px;
+        color: var(--text-dark);
+      }
+
+      .container {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+
+      /* Header Section */
+      .header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        border-radius: 24px;
+        padding: 48px 64px;
+        margin-bottom: 40px;
+        color: var(--white);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .header::before {
+        content: "";
+        position: absolute;
+        top: -100px;
+        right: -50px;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+      }
+
+      .header::after {
+        content: "";
+        position: absolute;
+        bottom: -80px;
+        right: 150px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .logo-icon {
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .logo-icon svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+      }
+
+      .logo-text {
+        font-weight: 700;
+        font-size: 18px;
+      }
+
+      .header h1 {
+        font-size: 44px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header p {
+        font-size: 18px;
+        opacity: 0.9;
+        max-width: 700px;
+        line-height: 1.7;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* Section Titles */
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .section-title h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text-dark);
+      }
+
+      .section-badge {
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .section-subtitle {
+        color: var(--text-gray);
+        font-size: 15px;
+        margin-bottom: 32px;
+        max-width: 600px;
+      }
+
+      /* Phase Section Container */
+      .phase-section {
+        margin-bottom: 48px;
+      }
+
+      /* Data Pipeline Section */
+      .pipeline-section {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 48px;
+        margin-bottom: 40px;
+        box-shadow: var(--card-shadow);
+      }
+
+      /* Pipeline Flow */
+      .pipeline-flow {
+        display: flex;
+        align-items: stretch;
+        gap: 24px;
+        position: relative;
+        overflow-x: auto;
+        padding: 20px 0;
+      }
+
+      .pipeline-step {
+        flex: 1;
+        min-width: 200px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .pipeline-step-content {
+        background: var(--light-blue);
+        border-radius: 16px;
+        padding: 24px;
+        height: 100%;
+        position: relative;
+        z-index: 1;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .pipeline-step-content:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(91, 108, 240, 0.15);
+      }
+
+      .pipeline-step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: -12px;
+        width: 24px;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        z-index: 0;
+      }
+
+      .pipeline-step:last-child::after {
+        display: none;
+      }
+
+      .pipeline-arrow {
+        position: absolute;
+        top: 50%;
+        right: -12px;
+        transform: translate(50%, -50%);
+        z-index: 2;
+        background: white;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .pipeline-step:last-child .pipeline-arrow {
+        display: none;
+      }
+
+      .pipeline-arrow svg {
+        width: 16px;
+        height: 16px;
+        color: var(--primary-purple);
+      }
+
+      .step-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+
+      .step-icon svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+      }
+
+      .step-number {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        background: var(--primary-purple);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .pipeline-step h4 {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+      }
+
+      .pipeline-step p {
+        font-size: 13px;
+        color: var(--text-gray);
+        line-height: 1.6;
+        margin-bottom: 12px;
+      }
+
+      .tech-tag {
+        display: inline-block;
+        background: white;
+        color: var(--primary-purple);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-right: 6px;
+        margin-bottom: 6px;
+      }
+
+      /* Database Section */
+      .database-section {
+        background: linear-gradient(
+          135deg,
+          var(--dark-navy) 0%,
+          var(--darker-navy) 100%
+        );
+        border-radius: 24px;
+        padding: 48px;
+        margin-bottom: 40px;
+        color: white;
+      }
+
+      .database-section .section-title h2 {
+        color: white;
+      }
+
+      .database-section .section-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .db-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+
+      @media (max-width: 1024px) {
+        .db-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 600px) {
+        .db-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .db-table {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background 0.3s ease;
+      }
+
+      .db-table:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .db-table-icon {
+        width: 44px;
+        height: 44px;
+        background: var(--accent-purple);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+      }
+
+      .db-table-icon svg {
+        width: 22px;
+        height: 22px;
+        color: white;
+      }
+
+      .db-table h4 {
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      .db-table p {
+        font-size: 12px;
+        opacity: 0.7;
+        line-height: 1.5;
+        margin-bottom: 12px;
+      }
+
+      .db-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        padding: 6px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .db-field:first-of-type {
+        border-top: none;
+      }
+
+      .db-field-icon {
+        width: 16px;
+        height: 16px;
+        color: var(--accent-purple);
+      }
+
+      .db-field span {
+        opacity: 0.8;
+      }
+
+      /* Application Section */
+      .app-section {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 48px;
+        margin-bottom: 40px;
+        box-shadow: var(--card-shadow);
+      }
+
+      .app-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 32px;
+      }
+
+      @media (max-width: 900px) {
+        .app-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .pages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .page-card {
+        background: var(--light-purple);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        transition: transform 0.3s ease;
+      }
+
+      .page-card:hover {
+        transform: translateX(8px);
+      }
+
+      .page-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .page-icon svg {
+        width: 22px;
+        height: 22px;
+        color: white;
+      }
+
+      .page-info h5 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+      }
+
+      .page-info p {
+        font-size: 12px;
+        color: var(--text-gray);
+      }
+
+      /* AI Chat Section */
+      .chat-section {
+        background: linear-gradient(
+          135deg,
+          var(--light-blue) 0%,
+          var(--light-purple) 100%
+        );
+        border-radius: 16px;
+        padding: 32px;
+        border: 2px solid rgba(91, 108, 240, 0.1);
+      }
+
+      .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .chat-header-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .chat-header-icon svg {
+        width: 20px;
+        height: 20px;
+        color: white;
+      }
+
+      .chat-header h4 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-dark);
+      }
+
+      .chat-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .chat-flow-item {
+        background: white;
+        border-radius: 12px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .chat-flow-number {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-purple);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .chat-flow-text {
+        flex: 1;
+      }
+
+      .chat-flow-text h5 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+      }
+
+      .chat-flow-text p {
+        font-size: 12px;
+        color: var(--text-gray);
+      }
+
+      .chat-flow-icon {
+        width: 24px;
+        height: 24px;
+        color: var(--primary-purple);
+      }
+
+      /* Tools Grid */
+      .tools-section {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 48px;
+        margin: 0 auto 40px;
+        max-width: 800px;
+        box-shadow: var(--card-shadow);
+      }
+
+      .tools-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .tool-card {
+        background: var(--light-blue);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .tool-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(91, 108, 240, 0.12);
+      }
+
+      .tool-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+      }
+
+      .tool-icon svg {
+        width: 22px;
+        height: 22px;
+        color: white;
+      }
+
+      .tool-card h5 {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+      }
+
+      .tool-card p {
+        font-size: 11px;
+        color: var(--text-gray);
+        line-height: 1.4;
+      }
+
+      /* Tech Stack Footer */
+      .tech-stack {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 48px;
+        margin: 0 auto 40px;
+        max-width: 800px;
+        box-shadow: var(--card-shadow);
+      }
+
+      .stack-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .stack-item {
+        background: var(--light-purple);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .stack-item h5 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+      }
+
+      .stack-item p {
+        font-size: 12px;
+        color: var(--text-gray);
+      }
+
+      /* Big Flow Diagram */
+      .flow-diagram {
+        background: var(--white);
+        border-radius: 24px;
+        padding: 48px;
+        margin-bottom: 40px;
+        box-shadow: var(--card-shadow);
+        max-width: 1200px;
+        margin-inline: auto;
+      }
+
+      .flow-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .flow-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .flow-box {
+        background: var(--light-blue);
+        border-radius: 16px;
+        padding: 20px 28px;
+        text-align: center;
+        min-width: 160px;
+        position: relative;
+      }
+
+      .flow-box.highlight {
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        color: white;
+      }
+
+      .flow-box.highlight h5,
+      .flow-box.highlight p {
+        color: white;
+      }
+
+      .flow-box.dark {
+        background: var(--dark-navy);
+        color: white;
+      }
+
+      .flow-box.dark h5,
+      .flow-box.dark p {
+        color: white;
+      }
+
+      .flow-box h5 {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 4px;
+      }
+
+      .flow-box p {
+        font-size: 12px;
+        color: var(--text-gray);
+      }
+
+      .flow-arrow-down {
+        display: flex;
+        justify-content: center;
+        padding: 8px 0;
+      }
+
+      .flow-arrow-down svg {
+        width: 24px;
+        height: 24px;
+        color: var(--primary-purple);
+      }
+
+      .flow-arrow-right {
+        display: flex;
+        align-items: center;
+      }
+
+      .flow-arrow-right svg {
+        width: 24px;
+        height: 24px;
+        color: var(--primary-purple);
+      }
+
+      /* Concentric Rings Visual */
+      .rings-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+      }
+
+      .rings {
+        position: relative;
+        width: 280px;
+        height: 280px;
+      }
+
+      .ring {
+        position: absolute;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .ring-outer {
+        width: 280px;
+        height: 280px;
+        background: rgba(91, 108, 240, 0.15);
+        top: 0;
+        left: 0;
+      }
+
+      .ring-middle {
+        width: 200px;
+        height: 200px;
+        background: rgba(91, 108, 240, 0.25);
+        top: 40px;
+        left: 40px;
+      }
+
+      .ring-inner {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        top: 80px;
+        left: 80px;
+      }
+
+      .ring-label {
+        position: absolute;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-dark);
+        white-space: nowrap;
+      }
+
+      .ring-label-outer {
+        top: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .ring-label-middle {
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .ring-label-inner {
+        color: white;
+        font-size: 12px;
+      }
+
+      /* Stats Section */
+      .stats-section {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+
+      @media (max-width: 768px) {
+        .stats-section {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      .stat-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 28px;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+      }
+
+      .stat-value {
+        font-size: 40px;
+        font-weight: 800;
+        background: linear-gradient(
+          135deg,
+          var(--primary-blue) 0%,
+          var(--primary-purple) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: var(--text-gray);
+        font-weight: 500;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        padding: 32px;
+        color: var(--text-gray);
+        font-size: 14px;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        body {
+          padding: 20px;
+        }
+
+        .header {
+          padding: 32px;
+        }
+
+        .header h1 {
+          font-size: 28px;
+        }
+
+        .pipeline-section,
+        .app-section,
+        .tools-section,
+        .tech-stack,
+        .flow-diagram {
+          padding: 28px;
+        }
+
+        .pipeline-flow {
+          flex-direction: column;
+          gap: 32px;
+        }
+
+        .pipeline-step::after {
+          display: none;
+        }
+
+        .pipeline-arrow {
+          display: none;
+        }
+
+        .tools-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stack-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+          </div>
+          <span class="logo-text">NuDevLens</span>
+        </div>
+        <h1>System Architecture</h1>
+        <p>
+          AI-powered developer expertise discovery platform. This diagram shows
+          how we fetch, process, and store GitHub data, then serve it through
+          our application with AI-powered search and chat capabilities.
+        </p>
+      </div>
+
+      <!-- Section 1: Data Ingestion & Processing Pipeline -->
+      <div class="pipeline-section">
+        <div class="section-title">
+          <span class="section-badge">Phase 1</span>
+          <h2>Data Ingestion & Processing</h2>
+        </div>
+        <p class="section-subtitle">
+          How we fetch GitHub data, process it through AI, generate summaries,
+          create embeddings, and store everything in the database.
+        </p>
+
+        <div class="pipeline-flow">
+          <!-- Step 1: Fetch -->
+          <div class="pipeline-step">
+            <div class="pipeline-step-content">
+              <span class="step-number">1</span>
+              <div class="step-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+                  />
+                </svg>
+              </div>
+              <h4>Fetch from GitHub</h4>
+              <p>
+                Pull repository data, commits, issues, and contributor
+                information via GitHub API
+              </p>
+              <span class="tech-tag">GitHub API</span>
+              <span class="tech-tag">Octokit</span>
+            </div>
+            <div class="pipeline-arrow">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Step 2: Summarize -->
+          <div class="pipeline-step">
+            <div class="pipeline-step-content">
+              <span class="step-number">2</span>
+              <div class="step-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M12 2a10 10 0 1 0 10 10H12V2zM12 12L12 2M12 12L22 12"
+                  />
+                  <circle cx="12" cy="12" r="4" />
+                </svg>
+              </div>
+              <h4>AI Summarization</h4>
+              <p>
+                Generate intelligent summaries at commit, repository-work, and
+                contributor levels
+              </p>
+              <span class="tech-tag">OpenAI GPT</span>
+              <span class="tech-tag">Batching</span>
+            </div>
+            <div class="pipeline-arrow">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Step 3: Embed -->
+          <div class="pipeline-step">
+            <div class="pipeline-step-content">
+              <span class="step-number">3</span>
+              <div class="step-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+                  />
+                </svg>
+              </div>
+              <h4>Vector Embeddings</h4>
+              <p>
+                Convert summaries into 1536-dimension vectors for semantic
+                search capability
+              </p>
+              <span class="tech-tag">Ollama</span>
+              <span class="tech-tag">1536 dims</span>
+            </div>
+            <div class="pipeline-arrow">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Step 4: Store -->
+          <div class="pipeline-step">
+            <div class="pipeline-step-content">
+              <span class="step-number">4</span>
+              <div class="step-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <ellipse cx="12" cy="5" rx="9" ry="3" />
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                </svg>
+              </div>
+              <h4>Store in Database</h4>
+              <p>
+                Persist all data with summaries and embeddings in PostgreSQL
+                with pgvector
+              </p>
+              <span class="tech-tag">PostgreSQL</span>
+              <span class="tech-tag">pgvector</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Application Layer -->
+      <div class="app-section">
+        <div class="section-title">
+          <span class="section-badge">Phase 2</span>
+          <h2>Application Interface</h2>
+        </div>
+        <p class="section-subtitle">
+          Users interact with the data through dedicated pages and an AI-powered
+          chat interface for natural language queries.
+        </p>
+
+        <div class="app-grid">
+          <!-- Pages List -->
+          <div class="pages-list">
+            <div class="page-card">
+              <div class="page-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <div class="page-info">
+                <h5>Dashboard</h5>
+                <p>Overview stats and quick insights</p>
+              </div>
+            </div>
+
+            <div class="page-card">
+              <div class="page-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <div class="page-info">
+                <h5>Contributors</h5>
+                <p>Browse developer profiles and expertise</p>
+              </div>
+            </div>
+
+            <div class="page-card">
+              <div class="page-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+                  />
+                </svg>
+              </div>
+              <div class="page-info">
+                <h5>Repositories</h5>
+                <p>Explore repos and their contributors</p>
+              </div>
+            </div>
+
+            <div class="page-card">
+              <div class="page-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
+                </svg>
+              </div>
+              <div class="page-info">
+                <h5>Commits</h5>
+                <p>View commit history with AI summaries</p>
+              </div>
+            </div>
+
+            <div class="page-card">
+              <div class="page-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
+              <div class="page-info">
+                <h5>Search</h5>
+                <p>Semantic search across all data</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Chat Section -->
+          <div class="chat-section">
+            <div class="chat-header">
+              <div class="chat-header-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  />
+                </svg>
+              </div>
+              <h4>AI Chat Interface</h4>
+            </div>
+
+            <div class="chat-flow">
+              <div class="chat-flow-item">
+                <span class="chat-flow-number">1</span>
+                <div class="chat-flow-text">
+                  <h5>User Asks Question</h5>
+                  <p>"Who's the expert on authentication?"</p>
+                </div>
+                <svg
+                  class="chat-flow-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                  />
+                </svg>
+              </div>
+
+              <div class="chat-flow-item">
+                <span class="chat-flow-number">2</span>
+                <div class="chat-flow-text">
+                  <h5>Agent Reasoning Loop</h5>
+                  <p>Analyze query → Select tools → Execute → Decide</p>
+                </div>
+                <svg
+                  class="chat-flow-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M17 2.1l4 4-4 4" />
+                  <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8" />
+                  <path d="M7 21.9l-4-4 4-4" />
+                  <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2" />
+                </svg>
+              </div>
+
+              <div class="chat-flow-item">
+                <span class="chat-flow-number">3</span>
+                <div class="chat-flow-text">
+                  <h5>Vector Search</h5>
+                  <p>Query embeddings with cosine similarity</p>
+                </div>
+                <svg
+                  class="chat-flow-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+              </div>
+
+              <div class="chat-flow-item">
+                <span class="chat-flow-number">4</span>
+                <div class="chat-flow-text">
+                  <h5>Stream Response</h5>
+                  <p>Real-time AI answer with citations</p>
+                </div>
+                <svg
+                  class="chat-flow-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                  <path d="M22 4L12 14.01l-3-3" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Full Flow Diagram -->
+      <div class="flow-diagram">
+        <div class="section-title">
+          <span class="section-badge">Overview</span>
+          <h2>Complete System Flow</h2>
+        </div>
+        <p class="section-subtitle">
+          End-to-end data flow from GitHub to user discovery
+        </p>
+
+        <div class="flow-container">
+          <!-- Row 1: Data Source -->
+          <div class="flow-row">
+            <div class="flow-box highlight">
+              <h5>GitHub API</h5>
+              <p>Source of truth</p>
+            </div>
+          </div>
+
+          <div class="flow-arrow-down">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          </div>
+
+          <!-- Row 2: Processing -->
+          <div class="flow-row">
+            <div class="flow-box">
+              <h5>Fetch Script</h5>
+              <p>Pull data</p>
+            </div>
+            <div class="flow-arrow-right">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div class="flow-box">
+              <h5>Summarize</h5>
+              <p>AI summaries</p>
+            </div>
+            <div class="flow-arrow-right">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div class="flow-box">
+              <h5>Embed</h5>
+              <p>Vector encoding</p>
+            </div>
+          </div>
+
+          <div class="flow-arrow-down">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          </div>
+
+          <!-- Row 3: Storage -->
+          <div class="flow-row">
+            <div class="flow-box dark">
+              <h5>PostgreSQL + pgvector</h5>
+              <p>Data & embeddings storage</p>
+            </div>
+          </div>
+
+          <div class="flow-arrow-down">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          </div>
+
+          <!-- Row 4: Application -->
+          <div class="flow-row">
+            <div class="flow-box">
+              <h5>Next.js App</h5>
+              <p>API + Frontend</p>
+            </div>
+            <div class="flow-arrow-right">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div class="flow-box highlight">
+              <h5>AI Agent</h5>
+              <p>Tool selection</p>
+            </div>
+            <div class="flow-arrow-right">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div class="flow-box">
+              <h5>Vector Search</h5>
+              <p>Semantic matching</p>
+            </div>
+          </div>
+
+          <div class="flow-arrow-down">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+          </div>
+
+          <!-- Row 5: Output -->
+          <div class="flow-row">
+            <div class="flow-box highlight">
+              <h5>Expert Discovery</h5>
+              <p>Ranked results with proof</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: AI Tools -->
+      <div class="tools-section">
+        <div class="section-title">
+          <span class="section-badge">AI Agent</span>
+          <h2>Available Tools</h2>
+        </div>
+        <p class="section-subtitle">
+          The AI agent dynamically selects from these tools based on the user's
+          query to find the best experts.
+        </p>
+
+        <div class="tools-grid">
+          <div class="tool-card">
+            <div class="tool-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <circle cx="15" cy="15" r="6" opacity="0.3" />
+              </svg>
+            </div>
+            <h5>Search Contributors</h5>
+            <p>Find people by skills using semantic search</p>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+                />
+              </svg>
+            </div>
+            <h5>Search Repo Work</h5>
+            <p>Find work summaries in specific repos</p>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="4" />
+                <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
+              </svg>
+            </div>
+            <h5>Search Commits</h5>
+            <p>Find commits with semantic matching</p>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 20V10" />
+                <path d="M18 20V4" />
+                <path d="M6 20v-4" />
+              </svg>
+            </div>
+            <h5>Top Contributors</h5>
+            <p>Rank by commit count</p>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <path d="M20 8v6" />
+                <path d="M23 11h-6" />
+              </svg>
+            </div>
+            <h5>Contributor Stats</h5>
+            <p>Detailed stats for a person</p>
+          </div>
+
+          <div class="tool-card">
+            <div class="tool-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              </svg>
+            </div>
+            <h5>Analyze Bug</h5>
+            <p>Find experts who can fix issues</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: Tech Stack -->
+      <div class="tech-stack">
+        <div class="section-title">
+          <span class="section-badge">Stack</span>
+          <h2>Technology Stack</h2>
+        </div>
+
+        <div class="stack-grid">
+          <div class="stack-item">
+            <h5>Next.js 15</h5>
+            <p>Frontend + API</p>
+          </div>
+          <div class="stack-item">
+            <h5>React 19</h5>
+            <p>UI Components</p>
+          </div>
+          <div class="stack-item">
+            <h5>PostgreSQL</h5>
+            <p>Database</p>
+          </div>
+          <div class="stack-item">
+            <h5>pgvector</h5>
+            <p>Vector Search</p>
+          </div>
+          <div class="stack-item">
+            <h5>NAI API</h5>
+            <p>LLM Reasoning</p>
+          </div>
+          <div class="stack-item">
+            <h5>Vercel AI SDK</h5>
+            <p>Streaming</p>
+          </div>
+          <div class="stack-item">
+            <h5>Drizzle ORM</h5>
+            <p>Database Access</p>
+          </div>
+          <div class="stack-item">
+            <h5>tRPC</h5>
+            <p>Type-safe APIs</p>
+          </div>
+          <div class="stack-item">
+            <h5>Tailwind CSS</h5>
+            <p>Styling</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>
+          NuDevLens Architecture Diagram • AI-powered developer expertise
+          discovery
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

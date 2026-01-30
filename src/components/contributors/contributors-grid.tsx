@@ -33,7 +33,9 @@ interface ContributorsGridProps {
 
 export function ContributorsGrid({ contributors }: ContributorsGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<ExpertiseCategory[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<
+    ExpertiseCategory[]
+  >([]);
   const [sortBy, setSortBy] = useState<SortOption>("commits");
   const [page, setPage] = useState(1);
 
@@ -44,7 +46,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
   // Extract available expertise categories from contributors (max 10)
   const availableCategories = useMemo(
     () => extractAvailableCategories(contributors.map((c) => c.summary)),
-    [contributors]
+    [contributors],
   );
 
   // Filter and sort contributors
@@ -57,7 +59,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
       result = result.filter(
         (contributor) =>
           contributor.username.toLowerCase().includes(query) ||
-          contributor.summary?.toLowerCase().includes(query)
+          contributor.summary?.toLowerCase().includes(query),
       );
     }
 
@@ -82,11 +84,13 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
     return result;
   }, [contributors, searchQuery, selectedCategories, sortBy]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredContributors.length / PAGE_SIZE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredContributors.length / PAGE_SIZE),
+  );
   const paginatedContributors = useMemo(
-    () =>
-      filteredContributors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filteredContributors, page]
+    () => filteredContributors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredContributors, page],
   );
 
   // Reset to page 1 when filters or sort change
@@ -124,7 +128,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Sort by:</span>
-          <div className="flex gap-1">
+          <div className="flex gap-3">
             <SortButton
               active={sortBy === "commits"}
               onClick={() => setSortBy("commits")}
@@ -176,9 +180,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
                       }}
                       aria-disabled={page <= 1}
                       className={
-                        page <= 1
-                          ? "pointer-events-none opacity-50"
-                          : undefined
+                        page <= 1 ? "pointer-events-none opacity-50" : undefined
                       }
                     />
                   </PaginationItem>
@@ -187,7 +189,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
                     if (totalPages <= maxVisible) {
                       return Array.from(
                         { length: totalPages },
-                        (_, i) => i + 1
+                        (_, i) => i + 1,
                       ).map((p) => (
                         <PaginationItem key={p}>
                           <PaginationLink
@@ -212,7 +214,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
                         "ellipsis",
                         totalPages - 2,
                         totalPages - 1,
-                        totalPages
+                        totalPages,
                       );
                     } else {
                       pages.push(
@@ -222,7 +224,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
                         page,
                         page + 1,
                         "ellipsis",
-                        totalPages
+                        totalPages,
                       );
                     }
                     return pages.map((p, i) =>
@@ -243,7 +245,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
                             {p}
                           </PaginationLink>
                         </PaginationItem>
-                      )
+                      ),
                     );
                   })()}
                   <PaginationItem>
