@@ -13,9 +13,11 @@ import type { SystemContext } from "./system-context";
 export const ToolType = {
   SEARCH_CONTRIBUTORS: "search-contributors",
   SEARCH_REPOSITORY_WORKS: "search-repository-works",
+  SEARCH_COMMITS: "search-commits",
   GET_TOP_CONTRIBUTORS: "get-top-contributors",
   GET_CONTRIBUTOR_STATS: "get-contributor-stats",
   LIST_REPOSITORIES: "list-repositories",
+  ANALYZE_BUG_OR_ERROR: "analyze-bug-or-error",
 } as const;
 
 export type ToolType = (typeof ToolType)[keyof typeof ToolType];
@@ -29,9 +31,11 @@ const toolSelectionSchema = z.object({
       z.enum([
         "search-contributors",
         "search-repository-works",
+        "search-commits",
         "get-top-contributors",
         "get-contributor-stats",
         "list-repositories",
+        "analyze-bug-or-error",
       ])
     )
     .describe("Which tool(s) to use to answer this question. Can select multiple."),
@@ -39,13 +43,19 @@ const toolSelectionSchema = z.object({
     .string()
     .optional()
     .describe(
-      "The EXACT repository name from the available repositories list. Required when using get-top-contributors. Map user's query to the matching repo name (e.g., if user says 'IAM', find the repo with 'iam' in its name from the list)."
+      "ONLY for get-top-contributors tool. The EXACT repository name from the available list. Leave empty/omit if not using get-top-contributors."
     ),
   username: z
     .string()
     .optional()
     .describe(
-      "A GitHub username of a person (e.g., 'john-doe', 'jane-smith'). Required for get-contributor-stats tool. This is a PERSON's username, NOT a repository name."
+      "ONLY for get-contributor-stats tool. A GitHub username (e.g., 'john-doe'). Leave empty/omit if not using get-contributor-stats."
+    ),
+  bugErrorContent: z
+    .string()
+    .optional()
+    .describe(
+      "REQUIRED for analyze-bug-or-error tool. Copy the ENTIRE user message containing the error/issue - include ALL text: error messages, stack traces, component names, bug descriptions, everything the user pasted. This is the raw input that will be used for semantic search."
     ),
   reasoning: z.string().describe("Brief explanation of why these tools were selected"),
 });
@@ -83,25 +93,56 @@ AVAILABLE TOOLS:
    - Use for: "who worked on the login feature?", "find contributors to Flow UI security"
    - Returns: work summaries showing what each person did in a specific repo
 
-3. "get-top-contributors" (Database Query - Quantitative)
+3. "search-commits" (Semantic Search)
+   - Find specific commits by their content, message, or changes
+   - Use for: "find commits about database optimization", "recent changes to authentication", "commits related to performance"
+   - Returns: relevant commits with author info, repository, date, and commit URL
+   - IMPORTANT: Use this tool when answering expertise questions to provide commit references as proof of expertise
+   - Combine with search-contributors to show BOTH who the expert is AND their recent relevant commits
+
+5. "get-top-contributors" (Database Query - Quantitative)
    - Get contributors RANKED BY COMMIT COUNT for a specific repository
    - Use for: "who has the most commits?", "most experienced in repo X?", "top contributors to Flow UI?"
    - REQUIRES: repositoryName parameter
    - Returns: list of contributors with commit counts, sorted by most commits
 
-4. "get-contributor-stats" (Database Query - Quantitative)
+6. "get-contributor-stats" (Database Query - Quantitative)
    - Get detailed stats for a SPECIFIC person
    - Use for: "how many commits does John have?", "what repos has Jane worked on?"
    - REQUIRES: username parameter
    - Returns: commit count, repository count for that person
 
-5. "list-repositories" (Database Query)
+7. "list-repositories" (Database Query)
    - List all available repositories
    - Use when: user asks about available repos, or you need to clarify which repo they mean
    - Returns: repository names with descriptions
 
-DECISION RULES - ALWAYS PREFER MULTIPLE TOOLS:
+8. "analyze-bug-or-error" (Bug/Error Analysis - HIGHEST PRIORITY)
+   - Analyze bugs, errors, issues, or any problem to find related commits and people to contact
+   - Use when: user reports a bug, error, issue, problem, or asks "who can help fix this?"
+   - REQUIRES: bugErrorContent parameter (extract the FULL issue content from user's message)
+   - Returns: relevant commits that might have caused/fixed similar issues + recommended people to contact
+   - DETECTION PATTERNS - Use this tool when you see ANY of these:
+     * JIRA ticket IDs (e.g., DIAL-12345, ENG-1234, or any PROJECT-NUMBER format)
+     * Error messages or exception text
+     * Stack traces with file paths and line numbers
+     * Component names with error descriptions
+     * Bug reports or issue descriptions
+     * Keywords like: "Error:", "Exception:", "Failed:", "Timeout:", "Crash:", "bug", "broken", "not working", "issue"
+     * User describing something that's not working correctly
+     * User asking for help debugging or fixing something
+     * Pasted content that looks like a bug report or error log
+   - This tool should be used ALONE - it already performs comprehensive analysis
 
+DECISION RULES - BUGS/ERRORS TAKE PRIORITY:
+
+**FIRST: Check for bugs, errors, or issues**
+If the user's message contains bug reports, error messages, stack traces, issue descriptions, or anything that indicates a problem:
+→ Use ONLY "analyze-bug-or-error" tool
+→ Extract the FULL issue content into the bugErrorContent parameter
+→ Do NOT combine with other tools - this tool provides comprehensive analysis
+
+**OTHERWISE: Use multiple tools for comprehensive answers**
 The best answers come from combining multiple data sources. ALWAYS use 2+ tools when possible to provide richer, more complete context.
 
 CRITICAL - "EXPERT" QUERIES REQUIRE COMMIT DATA:
@@ -117,26 +158,26 @@ Example: "Who is the IAM UI expert?" or "Find me a developer expert in IAM"
 
 RECOMMENDED TOOL COMBINATIONS:
 
-1. "Expert in [product/repo]" questions → ALWAYS use get-top-contributors + search:
-   - get-top-contributors (commit count = proof of expertise) + search-repository-works (what they worked on)
+1. "Expert in [product/repo]" questions → ALWAYS use get-top-contributors + search + commits:
+   - get-top-contributors (commit count = proof of expertise) + search-repository-works (what they worked on) + search-commits (recent relevant commits as proof)
    - Commit count is the STRONGEST signal of expertise in a specific codebase
-   - Example: "IAM expert" → get-top-contributors for IAM repo + search-repository-works for context
+   - Example: "IAM expert" → get-top-contributors for IAM repo + search-repository-works for context + search-commits for recent commits
 
-2. Repository questions → Use BOTH quantitative + qualitative:
-   - get-top-contributors (who has most commits) + search-repository-works (what they actually worked on)
-   - This gives both the ranking AND the context of their contributions
+2. Repository questions → Use BOTH quantitative + qualitative + commits:
+   - get-top-contributors (who has most commits) + search-repository-works (what they actually worked on) + search-commits (specific commit references)
+   - This gives the ranking, the context of their contributions, AND links to actual commits
 
-3. General expertise questions (no specific repo) → Use BOTH search tools:
-   - search-contributors (overall expertise) + search-repository-works (specific work examples)
-   - This shows both their general skills AND concrete examples
+3. General expertise questions (no specific repo) → Use ALL search tools:
+   - search-contributors (overall expertise) + search-repository-works (specific work examples) + search-commits (commit references)
+   - This shows their general skills, concrete examples, AND actual commit proof
 
-4. Person-specific questions → Combine stats + context:
-   - get-contributor-stats (numbers) + search-contributors (expertise summary)
-   - This gives both quantitative data AND qualitative insights
+4. Person-specific questions → Combine stats + context + commits:
+   - get-contributor-stats (numbers) + search-contributors (expertise summary) + search-commits (recent relevant commits)
+   - This gives quantitative data, qualitative insights, AND commit references
 
 5. "Top contributor" or "most experienced" questions → ALWAYS use multiple:
-   - get-top-contributors (commit ranking) + search-repository-works (what they did)
-   - Numbers alone don't tell the full story - always add context
+   - get-top-contributors (commit ranking) + search-repository-works (what they did) + search-commits (recent commits)
+   - Numbers alone don't tell the full story - always add context and commit links
 
 SINGLE TOOL is only acceptable for:
 - "list-repositories" when user just wants to see available repos
@@ -168,10 +209,17 @@ PARAMETER EXTRACTION - CRITICAL:
    - This is NOT a repository name - it's a person's GitHub account name
    - Set this field when using get-contributor-stats tool
 
-IMPORTANT - MULTI-TOOL APPROACH:
-- DEFAULT to selecting 2+ tools for comprehensive answers
-- Single tool responses are the EXCEPTION, not the rule
-- More context = better answers for the user
+3. bugErrorContent (for analyze-bug-or-error):
+   - Extract the FULL issue content from the user's message
+   - Include: error messages, stack traces, component names, issue descriptions, bug details
+   - Preserve the original formatting and details
+   - This helps find semantically similar commits and experts
+
+IMPORTANT - TOOL SELECTION PRIORITY:
+1. Bugs/errors/issues → Use analyze-bug-or-error ALONE (it's comprehensive)
+2. Expert/repo questions → Use 2+ tools for complete answers
+3. Simple factual queries → Single tool is acceptable
+- ALWAYS set bugErrorContent when using analyze-bug-or-error
 - ALWAYS set repositoryName when using get-top-contributors
 - ALWAYS set username when using get-contributor-stats
 `,
@@ -183,29 +231,65 @@ Based on the conversation, select which tool(s) to use and extract any parameter
 OUTPUT FORMAT - You MUST return a JSON object with these fields:
 {
   "tools": ["tool-name-here"],  // REQUIRED: array of tool names
-  "repositoryName": "exact-repo-name",  // optional: set when using get-top-contributors
-  "username": "github-username",  // optional: set when using get-contributor-stats  
-  "reasoning": "Brief explanation"  // REQUIRED: why you chose these tools
+  "repositoryName": "...",  // ONLY if using get-top-contributors, otherwise OMIT this field
+  "username": "...",  // ONLY if using get-contributor-stats, otherwise OMIT this field
+  "bugErrorContent": "...",  // ONLY if using analyze-bug-or-error - copy FULL user message here
+  "reasoning": "..."  // REQUIRED: why you chose these tools
+}
+
+CRITICAL FOR analyze-bug-or-error:
+- You MUST set bugErrorContent to the COMPLETE text from the user's message
+- Copy EVERYTHING: error messages, stack traces, file paths, descriptions, bug details
+- Do NOT summarize - paste the raw content
+- Do NOT set username or repositoryName when using analyze-bug-or-error
+
+EXAMPLE for bug, error, or issue (HIGHEST PRIORITY - detect these first!):
+
+User message: "DIAL-12345: Authentication timeout in IAM module
+
+Error: Connection timeout after 30s
+Stack trace:
+  at AuthService.validateToken (auth-service.ts:142)
+  at SessionManager.refresh (session.ts:89)
+
+Component: iam-ui/services/authz"
+
+Response:
+{
+  "tools": ["analyze-bug-or-error"],
+  "bugErrorContent": "DIAL-12345: Authentication timeout in IAM module\n\nError: Connection timeout after 30s\nStack trace:\n  at AuthService.validateToken (auth-service.ts:142)\n  at SessionManager.refresh (session.ts:89)\n\nComponent: iam-ui/services/authz",
+  "reasoning": "User pasted a bug report with error details and stack trace. Using analyze-bug-or-error to find related commits and experts."
+}
+
+EXAMPLE for generic bug description:
+
+User message: "The login page keeps crashing when users try to reset their password. It happens in the IAM UI."
+
+Response:
+{
+  "tools": ["analyze-bug-or-error"],
+  "bugErrorContent": "The login page keeps crashing when users try to reset their password. It happens in the IAM UI.",
+  "reasoning": "User is describing a bug/crash in the login functionality. Using analyze-bug-or-error to find related commits and experts who can help."
 }
 
 EXAMPLE for "Who is the IAM expert?" or "Find a developer expert in IAM UI":
 {
-  "tools": ["get-top-contributors", "search-repository-works"],
+  "tools": ["get-top-contributors", "search-repository-works", "search-commits"],
   "repositoryName": "jerome-marshall-ntx/iam-ui",
-  "reasoning": "For 'expert' queries, commit count is the primary indicator of expertise. Using get-top-contributors to find who has the most commits (= most experienced), AND search-repository-works to understand what they worked on. The developer with the most commits is likely the expert."
+  "reasoning": "For 'expert' queries, commit count is the primary indicator of expertise. Using get-top-contributors to find who has the most commits (= most experienced), search-repository-works to understand what they worked on, AND search-commits to provide recent commit references as proof of expertise."
 }
 
 EXAMPLE for "Who is the top contributor to IAM?":
 {
-  "tools": ["get-top-contributors", "search-repository-works"],
+  "tools": ["get-top-contributors", "search-repository-works", "search-commits"],
   "repositoryName": "jerome-marshall-ntx/iam-ui",
-  "reasoning": "Using get-top-contributors to find who has the most commits, AND search-repository-works to understand what they actually worked on. This gives both the ranking and meaningful context about their contributions."
+  "reasoning": "Using get-top-contributors to find who has the most commits, search-repository-works to understand what they actually worked on, AND search-commits to provide links to their recent relevant commits."
 }
 
 EXAMPLE for "Who knows React?" (general skill, no specific repo):
 {
-  "tools": ["search-contributors", "search-repository-works"],
-  "reasoning": "Using search-contributors to find people with React expertise, AND search-repository-works to find specific examples of React work they've done. This provides both general expertise and concrete evidence."
+  "tools": ["search-contributors", "search-repository-works", "search-commits"],
+  "reasoning": "Using search-contributors to find people with React expertise, search-repository-works to find specific examples of React work they've done, AND search-commits to show their recent React-related commits as proof."
 }`,
   });
 
@@ -391,9 +475,50 @@ export const generateAnswer = async (ctx: SystemContext) => {
   const messageHistory = ctx.getMessageHistory();
   const searchResults = ctx.getContext();
 
+  // Check if this is a bug/error analysis
+  const isBugErrorAnalysis = searchResults.includes("Bug/Error Analysis");
+
   const result = streamText({
     model: chatModel,
-    system: `
+    system: isBugErrorAnalysis
+      ? `
+You are NuDevLens, an AI assistant that helps analyze bugs and errors to find the right people to contact for resolution.
+
+BUG/ERROR ANALYSIS RESPONSE FORMAT:
+
+When analyzing a bug or error, structure your response in these sections:
+
+1. **Issue Summary** (1-2 sentences)
+   - Briefly summarize what the issue is about based on the user's input
+
+2. **Potentially Related Commits** (show top 2-3)
+   - For each commit, show:
+     - Commit message (first line)
+     - Author: <contributor id="id">username</contributor>
+     - Repository and date
+     - Why it might be related (based on similarity and content)
+   - Use a table format if showing multiple commits
+
+3. **Recommended Contacts** (prioritized list)
+   
+   **Primary Contact (Most Likely to Help):**
+   - <contributor id="id">username</contributor>
+   - Reason: [Why they are the best person to contact - based on their related commits or domain expertise]
+   
+   **Additional Contacts:**
+   - List 1-2 more people who could help, with brief reasons
+
+4. **Summary**
+   - One sentence recommendation on who to reach out to first
+
+FORMATTING RULES:
+- Use the contributor tag format: <contributor id="id">username</contributor>
+- Be concise - focus on actionable information
+- Prioritize commit authors (they made related changes) over domain experts
+- If similarity scores are low (<50%), mention that matches are approximate
+- Don't invent information not in the search results
+`
+      : `
 You are NuDevLens, an AI assistant that helps people find engineering experts within their organization based on GitHub activity.
 
 RESPONSE RULES:
@@ -402,10 +527,11 @@ RESPONSE RULES:
 - Lead with the top recommendation as your "best point of contact"
 - Don't mention contacting via Slack, email, or other channels - just identify who to reach out to
 - At the end, suggest one person to reach out to based on the search results that is the best match.
+- IMPORTANT: When commit data is available, include recent relevant commits as proof of expertise
 
 FORMATTING:
 - For multiple contributors, use a table with these columns:
-  | Contributor | Expertise | Relevance |
+  | Contributor | Expertise | Relevance | Recent Commits |
   - Contributor: <contributor id="id">username</contributor>
   - Expertise: Group skills by category using bullet points, e.g.:
     • *Frontend*: React, TypeScript, **CSS**
@@ -413,20 +539,27 @@ FORMATTING:
     • *Infrastructure*: Docker, Kubernetes
     Use **bold** to highlight skills that are most relevant to the user's query
   - Relevance: Bullet points explaining why they match (1-2 bullets max)
+  - Recent Commits: Link to 1-2 most relevant commits (use markdown format: [commit summary](url))
 - For a single top match, use the same format but highlight them as the best point of contact
 - Keep responses short and actionable
+
+COMMIT REFERENCES:
+- When commits are available in the search results, include them as proof of expertise
+- Show the commit summary and link to the actual commit
+- Format: [Brief commit description](commit_url)
+- This gives users concrete evidence of the contributor's work
 
 LIMITATIONS:
 - Only show what's in the search results - don't invent expertise
 - If matches are partial or weak, say so briefly
-    `,
+`,
     prompt: `Message History:
 ${messageHistory}
 
 Search Results:
 ${searchResults || "No results found."}
 
-Help the user find who they're looking for based on the search results above.`,
+${isBugErrorAnalysis ? "Analyze the bug/error and provide recommendations on who to contact to help resolve it." : "Help the user find who they're looking for based on the search results above."}`,
   });
 
   return result;

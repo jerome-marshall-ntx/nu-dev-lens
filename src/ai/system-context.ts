@@ -1,7 +1,9 @@
+import type { searchCommitsByQuery } from "@/use-cases/commit";
 import type { searchContributorsByQuery } from "@/use-cases/contributor";
 import type { searchRepositoryWorksByQuery } from "@/use-cases/repository-work";
 import type { UIMessage } from "ai";
 import type {
+  BugErrorAnalysisResult,
   ContributorStatsResult,
   RepositoryListResult,
   TopContributorsResult,
@@ -15,9 +17,11 @@ import { messageToString } from "./utils";
 type ContextType =
   | "contributors"
   | "repository-works"
+  | "commits"
   | "top-contributors"
   | "contributor-stats"
-  | "repository-list";
+  | "repository-list"
+  | "bug-error-analysis";
 
 interface Context {
   type: ContextType;
@@ -46,6 +50,19 @@ export class SystemContext {
         return `<${role}>${messageToString(message)}</${role}>`;
       })
       .join("\n\n");
+  }
+
+  /**
+   * Get the last user message content (for fallback extraction of bug/error content)
+   */
+  getLastUserMessage(): string | null {
+    // Find the last user message
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      if (this.messages[i]?.role === "user") {
+        return messageToString(this.messages[i]!);
+      }
+    }
+    return null;
   }
 
   shouldStop() {
@@ -97,6 +114,29 @@ export class SystemContext {
 - contributor summary: ${r.contributor.summary ?? "No summary available"}
 - contributor url: ${r.contributor.url}
 - contributor username: ${r.contributor.username}`
+      ),
+    });
+  }
+
+  /**
+   * Add context for commit search results
+   */
+  addCommitsContext(
+    query: string,
+    commits: Awaited<ReturnType<typeof searchCommitsByQuery>>
+  ) {
+    this.addContext({
+      type: "commits",
+      label: `Semantic search for commits: "${query}"`,
+      results: commits.map(
+        (c) => `
+- commit summary: ${c.summary ?? "No summary available"}
+- commit url: ${c.url}
+- authored at: ${c.authoredAt ? new Date(c.authoredAt).toLocaleDateString() : "Unknown"}
+- author: ${c.contributor.username}
+- author url: ${c.contributor.url}
+- repository: ${c.repository.name}
+- similarity: ${(c.similarity * 100).toFixed(1)}%`
       ),
     });
   }
@@ -172,6 +212,75 @@ export class SystemContext {
     });
   }
 
+  /**
+   * Add context for bug/error analysis results
+   */
+  addBugErrorAnalysisContext(result: BugErrorAnalysisResult) {
+    if (!result.success) {
+      this.addContext({
+        type: "bug-error-analysis",
+        label: "Bug/Error Analysis failed",
+        results: ["Error: Unable to analyze the bug/error"],
+      });
+      return;
+    }
+
+    const { relevantCommits, commitAuthors, domainExperts } = result.analysis;
+
+    const results: string[] = [];
+
+    // Add relevant commits section
+    if (relevantCommits.length > 0) {
+      results.push("### Potentially Related Commits:");
+      relevantCommits.forEach((commit, i) => {
+        results.push(
+          `${i + 1}. **${commit.message.split("\n")[0]}**
+   - Author: ${commit.author.username} (${commit.author.url})
+   - Repository: ${commit.repository.name}
+   - Date: ${commit.authoredAt ? new Date(commit.authoredAt).toLocaleDateString() : "Unknown"}
+   - Summary: ${commit.summary ?? "No summary"}
+   - Similarity: ${(commit.similarity * 100).toFixed(1)}%
+   - URL: ${commit.url}`
+        );
+      });
+    } else {
+      results.push("No related commits found.");
+    }
+
+    // Add commit authors section (people who made related changes)
+    if (commitAuthors.length > 0) {
+      results.push("\n### People Who Made Related Changes (Potential Causers/Fixers):");
+      commitAuthors.forEach((author, i) => {
+        results.push(
+          `${i + 1}. **${author.username}** - ${author.relevantCommitCount} related commit(s)
+   - Profile: ${author.url}
+   - Most relevant commit: "${author.topCommit?.message.split("\n")[0] ?? "N/A"}"
+   - Expertise: ${author.summary ?? "No summary available"}`
+        );
+      });
+    }
+
+    // Add domain experts section
+    if (domainExperts.length > 0) {
+      results.push("\n### Domain Experts (Can Help Resolve):");
+      domainExperts.forEach((expert, i) => {
+        results.push(
+          `${i + 1}. **${expert.username}**
+   - Profile: ${expert.url}
+   - Repository: ${expert.repository.name}
+   - Work Summary: ${expert.workSummary ?? "No summary available"}
+   - Similarity: ${(expert.similarity * 100).toFixed(1)}%`
+        );
+      });
+    }
+
+    this.addContext({
+      type: "bug-error-analysis",
+      label: "Bug/Error Analysis Results",
+      results,
+    });
+  }
+
   // ============================================================================
   // CONTEXT OUTPUT
   // ============================================================================
@@ -198,12 +307,16 @@ ${c.results.join("\n")}`;
         return "Contributors (Semantic Search)";
       case "repository-works":
         return "Repository Works (Semantic Search)";
+      case "commits":
+        return "Commits (Semantic Search)";
       case "top-contributors":
         return "Top Contributors (Database Query)";
       case "contributor-stats":
         return "Contributor Stats (Database Query)";
       case "repository-list":
         return "Repository List (Database Query)";
+      case "bug-error-analysis":
+        return "Bug/Error Analysis";
       default:
         return "Search Results";
     }

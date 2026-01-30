@@ -1,4 +1,5 @@
 import { getAllRepositoryDescriptions } from "@/data-access/repository";
+import { searchCommitsByQuery } from "@/use-cases/commit";
 import { searchContributorsByQuery } from "@/use-cases/contributor";
 import { searchRepositoryWorksByQuery } from "@/use-cases/repository-work";
 import type { streamText, UIMessage } from "ai";
@@ -13,6 +14,7 @@ import {
 } from "./actions";
 import { SystemContext } from "./system-context";
 import {
+  analyzeBugOrError,
   getContributorStats,
   getTopContributorsByCommits,
   listRepositories,
@@ -26,9 +28,11 @@ import type { OurMessageStreamWrite } from "./types";
 const TOOL_DISPLAY_NAMES: Record<ToolSelection["tools"][number], string> = {
   "search-contributors": "Search Contributors",
   "search-repository-works": "Search Repository Works",
+  "search-commits": "Search Commits",
   "get-top-contributors": "Get Top Contributors",
   "get-contributor-stats": "Get Contributor Stats",
   "list-repositories": "List Repositories",
+  "analyze-bug-or-error": "Analyze Bug/Error",
 };
 
 // ============================================================================
@@ -88,6 +92,26 @@ async function executeTool(
         write({ type: "tool-output-available", toolCallId, output: repositoryWorks });
         ctx.addRepositoryWorksContext(searchQuery, repositoryWorks);
       }
+      break;
+    }
+
+    case ToolType.SEARCH_COMMITS: {
+      // For semantic commit search, generate a search query
+      const searchQuery = await generateSearchQuery(
+        ctx,
+        "repository-works", // Use repository-works type as it has similar semantic context
+        repositoryDescriptions
+      );
+      input = { query: searchQuery };
+
+      // Write tool input
+      write({ type: "tool-input-start", toolCallId, toolName });
+      write({ type: "tool-input-available", toolCallId, toolName, input });
+
+      // Execute semantic commit search
+      const commits = await searchCommitsByQuery(searchQuery, 10, 0.4);
+      write({ type: "tool-output-available", toolCallId, output: commits });
+      ctx.addCommitsContext(searchQuery, commits);
       break;
     }
 
@@ -165,6 +189,54 @@ async function executeTool(
       const result = await listRepositories();
       write({ type: "tool-output-available", toolCallId, output: result });
       ctx.addRepositoryListContext(result);
+      break;
+    }
+
+    case ToolType.ANALYZE_BUG_OR_ERROR: {
+      // Analyze bug/error to find related commits and experts
+      let issueContent = toolSelection.bugErrorContent;
+
+      // Fallback: if bugErrorContent is not provided, extract from last user message
+      if (!issueContent) {
+        console.warn("⚠️ analyze-bug-or-error called without bugErrorContent, extracting from last user message");
+        const lastUserMessage = ctx.getLastUserMessage();
+        if (lastUserMessage) {
+          issueContent = lastUserMessage;
+          console.log("📝 Extracted issue content from last user message");
+        }
+      }
+
+      if (!issueContent) {
+        console.error("❌ analyze-bug-or-error: No issue content found");
+        input = { error: "No issue content provided" };
+        write({ type: "tool-input-start", toolCallId, toolName });
+        write({ type: "tool-input-available", toolCallId, toolName, input });
+
+        write({
+          type: "tool-output-available",
+          toolCallId,
+          output: {
+            success: false,
+            error:
+              "No bug/error content was provided. Please describe the issue including any error messages, stack traces, or symptoms.",
+          },
+        });
+        break;
+      }
+
+      // Truncate long issue content for display (but use full content for search)
+      const displayContent =
+        issueContent.length > 200
+          ? issueContent.substring(0, 200) + "..."
+          : issueContent;
+      input = { issueContent: displayContent };
+
+      write({ type: "tool-input-start", toolCallId, toolName });
+      write({ type: "tool-input-available", toolCallId, toolName, input });
+
+      const result = await analyzeBugOrError(issueContent);
+      write({ type: "tool-output-available", toolCallId, output: result });
+      ctx.addBugErrorAnalysisContext(result);
       break;
     }
   }
