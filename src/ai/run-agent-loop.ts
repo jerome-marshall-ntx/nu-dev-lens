@@ -1,4 +1,5 @@
 import { getAllRepositoryDescriptions } from "@/data-access/repository";
+import { searchCommitsByQuery } from "@/use-cases/commit";
 import { searchContributorsByQuery } from "@/use-cases/contributor";
 import { searchRepositoryWorksByQuery } from "@/use-cases/repository-work";
 import type { streamText, UIMessage } from "ai";
@@ -27,6 +28,7 @@ import type { OurMessageStreamWrite } from "./types";
 const TOOL_DISPLAY_NAMES: Record<ToolSelection["tools"][number], string> = {
   "search-contributors": "Search Contributors",
   "search-repository-works": "Search Repository Works",
+  "search-commits": "Search Commits",
   "get-top-contributors": "Get Top Contributors",
   "get-contributor-stats": "Get Contributor Stats",
   "list-repositories": "List Repositories",
@@ -90,6 +92,26 @@ async function executeTool(
         write({ type: "tool-output-available", toolCallId, output: repositoryWorks });
         ctx.addRepositoryWorksContext(searchQuery, repositoryWorks);
       }
+      break;
+    }
+
+    case ToolType.SEARCH_COMMITS: {
+      // For semantic commit search, generate a search query
+      const searchQuery = await generateSearchQuery(
+        ctx,
+        "repository-works", // Use repository-works type as it has similar semantic context
+        repositoryDescriptions
+      );
+      input = { query: searchQuery };
+
+      // Write tool input
+      write({ type: "tool-input-start", toolCallId, toolName });
+      write({ type: "tool-input-available", toolCallId, toolName, input });
+
+      // Execute semantic commit search
+      const commits = await searchCommitsByQuery(searchQuery, 10, 0.4);
+      write({ type: "tool-output-available", toolCallId, output: commits });
+      ctx.addCommitsContext(searchQuery, commits);
       break;
     }
 

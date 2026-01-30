@@ -193,7 +193,6 @@ export async function analyzeBugOrError(issueContent: string) {
         summary: string | null;
         message: string;
         authoredAt: Date | null;
-        filesChanged: Array<{ filename: string; status: string }> | null;
         similarity: number;
       }>;
     }
@@ -206,7 +205,6 @@ export async function analyzeBugOrError(issueContent: string) {
       summary: commit.summary,
       message: commit.rawData.message,
       authoredAt: commit.authoredAt,
-      filesChanged: commit.rawData.files_changed,
       similarity: commit.similarity,
     };
 
@@ -285,7 +283,6 @@ export async function analyzeBugOrError(issueContent: string) {
           url: commit.repository.url,
         },
         authoredAt: commit.authoredAt,
-        filesChanged: commit.rawData.files_changed?.slice(0, 10), // Limit files shown
         similarity: commit.similarity,
       })),
 

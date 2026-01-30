@@ -1,3 +1,4 @@
+import type { searchCommitsByQuery } from "@/use-cases/commit";
 import type { searchContributorsByQuery } from "@/use-cases/contributor";
 import type { searchRepositoryWorksByQuery } from "@/use-cases/repository-work";
 import type { UIMessage } from "ai";
@@ -16,6 +17,7 @@ import { messageToString } from "./utils";
 type ContextType =
   | "contributors"
   | "repository-works"
+  | "commits"
   | "top-contributors"
   | "contributor-stats"
   | "repository-list"
@@ -116,6 +118,29 @@ export class SystemContext {
     });
   }
 
+  /**
+   * Add context for commit search results
+   */
+  addCommitsContext(
+    query: string,
+    commits: Awaited<ReturnType<typeof searchCommitsByQuery>>
+  ) {
+    this.addContext({
+      type: "commits",
+      label: `Semantic search for commits: "${query}"`,
+      results: commits.map(
+        (c) => `
+- commit summary: ${c.summary ?? "No summary available"}
+- commit url: ${c.url}
+- authored at: ${c.authoredAt ? new Date(c.authoredAt).toLocaleDateString() : "Unknown"}
+- author: ${c.contributor.username}
+- author url: ${c.contributor.url}
+- repository: ${c.repository.name}
+- similarity: ${(c.similarity * 100).toFixed(1)}%`
+      ),
+    });
+  }
+
   // ============================================================================
   // DATABASE QUERY CONTEXT FORMATTERS
   // ============================================================================
@@ -208,10 +233,6 @@ export class SystemContext {
     if (relevantCommits.length > 0) {
       results.push("### Potentially Related Commits:");
       relevantCommits.forEach((commit, i) => {
-        const filesStr = commit.filesChanged
-          ?.slice(0, 5)
-          .map((f) => `    - ${f.filename} (${f.status})`)
-          .join("\n");
         results.push(
           `${i + 1}. **${commit.message.split("\n")[0]}**
    - Author: ${commit.author.username} (${commit.author.url})
@@ -219,8 +240,7 @@ export class SystemContext {
    - Date: ${commit.authoredAt ? new Date(commit.authoredAt).toLocaleDateString() : "Unknown"}
    - Summary: ${commit.summary ?? "No summary"}
    - Similarity: ${(commit.similarity * 100).toFixed(1)}%
-   - URL: ${commit.url}
-${filesStr ? `   - Files changed:\n${filesStr}` : ""}`
+   - URL: ${commit.url}`
         );
       });
     } else {
@@ -287,6 +307,8 @@ ${c.results.join("\n")}`;
         return "Contributors (Semantic Search)";
       case "repository-works":
         return "Repository Works (Semantic Search)";
+      case "commits":
+        return "Commits (Semantic Search)";
       case "top-contributors":
         return "Top Contributors (Database Query)";
       case "contributor-stats":

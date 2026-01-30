@@ -59,7 +59,16 @@ export const searchCommitsByEmbedding = async (
   // Filter by minimum similarity threshold and limit to requested amount
   const results = allResults
     .filter((r) => r.similarity >= minSimilarity)
-    .slice(0, limit);
+    .slice(0, limit)
+    // Strip diff_patch and files_changed from rawData to reduce noise in AI context
+    .map((r) => ({
+      ...r,
+      rawData: {
+        ...r.rawData,
+        diff_patch: undefined,
+        files_changed: undefined,
+      },
+    }));
 
   return results;
 };

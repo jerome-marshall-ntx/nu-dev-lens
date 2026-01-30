@@ -13,6 +13,7 @@ import type { SystemContext } from "./system-context";
 export const ToolType = {
   SEARCH_CONTRIBUTORS: "search-contributors",
   SEARCH_REPOSITORY_WORKS: "search-repository-works",
+  SEARCH_COMMITS: "search-commits",
   GET_TOP_CONTRIBUTORS: "get-top-contributors",
   GET_CONTRIBUTOR_STATS: "get-contributor-stats",
   LIST_REPOSITORIES: "list-repositories",
@@ -30,6 +31,7 @@ const toolSelectionSchema = z.object({
       z.enum([
         "search-contributors",
         "search-repository-works",
+        "search-commits",
         "get-top-contributors",
         "get-contributor-stats",
         "list-repositories",
@@ -91,24 +93,31 @@ AVAILABLE TOOLS:
    - Use for: "who worked on the login feature?", "find contributors to Flow UI security"
    - Returns: work summaries showing what each person did in a specific repo
 
-3. "get-top-contributors" (Database Query - Quantitative)
+3. "search-commits" (Semantic Search)
+   - Find specific commits by their content, message, or changes
+   - Use for: "find commits about database optimization", "recent changes to authentication", "commits related to performance"
+   - Returns: relevant commits with author info, repository, date, and commit URL
+   - IMPORTANT: Use this tool when answering expertise questions to provide commit references as proof of expertise
+   - Combine with search-contributors to show BOTH who the expert is AND their recent relevant commits
+
+5. "get-top-contributors" (Database Query - Quantitative)
    - Get contributors RANKED BY COMMIT COUNT for a specific repository
    - Use for: "who has the most commits?", "most experienced in repo X?", "top contributors to Flow UI?"
    - REQUIRES: repositoryName parameter
    - Returns: list of contributors with commit counts, sorted by most commits
 
-4. "get-contributor-stats" (Database Query - Quantitative)
+6. "get-contributor-stats" (Database Query - Quantitative)
    - Get detailed stats for a SPECIFIC person
    - Use for: "how many commits does John have?", "what repos has Jane worked on?"
    - REQUIRES: username parameter
    - Returns: commit count, repository count for that person
 
-5. "list-repositories" (Database Query)
+7. "list-repositories" (Database Query)
    - List all available repositories
    - Use when: user asks about available repos, or you need to clarify which repo they mean
    - Returns: repository names with descriptions
 
-6. "analyze-bug-or-error" (Bug/Error Analysis - HIGHEST PRIORITY)
+8. "analyze-bug-or-error" (Bug/Error Analysis - HIGHEST PRIORITY)
    - Analyze bugs, errors, issues, or any problem to find related commits and people to contact
    - Use when: user reports a bug, error, issue, problem, or asks "who can help fix this?"
    - REQUIRES: bugErrorContent parameter (extract the FULL issue content from user's message)
@@ -149,26 +158,26 @@ Example: "Who is the IAM UI expert?" or "Find me a developer expert in IAM"
 
 RECOMMENDED TOOL COMBINATIONS:
 
-1. "Expert in [product/repo]" questions → ALWAYS use get-top-contributors + search:
-   - get-top-contributors (commit count = proof of expertise) + search-repository-works (what they worked on)
+1. "Expert in [product/repo]" questions → ALWAYS use get-top-contributors + search + commits:
+   - get-top-contributors (commit count = proof of expertise) + search-repository-works (what they worked on) + search-commits (recent relevant commits as proof)
    - Commit count is the STRONGEST signal of expertise in a specific codebase
-   - Example: "IAM expert" → get-top-contributors for IAM repo + search-repository-works for context
+   - Example: "IAM expert" → get-top-contributors for IAM repo + search-repository-works for context + search-commits for recent commits
 
-2. Repository questions → Use BOTH quantitative + qualitative:
-   - get-top-contributors (who has most commits) + search-repository-works (what they actually worked on)
-   - This gives both the ranking AND the context of their contributions
+2. Repository questions → Use BOTH quantitative + qualitative + commits:
+   - get-top-contributors (who has most commits) + search-repository-works (what they actually worked on) + search-commits (specific commit references)
+   - This gives the ranking, the context of their contributions, AND links to actual commits
 
-3. General expertise questions (no specific repo) → Use BOTH search tools:
-   - search-contributors (overall expertise) + search-repository-works (specific work examples)
-   - This shows both their general skills AND concrete examples
+3. General expertise questions (no specific repo) → Use ALL search tools:
+   - search-contributors (overall expertise) + search-repository-works (specific work examples) + search-commits (commit references)
+   - This shows their general skills, concrete examples, AND actual commit proof
 
-4. Person-specific questions → Combine stats + context:
-   - get-contributor-stats (numbers) + search-contributors (expertise summary)
-   - This gives both quantitative data AND qualitative insights
+4. Person-specific questions → Combine stats + context + commits:
+   - get-contributor-stats (numbers) + search-contributors (expertise summary) + search-commits (recent relevant commits)
+   - This gives quantitative data, qualitative insights, AND commit references
 
 5. "Top contributor" or "most experienced" questions → ALWAYS use multiple:
-   - get-top-contributors (commit ranking) + search-repository-works (what they did)
-   - Numbers alone don't tell the full story - always add context
+   - get-top-contributors (commit ranking) + search-repository-works (what they did) + search-commits (recent commits)
+   - Numbers alone don't tell the full story - always add context and commit links
 
 SINGLE TOOL is only acceptable for:
 - "list-repositories" when user just wants to see available repos
@@ -265,22 +274,22 @@ Response:
 
 EXAMPLE for "Who is the IAM expert?" or "Find a developer expert in IAM UI":
 {
-  "tools": ["get-top-contributors", "search-repository-works"],
+  "tools": ["get-top-contributors", "search-repository-works", "search-commits"],
   "repositoryName": "jerome-marshall-ntx/iam-ui",
-  "reasoning": "For 'expert' queries, commit count is the primary indicator of expertise. Using get-top-contributors to find who has the most commits (= most experienced), AND search-repository-works to understand what they worked on. The developer with the most commits is likely the expert."
+  "reasoning": "For 'expert' queries, commit count is the primary indicator of expertise. Using get-top-contributors to find who has the most commits (= most experienced), search-repository-works to understand what they worked on, AND search-commits to provide recent commit references as proof of expertise."
 }
 
 EXAMPLE for "Who is the top contributor to IAM?":
 {
-  "tools": ["get-top-contributors", "search-repository-works"],
+  "tools": ["get-top-contributors", "search-repository-works", "search-commits"],
   "repositoryName": "jerome-marshall-ntx/iam-ui",
-  "reasoning": "Using get-top-contributors to find who has the most commits, AND search-repository-works to understand what they actually worked on. This gives both the ranking and meaningful context about their contributions."
+  "reasoning": "Using get-top-contributors to find who has the most commits, search-repository-works to understand what they actually worked on, AND search-commits to provide links to their recent relevant commits."
 }
 
 EXAMPLE for "Who knows React?" (general skill, no specific repo):
 {
-  "tools": ["search-contributors", "search-repository-works"],
-  "reasoning": "Using search-contributors to find people with React expertise, AND search-repository-works to find specific examples of React work they've done. This provides both general expertise and concrete evidence."
+  "tools": ["search-contributors", "search-repository-works", "search-commits"],
+  "reasoning": "Using search-contributors to find people with React expertise, search-repository-works to find specific examples of React work they've done, AND search-commits to show their recent React-related commits as proof."
 }`,
   });
 
@@ -518,10 +527,11 @@ RESPONSE RULES:
 - Lead with the top recommendation as your "best point of contact"
 - Don't mention contacting via Slack, email, or other channels - just identify who to reach out to
 - At the end, suggest one person to reach out to based on the search results that is the best match.
+- IMPORTANT: When commit data is available, include recent relevant commits as proof of expertise
 
 FORMATTING:
 - For multiple contributors, use a table with these columns:
-  | Contributor | Expertise | Relevance |
+  | Contributor | Expertise | Relevance | Recent Commits |
   - Contributor: <contributor id="id">username</contributor>
   - Expertise: Group skills by category using bullet points, e.g.:
     • *Frontend*: React, TypeScript, **CSS**
@@ -529,8 +539,15 @@ FORMATTING:
     • *Infrastructure*: Docker, Kubernetes
     Use **bold** to highlight skills that are most relevant to the user's query
   - Relevance: Bullet points explaining why they match (1-2 bullets max)
+  - Recent Commits: Link to 1-2 most relevant commits (use markdown format: [commit summary](url))
 - For a single top match, use the same format but highlight them as the best point of contact
 - Keep responses short and actionable
+
+COMMIT REFERENCES:
+- When commits are available in the search results, include them as proof of expertise
+- Show the commit summary and link to the actual commit
+- Format: [Brief commit description](commit_url)
+- This gives users concrete evidence of the contributor's work
 
 LIMITATIONS:
 - Only show what's in the search results - don't invent expertise
