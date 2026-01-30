@@ -74,18 +74,20 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          "fixed right-6 bottom-6 z-50 flex items-center gap-3 rounded-full px-5 py-3.5 text-foreground transition-all duration-300 focus:outline-none",
-          "glass-strong hover:scale-[1.02] active:scale-[0.98]",
+          "glow-border fixed right-6 bottom-6 z-50 flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-5 py-3.5 text-foreground transition-all duration-300 focus:outline-none",
+          "shadow-[0_4px_20px_rgba(59,130,246,0.3),0_0_40px_rgba(59,130,246,0.15)]",
+          "hover:scale-[1.02] hover:shadow-[0_4px_25px_rgba(59,130,246,0.4),0_0_50px_rgba(59,130,246,0.25)] active:scale-[0.98]",
+          "dark:border-zinc-700 dark:bg-zinc-800 dark:shadow-[0_4px_20px_rgba(96,165,250,0.25),0_0_40px_rgba(96,165,250,0.15)] dark:hover:shadow-[0_4px_25px_rgba(96,165,250,0.35),0_0_50px_rgba(96,165,250,0.2)]",
           className,
         )}
         aria-label="Find an expert"
       >
-        <div className="glass-subtle flex h-8 w-8 items-center justify-center rounded-full">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-700">
           <Search className="h-4 w-4 text-primary" />
         </div>
         <span className="hidden items-center gap-2 text-sm font-medium md:inline-flex">
           Search...
-          <Kbd className="glass-subtle rounded-md px-1.5 py-0.5 text-xs text-muted-foreground">
+          <Kbd className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-xs text-muted-foreground dark:bg-zinc-700">
             ⌘K
           </Kbd>
         </span>
@@ -93,8 +95,8 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
 
       {/* Chat Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex h-[85vh] max-h-[85vh] w-[80vw] min-w-[80vw] flex-col gap-0 overflow-hidden p-0">
-          <DialogHeader className="shrink-0 border-b px-8 pt-6 pb-5">
+        <DialogContent className="flex h-[85vh] max-h-[85vh] w-[80vw] min-w-[80vw] flex-col gap-0 overflow-hidden rounded-[2rem] border border-white/10 bg-background/60 p-0 backdrop-blur-xl">
+          <DialogHeader className="border-glass-border-subtle shrink-0 border-b px-8 pt-6 pb-5">
             <DialogTitle className="text-lg font-semibold">
               Find an Expert
             </DialogTitle>
