@@ -354,6 +354,9 @@ async function populateDatabase(
           repositoryWorkId: repositoryWorkId,
           url: commitUrl,
           rawData: commitData,
+          authoredAt: commitData.authored_date
+            ? new Date(commitData.authored_date)
+            : null,
           summary: null,
         });
       }

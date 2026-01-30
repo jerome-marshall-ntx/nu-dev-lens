@@ -231,7 +231,7 @@ export async function getContributorCommits(
       url: commits.url,
       summary: commits.summary,
       rawData: commits.rawData,
-      createdAt: commits.createdAt,
+      createdAt: sql<Date>`COALESCE(${commits.authoredAt}, ${commits.createdAt})`.as("createdAt"),
       repositoryId: repositories.id,
       repositoryName: repositories.name,
       repositoryUrl: repositories.url,
@@ -240,7 +240,7 @@ export async function getContributorCommits(
     .innerJoin(repositoryWorks, eq(commits.repositoryWorkId, repositoryWorks.id))
     .innerJoin(repositories, eq(repositoryWorks.repositoryId, repositories.id))
     .where(eq(repositoryWorks.contributorId, contributorId))
-    .orderBy(desc(commits.createdAt))
+    .orderBy(desc(sql`COALESCE(${commits.authoredAt}, ${commits.createdAt})`))
     .limit(limit);
 
   return results.map((r) => ({

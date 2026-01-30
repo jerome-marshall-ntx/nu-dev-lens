@@ -608,6 +608,7 @@ async function processSingleRepository(
           sha: commitInfo.commitSha,
           url: commitInfo.commitSummary.html_url,
           message: commitInfo.commitMessageSummary,
+          authored_date: commitInfo.commitSummary.commit.author.date,
           files_changed: null,
           comment_count: null,
           diff_patch: null,

@@ -118,6 +118,7 @@ export const commits = createTable(
     rawData: jsonb().$type<StoredCommitData>().notNull(), // Typed commit data with diffs
     summary: d.text(), // Initially empty, populated by AI processing
     embedding: vector("embedding", { dimensions: 1536 }),
+    authoredAt: d.timestamp({ withTimezone: true }), // nullable for existing data
     createdAt: d
       .timestamp({ withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)

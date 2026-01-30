@@ -71,7 +71,7 @@ export async function getAllRepositoriesWithStats() {
   const lastActivityData = await db
     .select({
       repositoryId: repositoryWorks.repositoryId,
-      lastActivity: sql<Date>`max(${commits.createdAt})`,
+      lastActivity: sql<Date>`max(COALESCE(${commits.authoredAt}, ${commits.createdAt}))`,
     })
     .from(commits)
     .innerJoin(repositoryWorks, eq(commits.repositoryWorkId, repositoryWorks.id))
@@ -201,7 +201,7 @@ export async function getRepositoryRecentCommits(
       url: commits.url,
       summary: commits.summary,
       rawData: commits.rawData,
-      createdAt: commits.createdAt,
+      createdAt: sql<Date>`COALESCE(${commits.authoredAt}, ${commits.createdAt})`.as("createdAt"),
       contributorId: contributors.id,
       contributorUsername: contributors.username,
       contributorAvatarUrl: contributors.avatarUrl,
@@ -211,7 +211,7 @@ export async function getRepositoryRecentCommits(
     .innerJoin(repositoryWorks, eq(commits.repositoryWorkId, repositoryWorks.id))
     .innerJoin(contributors, eq(repositoryWorks.contributorId, contributors.id))
     .where(eq(repositoryWorks.repositoryId, repositoryId))
-    .orderBy(desc(commits.createdAt))
+    .orderBy(desc(sql`COALESCE(${commits.authoredAt}, ${commits.createdAt})`))
     .limit(limit);
 
   return results.map((r) => ({

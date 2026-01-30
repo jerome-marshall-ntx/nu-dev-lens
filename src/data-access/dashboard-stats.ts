@@ -117,7 +117,7 @@ export async function getRecentActivity(limit: number = 10) {
       url: commits.url,
       summary: commits.summary,
       rawData: commits.rawData,
-      createdAt: commits.createdAt,
+      createdAt: sql<Date>`COALESCE(${commits.authoredAt}, ${commits.createdAt})`.as("createdAt"),
       contributorId: contributors.id,
       contributorUsername: contributors.username,
       contributorAvatarUrl: contributors.avatarUrl,
@@ -128,7 +128,7 @@ export async function getRecentActivity(limit: number = 10) {
     .innerJoin(repositoryWorks, eq(commits.repositoryWorkId, repositoryWorks.id))
     .innerJoin(contributors, eq(repositoryWorks.contributorId, contributors.id))
     .innerJoin(repositories, eq(repositoryWorks.repositoryId, repositories.id))
-    .orderBy(desc(commits.createdAt))
+    .orderBy(desc(sql`COALESCE(${commits.authoredAt}, ${commits.createdAt})`))
     .limit(limit);
 
   return recentCommits.map((commit) => ({
