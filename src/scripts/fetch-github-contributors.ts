@@ -64,26 +64,32 @@ const CONCURRENT_REPOS = 3; // Process 3 repositories in parallel
 interface RepoConfig {
   url: string;
   branch?: string;
+  og_url?: string;
 }
 
 const REPOSITORIES: RepoConfig[] = [
   {
     url: "https://github.com/shashi-ntx/test-clone-prism-reactjs",
     branch: "master",
+    og_url: "https://github.com/nutanix-core/prism-ui-prism-reactjs-lib"
+
   },
   {
     url: "https://github.com/jerome-marshall-ntx/prism-ui-draas",
     branch: "master",
+    og_url: "https://github.com/nutanix-core/prism-ui-draas"
   },
   {
     url: "https://github.com/jerome-marshall-ntx/prism-ui-security-dashboard",
     branch: "main",
+    og_url: "https://github.com/nutanix-core/prism-ui-security-dashboard"
   },
   {
     url: "https://github.com/jerome-marshall-ntx/flow-ui-main",
     branch: "flow-ui-ng-master",
+    og_url: "https://github.com/nutanix-core/flow-ui-main"
   },
-  { url: "https://github.com/jerome-marshall-ntx/iam-ui", branch: "master" },
+  { url: "https://github.com/jerome-marshall-ntx/iam-ui", branch: "master", og_url: "https://github.com/nutanix-core/iam-ui" },
 ];
 
 // Files to ignore when collecting commit diffs (package locks, generated files, etc.)

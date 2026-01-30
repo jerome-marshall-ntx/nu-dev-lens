@@ -74,7 +74,7 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          "glow-border fixed right-6 bottom-6 z-50 flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-5 py-3.5 text-foreground transition-all duration-300 focus:outline-none",
+          "glow-border fixed right-6 bottom-6 z-50 flex items-center gap-3 rounded-full border border-zinc-200 bg-white px-3.5 py-2 text-foreground transition-all duration-300 focus:outline-none",
           "shadow-[0_4px_20px_rgba(59,130,246,0.3),0_0_40px_rgba(59,130,246,0.15)]",
           "hover:scale-[1.02] hover:shadow-[0_4px_25px_rgba(59,130,246,0.4),0_0_50px_rgba(59,130,246,0.25)] active:scale-[0.98]",
           "dark:border-zinc-700 dark:bg-zinc-800 dark:shadow-[0_4px_20px_rgba(96,165,250,0.25),0_0_40px_rgba(96,165,250,0.15)] dark:hover:shadow-[0_4px_25px_rgba(96,165,250,0.35),0_0_50px_rgba(96,165,250,0.2)]",
