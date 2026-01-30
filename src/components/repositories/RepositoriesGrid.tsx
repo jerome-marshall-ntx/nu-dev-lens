@@ -109,7 +109,7 @@ export function RepositoriesGrid({ repositories }: RepositoriesGridProps) {
         {/* Activity Filter */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Activity:</span>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <FilterButton
               active={activityFilter === "all"}
               onClick={() => setActivityFilter("all")}
@@ -136,7 +136,7 @@ export function RepositoriesGrid({ repositories }: RepositoriesGridProps) {
         {/* Sort Options */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Sort by:</span>
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <SortButton
               active={sortBy === "commits"}
               onClick={() => setSortBy("commits")}

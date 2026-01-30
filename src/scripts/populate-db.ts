@@ -25,9 +25,9 @@ import {
   contributors,
   repositories,
   repositoryWorks,
-  type InsertCommit,
-  type InsertContributor,
-  type InsertRepository,
+  type InsertCommitDb,
+  type InsertContributorDb,
+  type InsertRepositoryDb,
 } from "@/server/db/schema";
 import type { IngestionOutputData } from "@/types/github";
 import { eq, inArray, sql } from "drizzle-orm";
@@ -162,7 +162,7 @@ async function populateDatabase(
   // Step 2: Batch upsert all contributors
   console.log("👥 Step 2: Upserting contributors...");
   const contributorCache = new Map<string, number>(); // username -> contributor ID
-  const contributorsToInsert: InsertContributor[] = Array.from(
+  const contributorsToInsert: InsertContributorDb[] = Array.from(
     uniqueContributors.values(),
   ).map((c) => ({
     username: c.username,
@@ -227,7 +227,7 @@ async function populateDatabase(
 
   // Separate into existing (to update) and new (to insert)
   const repositoriesToUpdate: Array<{ id: number; name: string }> = [];
-  const repositoriesToInsert: InsertRepository[] = [];
+  const repositoriesToInsert: InsertRepositoryDb[] = [];
 
   for (const repoData of uniqueRepositories.values()) {
     const existingId = repoCache.get(repoData.url);
@@ -275,7 +275,7 @@ async function populateDatabase(
   // Step 4: Process repository works and commits
   console.log("🔗 Step 4: Processing repository works and commits...");
   const repositoryWorkCache = new Map<string, number>(); // "repoId-contributorId" -> work ID
-  const commitsToInsert: InsertCommit[] = [];
+  const commitsToInsert: InsertCommitDb[] = [];
 
   for (const contributorData of contributorsData) {
     const username = contributorData.username;
@@ -368,7 +368,7 @@ async function populateDatabase(
   console.log(
     `💾 Step 5: Batch inserting ${commitsToInsert.length} commits...`,
   );
-  const commitsMap = new Map<string, InsertCommit>();
+  const commitsMap = new Map<string, InsertCommitDb>();
   for (const commit of commitsToInsert) {
     const key = `${commit.repositoryWorkId}-${commit.url}`;
     if (!commitsMap.has(key)) {

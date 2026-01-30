@@ -2,6 +2,8 @@ import { ContributorsGrid } from "@/components/contributors/contributors-grid";
 import { getAllContributorsWithStats } from "@/data-access/contributor";
 import { Users } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function ContributorsPage() {
   const contributors = await getAllContributorsWithStats();
 
@@ -21,7 +23,9 @@ export default async function ContributorsPage() {
           <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <Users className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight">All Contributors</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            All Contributors
+          </h2>
         </div>
         <ContributorsGrid contributors={contributors} />
       </div>

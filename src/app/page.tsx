@@ -8,6 +8,8 @@ import {
   getTopContributors,
 } from "@/data-access/dashboard-stats";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   // Fetch data in parallel
   const [topContributors, recentActivity] = await Promise.all([
