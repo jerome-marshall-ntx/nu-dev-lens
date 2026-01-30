@@ -90,8 +90,8 @@ function SidebarHeaderContent() {
       <Link
         href="/"
         className={cn(
-          "flex h-10 items-center gap-3 px-2", // h-10 = 40px to match logo height
-          isCollapsed && "justify-center px-0",
+          "flex h-10 items-center px-2", // h-10 = 40px to match logo height
+          isCollapsed ? "justify-center px-0" : "gap-3",
         )}
       >
         {/* Logo - shown in both expanded and collapsed states */}
@@ -100,16 +100,21 @@ function SidebarHeaderContent() {
           alt="NuDevLens Logo"
           width={40}
           height={40}
-          className="rounded-lg"
+          className="shrink-0 rounded-lg"
         />
-        {!isCollapsed && (
-          <div className="flex flex-col">
-            <span className="font-semibold tracking-tight">NuDev Lens</span>
-            <span className="text-xs text-muted-foreground">
-              Developer Insights
-            </span>
-          </div>
-        )}
+        <div
+          className={cn(
+            "flex flex-col overflow-hidden transition-all duration-200 ease-linear",
+            isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100",
+          )}
+        >
+          <span className="font-semibold tracking-tight whitespace-nowrap">
+            NuDev Lens
+          </span>
+          <span className="text-xs whitespace-nowrap text-muted-foreground">
+            Developer Insights
+          </span>
+        </div>
       </Link>
     </SidebarHeader>
   );
