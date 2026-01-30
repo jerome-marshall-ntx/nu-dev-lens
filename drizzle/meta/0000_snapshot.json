@@ -1,5 +1,5 @@
 {
-  "id": "fbf47e4f-8465-4588-ade7-ad548778f90b",
+  "id": "50add3b0-92cb-47e0-9a37-a62cd8df3df5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -52,6 +52,12 @@
         "embedding": {
           "name": "embedding",
           "type": "vector(1536)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "authoredAt": {
+          "name": "authoredAt",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

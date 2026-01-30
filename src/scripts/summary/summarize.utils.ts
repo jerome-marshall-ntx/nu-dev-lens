@@ -175,11 +175,11 @@ export function buildContributorInput(
 Repository work summaries:
 
 ${validSummaries
-  .map(
-    (work, idx) =>
-      `${idx + 1}. Repository: ${work.repoName}\n   ${work.summary}`,
-  )
-  .join("\n\n")}
+      .map(
+        (work, idx) =>
+          `${idx + 1}. Repository: ${work.repoName}\n   ${work.summary}`,
+      )
+      .join("\n\n")}
 </contributor_input>`;
 }
 

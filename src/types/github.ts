@@ -55,6 +55,7 @@ export interface StoredCommitData {
   sha: string;
   url: string;
   message: string;
+  authored_date: string; // ISO date string from GitHub
   files_changed: Array<{ filename: string; status: string }> | null;
   comment_count: number | null;
   diff_patch: string | null;

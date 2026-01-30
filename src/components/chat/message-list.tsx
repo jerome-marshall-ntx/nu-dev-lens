@@ -3,6 +3,7 @@
 import {
   Conversation,
   ConversationContent,
+  ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import {
@@ -24,7 +25,7 @@ import {
 } from "@/components/ai-elements/tool";
 import { cn } from "@/lib/utils";
 import type { ChatStatus, UIMessage } from "ai";
-import { BrainIcon } from "lucide-react";
+import { BrainIcon, SearchIcon } from "lucide-react";
 import { Shimmer } from "../ai-elements/shimmer";
 
 interface MessageListProps {
@@ -39,9 +40,19 @@ export function MessageList({ messages, status }: MessageListProps) {
     messages.length > 0 &&
     messages[messages.length - 1]?.role === "user";
 
+  // Show empty state when no messages
+  const isEmpty = messages.length === 0;
+
   return (
     <Conversation>
       <ConversationContent>
+        {isEmpty && (
+          <ConversationEmptyState
+            icon={<SearchIcon className="size-8" />}
+            title="Find an engineering expert"
+            description="Ask about skills, expertise, or experience to discover the right person for the job"
+          />
+        )}
         {messages.map((message) => {
           // Check if message has any content
           const hasContent = message.parts.some(

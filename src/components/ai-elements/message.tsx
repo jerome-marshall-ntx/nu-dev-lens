@@ -15,15 +15,46 @@ import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
 import type { UIMessage } from "ai";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import Link from "next/link";
 import type {
   ComponentProps,
   ComponentType,
   HTMLAttributes,
   ReactElement,
 } from "react";
-import { createContext, memo, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import rehypeRaw from "rehype-raw";
 import { Streamdown } from "streamdown";
+
+// Context for modal close functionality
+interface MessageContextType {
+  onCloseModal?: () => void;
+}
+
+const MessageContext = createContext<MessageContextType>({});
+
+export const useMessageContext = () => useContext(MessageContext);
+
+export type MessageProviderProps = {
+  children: React.ReactNode;
+  onCloseModal?: () => void;
+};
+
+export const MessageProvider = ({
+  children,
+  onCloseModal,
+}: MessageProviderProps) => (
+  <MessageContext.Provider value={{ onCloseModal }}>
+    {children}
+  </MessageContext.Provider>
+);
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -306,6 +337,9 @@ export const MessageBranchPage = ({
   );
 };
 
+// Custom event for closing the modal when a contributor is clicked
+export const CONTRIBUTOR_CLICK_EVENT = "contributor-click";
+
 // Custom component to render contributor tags
 const ContributorTag = ({
   children,
@@ -313,14 +347,23 @@ const ContributorTag = ({
 }: {
   children?: React.ReactNode;
   id?: string;
-}) => (
-  <span
-    className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium text-nowrap text-primary"
-    data-contributor-id={id}
-  >
-    {children}
-  </span>
-);
+}) => {
+  const handleClick = useCallback(() => {
+    // Dispatch custom event to close modal
+    window.dispatchEvent(new CustomEvent(CONTRIBUTOR_CLICK_EVENT));
+  }, []);
+
+  return (
+    <Link
+      href={`/contributors/${id}`}
+      className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium text-nowrap text-primary"
+      data-contributor-id={id}
+      onClick={handleClick}
+    >
+      {children}
+    </Link>
+  );
+};
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;
 

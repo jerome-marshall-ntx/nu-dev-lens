@@ -1,5 +1,6 @@
 "use client";
 
+import { CONTRIBUTOR_CLICK_EVENT } from "@/components/ai-elements/message";
 import { ChatInterface } from "@/components/chat";
 import {
   Dialog,
@@ -52,22 +53,37 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
     }
   }, [open, sendMessage, messages.length]);
 
+  // Close modal when a contributor is clicked
+  React.useEffect(() => {
+    const handleContributorClick = () => {
+      setOpen(false);
+    };
+
+    window.addEventListener(CONTRIBUTOR_CLICK_EVENT, handleContributorClick);
+    return () => {
+      window.removeEventListener(
+        CONTRIBUTOR_CLICK_EVENT,
+        handleContributorClick,
+      );
+    };
+  }, []);
+
   return (
     <>
       {/* Floating Trigger Button */}
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full px-5 py-3.5 text-foreground transition-all duration-300 focus:outline-none",
+          "fixed right-6 bottom-6 z-50 flex items-center gap-3 rounded-full px-5 py-3.5 text-foreground transition-all duration-300 focus:outline-none",
           "glass-strong hover:scale-[1.02] active:scale-[0.98]",
-          className
+          className,
         )}
         aria-label="Find an expert"
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full glass-subtle">
+        <div className="glass-subtle flex h-8 w-8 items-center justify-center rounded-full">
           <Search className="h-4 w-4 text-primary" />
         </div>
-        <span className="hidden md:inline-flex items-center gap-2 text-sm font-medium">
+        <span className="hidden items-center gap-2 text-sm font-medium md:inline-flex">
           Search...
           <Kbd className="glass-subtle rounded-md px-1.5 py-0.5 text-xs text-muted-foreground">
             ⌘K
@@ -77,11 +93,13 @@ export function FloatingSearchWidget({ className }: FloatingSearchWidgetProps) {
 
       {/* Chat Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="w-[65vw] min-w-[65vw] h-[85vh] max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
-          <DialogHeader className="px-8 pt-6 pb-5 border-b shrink-0">
-            <DialogTitle className="text-lg font-semibold">Find an Expert</DialogTitle>
+        <DialogContent className="flex h-[85vh] max-h-[85vh] w-[80vw] min-w-[80vw] flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="shrink-0 border-b px-8 pt-6 pb-5">
+            <DialogTitle className="text-lg font-semibold">
+              Find an Expert
+            </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden min-h-0 px-8 pb-6 pt-6">
+          <div className="min-h-0 flex-1 overflow-hidden px-8 pt-6 pb-6">
             <ChatInterface
               messages={messages}
               status={status}
