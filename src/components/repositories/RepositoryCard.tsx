@@ -26,12 +26,16 @@ function getActivityStatus(lastActivity: Date | null): {
   pulse: boolean;
 } {
   if (!lastActivity) {
-    return { label: "No activity", color: "bg-muted-foreground/50", pulse: false };
+    return {
+      label: "No activity",
+      color: "bg-muted-foreground/50",
+      pulse: false,
+    };
   }
 
   const now = new Date();
   const diffDays = Math.floor(
-    (now.getTime() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays <= 7) {
@@ -62,12 +66,12 @@ export function RepositoryCard({ repository, className }: RepositoryCardProps) {
         name: c.username,
         avatarUrl: c.avatarUrl,
       })),
-    [repository.topContributors]
+    [repository.topContributors],
   );
 
   const activityStatus = useMemo(
     () => getActivityStatus(repository.lastActivity),
-    [repository.lastActivity]
+    [repository.lastActivity],
   );
 
   return (
@@ -83,11 +87,11 @@ export function RepositoryCard({ repository, className }: RepositoryCardProps) {
       className={cn(
         "group relative flex cursor-pointer items-start gap-4 rounded-3xl p-5 transition-all duration-300",
         "glass-interactive",
-        className
+        className,
       )}
     >
       {/* Repository Icon */}
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl glass-icon">
+      <div className="glass-icon flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl">
         <FolderGit2 className="h-7 w-7 text-primary" />
       </div>
 
@@ -102,7 +106,7 @@ export function RepositoryCard({ repository, className }: RepositoryCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleExternalLinkClick}
-            className="text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+            className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
             aria-label="View on GitHub"
           >
             <ExternalLink className="h-4 w-4" />
@@ -111,11 +115,11 @@ export function RepositoryCard({ repository, className }: RepositoryCardProps) {
 
         {/* Description */}
         {repository.description ? (
-          <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+          <p className="mt-1 line-clamp-1 text-sm text-foreground/80">
             {repository.description}
           </p>
         ) : (
-          <p className="mt-1 text-sm italic text-muted-foreground/60">
+          <p className="mt-1 text-sm text-muted-foreground/60 italic">
             No description available
           </p>
         )}

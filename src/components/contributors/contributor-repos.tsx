@@ -1,10 +1,6 @@
 import type { ContributorRepository } from "@/data-access/contributor";
-import {
-  ExternalLink,
-  FolderGit2,
-  GitCommitHorizontal,
-} from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { ExternalLink, FolderGit2, GitCommitHorizontal } from "lucide-react";
+import { Streamdown } from "streamdown";
 
 interface ContributorReposProps {
   repositories: ContributorRepository[];
@@ -18,9 +14,11 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
           <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <FolderGit2 className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight">Repository Contributions</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Repository Contributions
+          </h2>
         </div>
-        <p className="italic text-muted-foreground/60">
+        <p className="text-muted-foreground/60 italic">
           No repository contributions found.
         </p>
       </div>
@@ -34,7 +32,9 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
           <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <FolderGit2 className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight">Repository Contributions</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Repository Contributions
+          </h2>
         </div>
         <span className="text-sm text-muted-foreground">
           {repositories.length}{" "}
@@ -45,7 +45,7 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
         {repositories.map((repo) => (
           <div
             key={repo.id}
-            className="rounded-2xl glass-subtle p-4 transition-all duration-200 hover:glass"
+            className="glass-subtle hover:glass rounded-2xl p-4 transition-all duration-200"
           >
             {/* Repo Header */}
             <div className="flex items-start justify-between gap-4">
@@ -65,7 +65,7 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
                   </a>
                 </div>
                 {repo.repository.description && (
-                  <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+                  <p className="mt-1 line-clamp-1 text-sm text-foreground/80">
                     {repo.repository.description}
                   </p>
                 )}
@@ -79,10 +79,8 @@ export function ContributorRepos({ repositories }: ContributorReposProps) {
             {/* Work Summary */}
             {repo.summary && (
               <div className="mt-3 border-t border-border/30 pt-3">
-                <div className="text-sm leading-relaxed text-muted-foreground">
-                  <Streamdown>
-                    {repo.summary}
-                  </Streamdown>
+                <div className="text-sm leading-relaxed text-foreground">
+                  <Streamdown>{repo.summary}</Streamdown>
                 </div>
               </div>
             )}

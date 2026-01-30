@@ -17,7 +17,9 @@ export function RepositorySummary({ description }: RepositorySummaryProps) {
         </h2>
       </div>
       {description ? (
-        <Streamdown>{description}</Streamdown>
+        <div className="text-sm leading-relaxed text-foreground">
+          <Streamdown>{description}</Streamdown>
+        </div>
       ) : (
         <p className="text-muted-foreground/60 italic">
           No description available for this repository.

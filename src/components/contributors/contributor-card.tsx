@@ -1,7 +1,4 @@
-import {
-  ExpertiseTag,
-  ExpertiseTagGroup,
-} from "@/components/ui/expertise-tag";
+import { ExpertiseTag, ExpertiseTagGroup } from "@/components/ui/expertise-tag";
 import type { ContributorWithStats } from "@/data-access/contributor";
 import { extractExpertiseTags } from "@/lib/expertise-utils";
 import { cn } from "@/lib/utils";
@@ -27,7 +24,7 @@ export const ContributorCard = memo(function ContributorCard({
   // Extract expertise tags from the summary
   const expertiseTags = useMemo(
     () => extractExpertiseTags(contributor.summary, 4),
-    [contributor.summary]
+    [contributor.summary],
   );
 
   return (
@@ -36,7 +33,7 @@ export const ContributorCard = memo(function ContributorCard({
       className={cn(
         "group relative flex cursor-pointer items-start gap-4 rounded-3xl p-5 transition-all duration-300",
         "glass-interactive",
-        className
+        className,
       )}
     >
       {/* Avatar */}
@@ -68,7 +65,7 @@ export const ContributorCard = memo(function ContributorCard({
               e.stopPropagation();
               window.open(contributor.url, "_blank", "noopener,noreferrer");
             }}
-            className="text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+            className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-primary"
             aria-label="View on GitHub"
           >
             <ExternalLink className="h-4 w-4" />
@@ -79,14 +76,14 @@ export const ContributorCard = memo(function ContributorCard({
         {contributor.summary ? (
           <p
             className={cn(
-              "mt-1 text-sm text-muted-foreground",
-              expertiseTags.length > 0 ? "line-clamp-1" : "line-clamp-2"
+              "mt-1 text-sm text-foreground/80",
+              expertiseTags.length > 0 ? "line-clamp-1" : "line-clamp-2",
             )}
           >
             {contributor.summary.replace(/\*\*/g, "")}
           </p>
         ) : (
-          <p className="mt-1 text-sm italic text-muted-foreground/60">
+          <p className="mt-1 text-sm text-muted-foreground/60 italic">
             No summary available yet
           </p>
         )}

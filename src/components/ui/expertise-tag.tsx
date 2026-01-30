@@ -16,12 +16,10 @@ interface ExpertiseTagProps {
 }
 
 const variantStyles = {
-  default:
-    "bg-muted text-muted-foreground hover:bg-muted/80",
+  default: "bg-muted text-foreground/70 hover:bg-muted/80",
   outline:
-    "border border-border bg-transparent text-muted-foreground hover:bg-muted/50",
-  filled:
-    "bg-primary/10 text-primary hover:bg-primary/20",
+    "border border-border bg-transparent text-foreground/70 hover:bg-muted/50",
+  filled: "bg-primary/10 text-primary hover:bg-primary/20",
 };
 
 const selectedStyles = {
@@ -75,7 +73,7 @@ export function ExpertiseTag({
         sizeStyles[size],
         selected ? selectedStyles[variant] : variantStyles[variant],
         isClickable && "cursor-pointer",
-        className
+        className,
       )}
     >
       {label}

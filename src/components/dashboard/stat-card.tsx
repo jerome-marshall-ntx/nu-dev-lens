@@ -42,7 +42,7 @@ export function StatCard({
           <Icon className="h-5 w-5 text-primary" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="text-sm font-medium text-foreground/80">{title}</p>
           <p className="text-3xl font-semibold tracking-tight text-foreground">
             {value.toLocaleString()}
           </p>

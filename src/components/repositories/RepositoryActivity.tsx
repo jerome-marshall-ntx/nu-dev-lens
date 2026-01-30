@@ -16,9 +16,11 @@ export function RepositoryActivity({ commits }: RepositoryActivityProps) {
           <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <GitCommitHorizontal className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight">Recent Activity</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Recent Activity
+          </h2>
         </div>
-        <p className="italic text-muted-foreground/60">No commits found.</p>
+        <p className="text-muted-foreground/60 italic">No commits found.</p>
       </div>
     );
   }
@@ -30,7 +32,9 @@ export function RepositoryActivity({ commits }: RepositoryActivityProps) {
           <div className="glass-icon flex h-10 w-10 items-center justify-center rounded-2xl">
             <GitCommitHorizontal className="h-5 w-5 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight">Recent Activity</h2>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Recent Activity
+          </h2>
         </div>
         <span className="text-sm text-muted-foreground">
           Last {commits.length} {commits.length === 1 ? "commit" : "commits"}
@@ -47,7 +51,7 @@ export function RepositoryActivity({ commits }: RepositoryActivityProps) {
                 {/* Timeline line and dot */}
                 <div className="flex flex-col items-center">
                   {/* Dot */}
-                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl glass-subtle transition-colors group-hover:glass">
+                  <div className="glass-subtle group-hover:glass relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors">
                     <GitCommitHorizontal className="h-4 w-4 text-primary" />
                   </div>
                   {/* Connecting line */}
@@ -59,12 +63,12 @@ export function RepositoryActivity({ commits }: RepositoryActivityProps) {
                 {/* Content */}
                 <div className={cn("flex-1 pb-6", isLast && "pb-0")}>
                   {/* Time badge */}
-                  <span className="mb-2 inline-block rounded-full glass-subtle px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                  <span className="glass-subtle mb-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                     {formatRelativeTime(commit.createdAt)}
                   </span>
 
                   {/* Commit card */}
-                  <div className="rounded-2xl glass-subtle p-3 transition-all duration-200 group-hover:glass">
+                  <div className="glass-subtle group-hover:glass rounded-2xl p-3 transition-all duration-200">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         {/* Commit message */}
@@ -92,7 +96,7 @@ export function RepositoryActivity({ commits }: RepositoryActivityProps) {
 
                         {/* AI Summary if available */}
                         {commit.summary && (
-                          <p className="mt-2 text-xs leading-relaxed text-muted-foreground line-clamp-2">
+                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-foreground/90">
                             {commit.summary}
                           </p>
                         )}

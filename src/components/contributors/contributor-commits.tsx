@@ -85,7 +85,7 @@ export function ContributorCommits({ commits }: ContributorCommitsProps) {
 
                         {/* AI Summary if available */}
                         {commit.summary && (
-                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                          <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-foreground/80">
                             {commit.summary}
                           </p>
                         )}

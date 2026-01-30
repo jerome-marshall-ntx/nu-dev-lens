@@ -1,5 +1,5 @@
 import { Sparkles } from "lucide-react";
-import { Streamdown } from 'streamdown';
+import { Streamdown } from "streamdown";
 
 interface ContributorSummaryProps {
   summary: string | null;
@@ -15,13 +15,11 @@ export function ContributorSummary({ summary }: ContributorSummaryProps) {
         <h2 className="text-xl font-semibold tracking-tight">AI Summary</h2>
       </div>
       {summary ? (
-        <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
-          <Streamdown>
-            {summary}
-          </Streamdown>
+        <div className="text-sm leading-relaxed text-foreground/90">
+          <Streamdown>{summary}</Streamdown>
         </div>
       ) : (
-        <p className="italic text-muted-foreground/60">
+        <p className="text-muted-foreground/60 italic">
           No AI-generated summary available yet. This contributor&apos;s work
           hasn&apos;t been analyzed.
         </p>

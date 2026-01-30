@@ -24,13 +24,13 @@ interface RepositoriesGridProps {
  * Get activity level based on last activity date.
  */
 function getActivityLevel(
-  lastActivity: Date | null
+  lastActivity: Date | null,
 ): "active" | "recent" | "inactive" {
   if (!lastActivity) return "inactive";
 
   const now = new Date();
   const diffDays = Math.floor(
-    (now.getTime() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24)
+    (now.getTime() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays <= 30) return "active";
@@ -52,7 +52,7 @@ export function RepositoriesGrid({ repositories }: RepositoriesGridProps) {
       result = result.filter(
         (repository) =>
           repository.name.toLowerCase().includes(query) ||
-          repository.description?.toLowerCase().includes(query)
+          repository.description?.toLowerCase().includes(query),
       );
     }
 
@@ -77,12 +77,8 @@ export function RepositoriesGrid({ repositories }: RepositoriesGridProps) {
         break;
       case "activity":
         result.sort((a, b) => {
-          const aTime = a.lastActivity
-            ? new Date(a.lastActivity).getTime()
-            : 0;
-          const bTime = b.lastActivity
-            ? new Date(b.lastActivity).getTime()
-            : 0;
+          const aTime = a.lastActivity ? new Date(a.lastActivity).getTime() : 0;
+          const bTime = b.lastActivity ? new Date(b.lastActivity).getTime() : 0;
           return bTime - aTime;
         });
         break;
@@ -203,7 +199,7 @@ function SortButton({
       className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
         active
           ? "bg-primary text-primary-foreground"
-          : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+          : "bg-muted text-foreground/85 hover:bg-muted/80 hover:text-foreground"
       }`}
     >
       {icon}
@@ -229,12 +225,10 @@ function FilterButton({
       className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
         active
           ? "bg-primary text-primary-foreground"
-          : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+          : "bg-muted text-foreground/85 hover:bg-muted/80 hover:text-foreground"
       }`}
     >
-      {indicator && (
-        <span className={`h-2 w-2 rounded-full ${indicator}`} />
-      )}
+      {indicator && <span className={`h-2 w-2 rounded-full ${indicator}`} />}
       {label}
     </button>
   );
