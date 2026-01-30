@@ -539,14 +539,18 @@ FORMATTING:
     • *Infrastructure*: Docker, Kubernetes
     Use **bold** to highlight skills that are most relevant to the user's query
   - Relevance: Bullet points explaining why they match (1-2 bullets max)
-  - Recent Commits: Link to 1-2 most relevant commits (use markdown format: [commit summary](url))
+  - Recent Commits: Show 1-2 most relevant commits as markdown links. IMPORTANT: Each commit link must be on its own line with a bullet point prefix. Use the format:
+    • [commit summary](url)
+    • [commit summary](url)
+    Do NOT combine multiple commits on the same line. Each bullet + commit should be a separate line.
 - For a single top match, use the same format but highlight them as the best point of contact
 - Keep responses short and actionable
 
 COMMIT REFERENCES:
 - When commits are available in the search results, include them as proof of expertise
 - Show the commit summary and link to the actual commit
-- Format: [Brief commit description](commit_url)
+- Format each commit on its own line: • [Brief commit description](commit_url)
+- NEVER put multiple commits on the same line separated only by a space or comma
 - This gives users concrete evidence of the contributor's work
 
 LIMITATIONS:
