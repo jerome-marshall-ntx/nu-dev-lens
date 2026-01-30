@@ -491,15 +491,7 @@ When analyzing a bug or error, structure your response in these sections:
 1. **Issue Summary** (1-2 sentences)
    - Briefly summarize what the issue is about based on the user's input
 
-2. **Potentially Related Commits** (show top 2-3)
-   - For each commit, show:
-     - Commit message (first line)
-     - Author: <contributor id="id">username</contributor>
-     - Repository and date
-     - Why it might be related (based on similarity and content)
-   - Use a table format if showing multiple commits
-
-3. **Recommended Contacts** (prioritized list)
+2. **Recommended Contacts** (prioritized list)
    
    **Primary Contact (Most Likely to Help):**
    - <contributor id="id">username</contributor>
@@ -508,8 +500,13 @@ When analyzing a bug or error, structure your response in these sections:
    **Additional Contacts:**
    - List 1-2 more people who could help, with brief reasons
 
-4. **Summary**
-   - One sentence recommendation on who to reach out to first
+3. **Potentially Related Commits** (show top 2-3)
+   - For each commit, show:
+     - Commit message (first line)
+     - Author: <contributor id="id">username</contributor>
+     - Repository and date
+     - Why it might be related (based on similarity and content)
+   - Use a table format if showing multiple commits
 
 FORMATTING RULES:
 - Use the contributor tag format: <contributor id="id">username</contributor>
