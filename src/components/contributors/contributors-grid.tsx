@@ -11,17 +11,11 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import type { ContributorWithStats } from "@/data-access/contributor";
-import type { ExpertiseCategory } from "@/lib/expertise-utils";
-import {
-  extractAvailableCategories,
-  filterByCategory,
-} from "@/lib/expertise-utils";
 import { ArrowDownAZ, ArrowUpDown, GitCommitHorizontal } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { ContributorCard } from "./contributor-card";
 import { ContributorsSearch } from "./contributors-search";
-import { ExpertiseFilter } from "./expertise-filter";
 
 const PAGE_SIZE = 9;
 
@@ -33,21 +27,12 @@ interface ContributorsGridProps {
 
 export function ContributorsGrid({ contributors }: ContributorsGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<
-    ExpertiseCategory[]
-  >([]);
   const [sortBy, setSortBy] = useState<SortOption>("commits");
   const [page, setPage] = useState(1);
 
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
   }, []);
-
-  // Extract available expertise categories from contributors (max 10)
-  const availableCategories = useMemo(
-    () => extractAvailableCategories(contributors.map((c) => c.summary)),
-    [contributors],
-  );
 
   // Filter and sort contributors
   const filteredContributors = useMemo(() => {
@@ -61,11 +46,6 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
           contributor.username.toLowerCase().includes(query) ||
           contributor.summary?.toLowerCase().includes(query),
       );
-    }
-
-    // Filter by expertise categories
-    if (selectedCategories.length > 0) {
-      result = filterByCategory(result, selectedCategories);
     }
 
     // Sort
@@ -82,7 +62,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
     }
 
     return result;
-  }, [contributors, searchQuery, selectedCategories, sortBy]);
+  }, [contributors, searchQuery, sortBy]);
 
   const totalPages = Math.max(
     1,
@@ -96,14 +76,13 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
   // Reset to page 1 when filters or sort change
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, selectedCategories, sortBy]);
+  }, [searchQuery, sortBy]);
 
   const clearFilters = () => {
     setSearchQuery("");
-    setSelectedCategories([]);
   };
 
-  const hasActiveFilters = searchQuery.trim() || selectedCategories.length > 0;
+  const hasActiveFilters = searchQuery.trim().length > 0;
 
   return (
     <div className="space-y-6">
@@ -114,15 +93,6 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
         resultCount={filteredContributors.length}
         totalCount={contributors.length}
       />
-
-      {/* Expertise Filter */}
-      {availableCategories.length > 0 && (
-        <ExpertiseFilter
-          availableTags={availableCategories}
-          selectedTags={selectedCategories}
-          onTagsChange={setSelectedCategories}
-        />
-      )}
 
       {/* Sort Options */}
       <div className="flex items-center justify-between">
@@ -270,7 +240,7 @@ export function ContributorsGrid({ contributors }: ContributorsGridProps) {
         </>
       ) : (
         <SearchEmptyState
-          query={searchQuery || selectedCategories.join(", ")}
+          query={searchQuery}
           onClear={hasActiveFilters ? clearFilters : undefined}
         />
       )}

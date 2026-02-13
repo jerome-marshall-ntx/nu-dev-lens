@@ -1,16 +1,10 @@
 "use client";
 
-import {
-  ExpertiseTag,
-  ExpertiseTagGroup,
-} from "@/components/ui/expertise-tag";
 import type { RepositoryContributor } from "@/data-access/repository";
-import { extractExpertiseTags } from "@/lib/expertise-utils";
 import { cn } from "@/lib/utils";
 import { ExternalLink, GitCommitHorizontal, User, Users } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
 
 interface KeyContributorsProps {
   contributors: RepositoryContributor[];
@@ -72,12 +66,6 @@ function ContributorTile({ contributor }: ContributorTileProps) {
     e.stopPropagation();
   };
 
-  // Extract expertise tags from summary
-  const expertiseTags = useMemo(
-    () => extractExpertiseTags(contributor.summary, 3),
-    [contributor.summary]
-  );
-
   return (
     <div
       onClick={handleClick}
@@ -133,15 +121,6 @@ function ContributorTile({ contributor }: ContributorTileProps) {
             {contributor.commitCount === 1 ? "commit" : "commits"}
           </span>
         </div>
-
-        {/* Expertise Tags */}
-        {expertiseTags.length > 0 && (
-          <ExpertiseTagGroup className="mt-2">
-            {expertiseTags.map((tag) => (
-              <ExpertiseTag key={tag} label={tag} variant="filled" size="sm" />
-            ))}
-          </ExpertiseTagGroup>
-        )}
       </div>
     </div>
   );

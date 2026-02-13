@@ -6,5 +6,4 @@ export { ContributorRepos } from "./contributor-repos";
 export { ContributorSummary } from "./contributor-summary";
 export { ContributorsGrid } from "./contributors-grid";
 export { ContributorsSearch } from "./contributors-search";
-export { ExpertiseFilter } from "./expertise-filter";
 

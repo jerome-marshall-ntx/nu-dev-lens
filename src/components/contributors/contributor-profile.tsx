@@ -1,9 +1,4 @@
-import {
-  ExpertiseTag,
-  ExpertiseTagGroup,
-} from "@/components/ui/expertise-tag";
 import type { ContributorDetails } from "@/data-access/contributor";
-import { extractExpertiseTags } from "@/lib/expertise-utils";
 import { formatMonthYear } from "@/lib/utils";
 import {
   Calendar,
@@ -18,9 +13,6 @@ interface ContributorProfileProps {
 }
 
 export function ContributorProfile({ contributor }: ContributorProfileProps) {
-  // Extract expertise tags from summary
-  const expertiseTags = extractExpertiseTags(contributor.summary, 8);
-
   return (
     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
       {/* Avatar */}
@@ -85,20 +77,6 @@ export function ContributorProfile({ contributor }: ContributorProfileProps) {
             </div>
           </div>
         </div>
-
-        {/* Expertise Tags */}
-        {expertiseTags.length > 0 && (
-          <div className="mt-2">
-            <p className="mb-2 text-xs font-medium text-muted-foreground">
-              Expertise
-            </p>
-            <ExpertiseTagGroup>
-              {expertiseTags.map((tag) => (
-                <ExpertiseTag key={tag} label={tag} variant="filled" />
-              ))}
-            </ExpertiseTagGroup>
-          </div>
-        )}
       </div>
     </div>
   );

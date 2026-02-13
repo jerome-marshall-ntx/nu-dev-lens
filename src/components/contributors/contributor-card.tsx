@@ -1,6 +1,4 @@
-import { ExpertiseTag, ExpertiseTagGroup } from "@/components/ui/expertise-tag";
 import type { ContributorWithStats } from "@/data-access/contributor";
-import { extractExpertiseTags } from "@/lib/expertise-utils";
 import { cn } from "@/lib/utils";
 import {
   ExternalLink,
@@ -10,7 +8,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { memo, useMemo } from "react";
+import { memo } from "react";
 
 interface ContributorCardProps {
   contributor: ContributorWithStats;
@@ -21,12 +19,6 @@ export const ContributorCard = memo(function ContributorCard({
   contributor,
   className,
 }: ContributorCardProps) {
-  // Extract expertise tags from the summary
-  const expertiseTags = useMemo(
-    () => extractExpertiseTags(contributor.summary, 4),
-    [contributor.summary],
-  );
-
   return (
     <Link
       href={`/contributors/${contributor.username}`}
@@ -72,29 +64,15 @@ export const ContributorCard = memo(function ContributorCard({
           </button>
         </div>
 
-        {/* Summary - truncated to 1 line when we have tags */}
+        {/* Summary */}
         {contributor.summary ? (
-          <p
-            className={cn(
-              "mt-1 text-sm text-foreground/80",
-              expertiseTags.length > 0 ? "line-clamp-1" : "line-clamp-2",
-            )}
-          >
+          <p className="mt-1 line-clamp-2 text-sm text-foreground/80">
             {contributor.summary.replace(/\*\*/g, "")}
           </p>
         ) : (
           <p className="mt-1 text-sm text-muted-foreground/60 italic">
             No summary available yet
           </p>
-        )}
-
-        {/* Expertise Tags */}
-        {expertiseTags.length > 0 && (
-          <ExpertiseTagGroup className="mt-2">
-            {expertiseTags.map((tag) => (
-              <ExpertiseTag key={tag} label={tag} variant="filled" size="sm" />
-            ))}
-          </ExpertiseTagGroup>
         )}
 
         {/* Stats */}
