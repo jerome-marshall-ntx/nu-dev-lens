@@ -7,7 +7,7 @@ import { DefaultChatTransport } from "ai";
 export default function Chat() {
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
-      api: "/api/chat-new",
+      api: "/api/chat-new", // Chat API endpoint
     }),
   });
   console.log("🚀 ~ Chat ~ messages:", messages);
