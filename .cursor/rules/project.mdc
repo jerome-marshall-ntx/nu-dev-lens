@@ -1,0 +1,50 @@
+---
+description: "Core project identity, architecture, and universal constraints for NuDevLens"
+alwaysApply: true
+---
+
+# NuDevLens — Project Rules
+
+NuDevLens is a developer discovery platform that surfaces engineering expertise from GitHub data. Built with Next.js 15 (App Router), TypeScript, React 19, Drizzle ORM, and PostgreSQL with pgvector. AI features use the Vercel AI SDK with an OpenAI-compatible endpoint and Ollama for embeddings.
+
+## Architecture
+
+The system has three phases: **Data Ingestion** (GitHub fetch) → **AI Summarization** (LLM summaries + embeddings) → **Discovery** (search, chat, dashboards).
+
+### Layer Responsibilities
+
+| Layer | Path | Purpose |
+|---|---|---|
+| Pages | `src/app/` | Next.js App Router pages and API routes |
+| Components | `src/components/` | React components grouped by feature |
+| AI | `src/ai/` | LLM models, agent loop, tools, prompts |
+| Use Cases | `src/use-cases/` | Business logic (combines data-access + AI) |
+| Data Access | `src/data-access/` | Drizzle database queries only |
+| Schema | `src/server/db/schema.ts` | Single source of truth for all DB types |
+| Scripts | `src/scripts/` | CLI scripts for summarization, embedding, data import |
+
+## Constraints
+
+- NEVER commit secrets, API keys, or `.env` files
+- NEVER query the database directly outside `src/data-access/` — always go through the data-access layer
+- NEVER put business logic in data-access files — that belongs in `src/use-cases/`
+- NEVER use `any` type — use `unknown` with type guards or proper typing
+- ALWAYS use the `@/` path alias for imports (maps to `src/`)
+- ALWAYS validate AI tool inputs with Zod schemas
+- ALWAYS use `pnpm` as the package manager (not npm or yarn)
+
+## Conventions
+
+- Use TypeScript strict mode — `noUncheckedIndexedAccess` is enabled
+- Use `export const` for data-access functions, `export function` for use-case functions
+- Use section separators (`// ====`) to organize related code within files
+- Check `src/lib/utils.ts` before creating new utility functions — `cn()`, date formatters, etc. already exist
+- Keep Drizzle schema as the single source of truth — derive TypeScript types from it using `typeof` and `$inferSelect`
+
+## Key Files
+
+- Database schema: `src/server/db/schema.ts`
+- AI models config: `src/ai/models.ts`
+- Agent loop: `src/ai/run-agent-loop.ts`
+- Shared utilities: `src/lib/utils.ts`
+- Global styles and tokens: `src/styles/globals.css`

@@ -1,0 +1,57 @@
+---
+description: "AI and LLM conventions for the agent loop, tools, embeddings, and summarization in NuDevLens"
+globs: "src/ai/**/*.ts,src/scripts/summary/**/*.ts,src/scripts/embedding/**/*.ts"
+alwaysApply: false
+---
+
+# AI & Inferencing Rules
+
+## Model Configuration
+
+- All model definitions live in `src/ai/models.ts` — NEVER hardcode model names or API URLs elsewhere
+- Chat and summarization use `chatModel` / `summarizationModel` (OpenAI-compatible endpoint via `NAI_BASE_URL`)
+- Embeddings use `embeddingModel` (Ollama `qwen3-embedding:8b`, 1536 dimensions)
+- Environment variables: `NAI_BASE_URL`, `NAI_API_KEY` — never expose these in client code
+
+## Agent Loop
+
+The chat agent follows a structured loop in `src/ai/run-agent-loop.ts`:
+
+```
+User message → Select tools → Execute tools → Decide (continue or answer) → Generate answer
+```
+
+- `SystemContext` accumulates tool results across loop iterations — pass it through, don't recreate it
+- Each tool execution streams status updates to the client via `OurMessageStreamWrite`
+- The loop self-limits to prevent infinite cycles — respect the `maxIterations` parameter
+
+## AI Tools
+
+- Tool definitions live in `src/ai/tools.ts` using the Vercel AI SDK `tool()` helper
+- Manual tool orchestration lives in `src/ai/actions.ts` (tool selection, decision-making, answer generation)
+- ALWAYS validate tool inputs with Zod schemas — every tool must have an `inputSchema`
+- Tool descriptions should be detailed and optimized for LLM understanding — guide the model on when and how to use each tool
+- Search tools should instruct the LLM to rewrite queries for semantic matching, not use user queries verbatim
+
+## Embeddings & Semantic Search
+
+- Use `embedQuery()` from `src/ai/utils.ts` to convert text to embeddings — never call the embedding model directly
+- Embedding vectors are 1536 dimensions — this must match the pgvector column definition
+- Similarity searches use cosine distance (`1 - cosineDistance`) — higher scores mean more similar
+- Always filter with a `minSimilarity` threshold to avoid returning irrelevant results
+- The search flow is: text query → `embedQuery()` → `searchByEmbedding()` (in data-access)
+
+## Summarization Pipeline
+
+- Level 1: Summarize raw commits and issues per contributor per repo
+- Level 2: Summarize a contributor's work within a repository (from Level 1 summaries)
+- Level 3: Summarize a contributor's overall engineering profile (from Level 2 summaries)
+- Scripts live in `src/scripts/summary/` — run with `pnpm summarize`
+- Embeddings are generated separately with `pnpm embed`
+
+## Avoid
+
+- Don't call LLM APIs directly — use the exported models from `src/ai/models.ts`
+- Don't create new tool definitions without adding them to the agent loop's tool mapping in `run-agent-loop.ts`
+- Don't skip the use-case layer for search — embedding + DB query should be composed in `src/use-cases/`, not in tools directly
+- Don't change embedding dimensions without updating both the model config and the database schema vector columns

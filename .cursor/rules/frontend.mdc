@@ -1,0 +1,42 @@
+---
+description: "Frontend conventions for React components, pages, and styling in NuDevLens"
+globs: "src/components/**/*.tsx,src/app/**/page.tsx,src/app/**/layout.tsx,src/styles/**"
+alwaysApply: false
+---
+
+# Frontend Rules
+
+## Component Patterns
+
+- Use **server components** by default for pages that fetch data
+- Add `"use client"` only when the component needs interactivity (state, effects, event handlers)
+- Group components by feature: `components/contributors/`, `components/chat/`, `components/dashboard/`
+- Shared UI primitives live in `components/ui/` (shadcn-style) — check there before creating new base components
+
+## Styling
+
+- Use **Tailwind CSS v4** for all styling — no inline styles, no CSS modules
+- Use `cn()` from `@/lib/utils` to merge conditional class names
+- Design tokens are defined in `src/styles/globals.css` under `@theme inline` — use CSS variables, not hardcoded colors
+- Use the existing glass utility classes for card-like surfaces: `.glass`, `.glass-card`, `.glass-interactive`, `.glass-btn`
+- The project supports light and dark mode — always ensure both work
+
+## State Management
+
+- Use **React Query** (via tRPC) for server data fetching and caching
+- Use `useChat` from `@ai-sdk/react` for chat interactions
+- Use local React hooks (`useState`, `useMemo`, `useCallback`) for UI state
+- No Redux or Zustand — keep state simple and co-located
+
+## Pages
+
+- Pages are server components that fetch data directly using data-access or use-case functions
+- Keep pages thin — delegate rendering to feature components
+- Use loading.tsx and error.tsx for loading/error states when appropriate
+
+## Avoid
+
+- Don't create new base UI components without checking `src/components/ui/` first
+- Don't use `fetch()` directly for internal API calls — use tRPC or server-side data-access functions
+- Don't hardcode colors or spacing — use Tailwind tokens and CSS variables
+- Don't import from barrel files if a direct import is available

@@ -1,0 +1,50 @@
+---
+description: "Backend conventions for API routes, database access, tRPC, and server logic in NuDevLens"
+globs: "src/app/api/**/*.ts,src/data-access/**/*.ts,src/use-cases/**/*.ts,src/server/**/*.ts,src/trpc/**/*.ts"
+alwaysApply: false
+---
+
+# Backend Rules
+
+## Layered Architecture
+
+Follow the strict layer separation:
+
+1. **Data Access** (`src/data-access/`) — Raw Drizzle queries. No business logic, no AI calls. Export as `const` arrow functions.
+2. **Use Cases** (`src/use-cases/`) — Business logic that combines data-access functions with AI utilities (e.g., embedding a query then searching). Export as named `function` declarations.
+3. **API Routes** (`src/app/api/`) — HTTP handlers that call use-case or data-access functions. Handle request parsing and response formatting here.
+
+```
+API Route → Use Case → Data Access → Database
+```
+
+NEVER skip a layer — an API route should not query the database directly.
+
+## Database & Drizzle
+
+- Schema lives in `src/server/db/schema.ts` — this is the single source of truth
+- Use `createTable` from the schema file (supports multi-project schema prefix)
+- Use Drizzle query builder or relational queries — no raw SQL strings unless absolutely necessary
+- Embedding columns use `vector(1536)` from pgvector — always check `isNotNull(embedding)` before similarity searches
+- Run `pnpm db:push` to apply schema changes during development, `pnpm db:migrate` for production
+
+## tRPC
+
+- Routers live in `src/server/api/`
+- The root router is in `src/server/api/root.ts`
+- Use `superjson` as the transformer (already configured)
+- Add new procedures to existing routers or create new routers and merge them into the root
+
+## API Routes
+
+- Use Next.js Route Handlers (`route.ts` with `GET`, `POST` exports)
+- Validate request bodies with Zod before processing
+- Return consistent error shapes: `NextResponse.json({ error: string }, { status: number })`
+- Streaming responses use the Vercel AI SDK patterns — see `src/app/api/chat-new/route.ts` for the pattern
+
+## Avoid
+
+- Don't put query logic in use-case files — that belongs in data-access
+- Don't create new database connection instances — use `db` from `@/server/db`
+- Don't use `console.log` for error handling — throw typed errors that the caller can handle
+- Don't add middleware or auth wrappers without following the existing tRPC middleware pattern
