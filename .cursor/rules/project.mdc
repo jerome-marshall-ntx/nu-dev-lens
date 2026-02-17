@@ -13,15 +13,15 @@ The system has three phases: **Data Ingestion** (GitHub fetch) → **AI Summariz
 
 ### Layer Responsibilities
 
-| Layer | Path | Purpose |
-|---|---|---|
-| Pages | `src/app/` | Next.js App Router pages and API routes |
-| Components | `src/components/` | React components grouped by feature |
-| AI | `src/ai/` | LLM models, agent loop, tools, prompts |
-| Use Cases | `src/use-cases/` | Business logic (combines data-access + AI) |
-| Data Access | `src/data-access/` | Drizzle database queries only |
-| Schema | `src/server/db/schema.ts` | Single source of truth for all DB types |
-| Scripts | `src/scripts/` | CLI scripts for summarization, embedding, data import |
+| Layer       | Path                      | Purpose                                               |
+| ----------- | ------------------------- | ----------------------------------------------------- |
+| Pages       | `src/app/`                | Next.js App Router pages and API routes               |
+| Components  | `src/components/`         | React components grouped by feature                   |
+| AI          | `src/ai/`                 | LLM models, agent loop, tools, prompts                |
+| Use Cases   | `src/use-cases/`          | Business logic (combines data-access + AI)            |
+| Data Access | `src/data-access/`        | Drizzle database queries only                         |
+| Schema      | `src/server/db/schema.ts` | Single source of truth for all DB types               |
+| Scripts     | `src/scripts/`            | CLI scripts for summarization, embedding, data import |
 
 ## Constraints
 
@@ -48,3 +48,9 @@ The system has three phases: **Data Ingestion** (GitHub fetch) → **AI Summariz
 - Agent loop: `src/ai/run-agent-loop.ts`
 - Shared utilities: `src/lib/utils.ts`
 - Global styles and tokens: `src/styles/globals.css`
+
+## References
+
+- Frontend Rules: .cursor/rules/frontend.mdc
+- Backend Rules: .cursor/rules/backend.mdc
+- AI & Inferencing Rules: .cursor/rules/ai-inferencing.mdc
